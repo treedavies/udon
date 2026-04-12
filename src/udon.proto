@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package unary;
+
+service Unary{
+ rpc commit(CommitMessage) returns (MessageResponse) {}
+ rpc check(CheckRequest) returns (CheckRequestResponse) {}
+ rpc fetch(Request)  returns (MessageResponse) {}
+ rpc clean(CleanRequest) returns (CleanResponse) {}
+ rpc ping(PingRequest) returns (PingResponse) {}
+}
+
+message PingRequest{}
+message PingResponse{
+	bytes status = 1; 
+}
+
+message CleanRequest{
+	bytes key_id = 1;
+	bytes signature = 2;
+	bytes uuid = 3;
+	bytes clean_count = 4;
+}
+
+message CleanResponse{
+	bytes key_id = 1;
+	bytes signature = 2;
+	bytes uuid = 3;
+	bytes error = 4;
+}
+
+message Request{
+	bytes value  = 1;
+	bytes key_id = 2;
+	bytes signature = 3;
+	bytes uuid = 4;
+}
+
+message CheckRequest{
+	bytes key_id = 1;
+	bytes signature = 2;
+	bytes uuid = 3;
+}
+
+message CheckRequestResponse{
+	bytes value = 1;
+	bytes signature = 2;
+	bytes error = 3;
+}
+
+message CommitMessage{
+	bytes destination = 1;
+	bytes key_id = 2;
+	bytes signature = 3;
+	bytes uuid = 4;
+
+	// Dest Key encrypted 
+	bytes time = 5;
+	bytes payload = 6;
+	bytes source = 7;
+	bytes msg_signature = 8;
+	bytes channel = 9;
+	bytes symetric_key = 10;
+}
+
+message MessageResponse{
+	// Are these 2 fields used?
+	bytes response = 1;
+	bytes destination = 2;
+
+	// Recipeint Key encrypted
+	bytes time = 3;
+	bytes payload = 4;
+	bytes source = 5;
+	bytes signature = 6;
+	bytes channel = 7;
+	bytes symetric_key = 8;
+
+	bytes error = 9;
+}

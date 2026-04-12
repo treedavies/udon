@@ -1,0 +1,31 @@
+#!/usr/local/bin/udon/udon-venv/bin/python3
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (c) 2025 Tree Davies
+
+import os
+import sys
+import libudon as udon
+from signal import signal
+from signal import SIGINT
+
+def handler(signal_received, frame):
+    ''' Handle SIGIN/CTRL-C '''
+    sys.exit(' exiting...')
+signal(SIGINT, handler)
+
+if not os.path.exists("./config"):
+	home_dir = udon.udon_utils.home_dir()
+	if home_dir == None:
+		sys.exit("Error: Platform not identified.")
+
+	cfg = f"{home_dir}/.udon/server.conf"
+	if not os.path.exists(cfg):
+		print(f"Error: server Config not found: {cfg}")
+		print("Try running: `udon_init.py --init`")
+		sys.exit(1)
+
+	srv = udon.udon_server()
+	print("Server instantiated")
+	print("Starting Server")
+	srv.s_start_server()
+

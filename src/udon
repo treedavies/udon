@@ -1,0 +1,395 @@
+#!/usr/local/bin/udon/udon-venv/bin/python3
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (c) 2025 Tree Davies
+
+from libudon import udon_DB
+from libudon import udon_client
+from libudon import udon_utils
+from optparse import OptionParser
+from signal import signal
+from signal import SIGINT
+import config
+import time
+import sys
+import os
+from test_libudon import check_all_configs
+
+""" Global Variables """
+UDON_CHAN_DIR = '.udon/channel_cfgs'
+UDON_DB_DIR = '.udon/dbn'
+UDON_TLS_DIR = '.udon/TLS'
+UDON_LOGS_DIR = '.udon/logs'
+
+
+def handler(signal_received, frame):
+    ''' Handle SIGIN/CTRL-C '''
+    sys.exit(' exiting...')
+
+def error_and_exit(msg: str):
+	sys.exit(str(msg))
+
+
+def do_check_sync(channel: str):
+	"""
+	"""
+	cfg_name = channel
+	user = os.getlogin()
+
+	home_dir = udon_utils.home_dir()
+	if not home_dir:
+		error_and_exit("Error: udon.check_sync(): home_dir() return None")
+
+	cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+	if not os.path.exists(cfg_path):
+		error_and_exit(f"Error: udon.check_sync(): config path not found: {cfg_path}")
+
+	cfg = config.Config(cfg_path)
+	client = udon_client()
+	if not client.c_load_config(cfg):
+		error_and_exit(f"Error: udon.check_sync(): c_load_config() failed")
+
+	rc = udon_DB.init_primary_table(client.client_db_path, client.key_name)
+	if rc != 0:
+		error_and_exit(f"Error: udon.check_sync(): udon_DB.init_primary_table() failed")
+	client.c_poll(sync=True)
+
+
+def do_poll_check():
+	"""
+	"""
+	cfg = None
+	cfg_name = options.poll_channel
+
+	if cfg_name == "":
+		error_and_exit(f"Error: udon.poll_check() - config empty string: {cfg_name}")
+
+	home_dir = udon_utils.home_dir()
+	if home_dir == None:
+		error_and_exit(f"Error: udon.poll_check() - home_dir() returned None")
+
+	cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+	if not os.path.exists(cfg_path):
+		error_and_exit(f"Error: udon.poll_check() - cfg_path not found: {cfg_path}")
+
+	try:
+		cfg = config.Config(cfg_path)
+	except Exception as e:
+		error_and_exit(f"Error: udon.poll_check() - Failed to open config {cfg_path} - {e}")
+
+	client = udon_client()
+	if not client.c_load_config(cfg):
+			error_and_exit(f"Error: udon.poll_check() - c_load_config() {cfg}")
+
+	rc = udon_DB.init_primary_table(client.client_db_path, client.key_name)
+	if rc != 0:
+		error_and_exit(f"Error: udon.poll_check() - udon_DB.init_primary_table {cfg}")
+	rtn = client.c_poll()
+
+
+def do_read():
+	"""
+	"""
+	if not options.msg_num:
+		options.msg_num = 3
+
+	if len(sys.argv) == 4:
+		n = sys.argv[3]
+		if udon_utils.is_int(n):
+			options.msg_num = int(n)
+
+	if not udon_utils.is_int(options.msg_num):
+		error_and_exit("Error: udon.read() Requested msg number NOT integer")
+	num = int(options.msg_num)
+
+	home_dir = udon_utils.home_dir()
+	if home_dir == None:
+		error_and_exit(f"Error: udon.read() home_dir() return None")
+
+	cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{options.read_channel}"
+	if not os.path.exists(cfg_path):
+		error_and_exit(f"Error: udon.read() channel path NOT found: {cfg_path}")
+
+	try:
+		cfg = config.Config(cfg_path)
+	except Exception as e:
+		error_and_exit(f"Error: udon.read() Failed to open config {cfg_path}:{e}")
+
+	client = udon_client()
+	if not client.c_load_config(cfg):
+		error_and_exit(f"Error: udon.read() - client.c_load_config() Failed")
+
+	if not udon_DB.channel_table_exists(client.client_db_path, client.channel_name):
+		err = "Error: udon.read() - channel_table_exists() False"
+		try_sync = "Try: udon --sync <channel>"
+		error_and_exit(f"{err}\n{try_sync}")
+	channel_name = f"chan_{client.channel_name}"
+
+	# List of lists
+	message_lst = client.c_read(channel_name, num)
+	if message_lst == None:
+		error_and_exit("do_read() returned Error")
+	for msg in message_lst:
+		msg_num = msg[0]
+		time    = msg[1]
+		verify  = msg[2]
+		key     = msg[3]
+		channel = msg[4]
+		message = msg[5]
+
+		if key in client.hash_to_keyname.keys():
+			key = client.hash_to_keyname[key]
+
+		fmtd_out = "".join([f"#{msg_num}: ",
+					f"{time}\n",
+					f"{verify} ",
+					f"{key} ",
+					f"[{channel}]\n{message}\n"])
+		print(fmtd_out)
+
+
+
+def get_input():
+	"""
+		Receive command line input from user.
+		Return when 2 consecutive newlines are input
+	"""
+	A, B, Z = "", "", ""
+	while True:
+		A = input("> ")
+		if A != "" :
+			Z = f"{Z}\n{A}"
+		else:
+			break
+		B = input("> ")
+		if B == "":
+			break
+		else:
+			Z = f"{Z}\n{B}"
+
+	if Z.startswith("\n"):
+		Z = Z[1:]
+
+	""" Note: strings with new lines break signature verification """
+	return Z.strip()
+
+
+def do_commit_message():
+	"""
+	"""
+	home_dir = udon_utils.home_dir()
+	cfg = None
+
+	path = f"{home_dir}/{UDON_CHAN_DIR}/" + options.msg_channel
+	if not os.path.exists(path):
+		error_and_exit(f"Error: udon.commit_message() - Path not found: {path}")
+
+	try:
+		cfg = config.Config(path)
+		# cfg = cfg.as_dict()
+	except Exception as e:
+		error_and_exit(f"Error: udon.commit_message() - config.Config() {e}")
+
+	client = udon_client()
+	if not client.c_load_config(cfg):
+		error_and_exit(f"Error: udon.commit_message() - c_load_config failure")
+
+	if options.cli_input:
+		msg = options.cli_input
+	else:
+		msg = get_input()
+		if not msg:
+			return
+
+	sig = client.c_sign_bstring(msg.encode(), client.key_name)
+	if sig == None:
+		error_and_exit(f"Error: udon.commit_message() - c_sign_bstring() failure")
+
+	sent = 0
+	total = len(client.recipients)
+	print("Sending...")
+	for recipient in client.recipients:
+		rtn = client.c_send(recipient, msg, sig, client.channel_name)
+		if rtn == True:
+			sent = sent + 1
+	print(f"Sent:{sent}/{total}")
+
+
+def do_clean_channel(chan: str):
+	"""
+	"""
+	home_dir = udon_utils.home_dir()
+	cfg = None
+
+	path = f"{home_dir}/{UDON_CHAN_DIR}/{chan}"
+	if not os.path.exists(path):
+		error_and_exit(f"Error: udon.clean() - Path not found: {path}")
+
+	try:
+		cfg = config.Config(path)
+	except Exception as e:
+		error_and_exit(f"Error: udon.clean() - config.Config() {e}")
+
+	local_db_path = cfg['client_db_path']
+	if not os.path.exists(local_db_path):
+		error_and_exit(f"Error: udon.clean() - client_db_path not found")
+
+	table_name = f"chan_{chan}"
+	msg_count = udon_DB.table_row_count(local_db_path, table_name)
+	if msg_count == None:
+		error_and_exit(f"Error: udon.clean() - table_row_count() returned None")
+
+	if not udon_utils.is_int(msg_count):
+		error_and_exit(f"Error: udon.clean() - table_row_count return non int")
+	msg_count = str(msg_count).encode()
+
+	client = udon_client()
+	if not client.c_load_config(cfg):
+		error_and_exit(f"Error: udon.clean() - c_load_config failure")
+	client.c_load_config(cfg)
+
+	key_id = client.key_name
+	uuid = udon_utils.generate_uuid()
+	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid = uuid.encode()
+
+	rsp = client.c_clean(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid,
+					  clean_count=msg_count)
+
+
+def do_list_channels():
+	"""
+	"""
+	chan_lst = udon_DB.get_channel_list()
+	if chan_lst == None:
+		error_and_exit(f"Error: udon_DB.list_channels() - list_channels returned None")
+
+	db_paths = udon_DB.get_client_db_paths(chan_lst)
+	if db_paths == None:
+		error_and_exit(f"Error: udon_DB.list_channels() - get_client_db_paths return None")
+
+	print("Channels:")
+	for path in db_paths:
+		table_lst = udon_DB.get_table_list(path)
+		for table in table_lst:
+			if "chan_" in table:
+				unread_msgs = udon_DB.channel_new_msg_count(path, table)
+				if unread_msgs < 0:
+					print("Error: udon:list_channels() - channel_new_msg_count() returned < 0")
+					sys.exit(1)
+
+				total = udon_DB.table_row_count(path, table)
+				# verify
+				chan = table.replace("chan_","").replace(" ","")
+				if unread_msgs > 0:
+					chan = f"\033[0;32;48m{chan}\033[0m"
+				print(f" * {chan}: Unread:{unread_msgs} Total:{total}")
+
+
+
+def do_iter_poll():
+	"""
+		Iterate over channel configs.
+		and poll the server for new messages.
+		If new messages exists, sync and print them.
+	"""
+	print("Waiting for messages...")
+	home_dir = udon_utils.home_dir()
+	while (True):
+		cfg_file_lst = udon_DB.get_channel_list()
+		if cfg_file_lst == None:
+			error_and_exit("No channels found.\nExiting...")
+
+		for cfg_name in cfg_file_lst:
+			cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+			if not os.path.exists(cfg_path):
+				error_and_exit(f"Error: udon.iter_poll() config not found: {cfg_path}")
+
+			try:
+				cfg = config.Config(cfg_path)
+			except Exception as e:
+				error_and_exit(f"Error: udon.iter_poll(): Failed to open config {cfg}")
+
+			client = udon_client()
+			if not client.c_load_config(cfg):
+				error_and_exit(f"Error: udon.iter_poll() Failed to open config {cfg}")
+
+			r = udon_DB.init_primary_table(client.client_db_path, client.key_name)
+			if r != 0:
+				error_and_exit(f"Error: udon.iter_poll() init_primary_table {cfg}")
+
+			diff = client.c_poll(sync=True, quiet=True)
+			if diff < 0:
+				sys.exit("Error: udon.iter_poll() - poll() return -1")
+			if diff > 0:
+				chan_lst = udon_DB.get_channel_list()
+				for channel_name in chan_lst:
+					channel_name = f'chan_{channel_name}'
+					if udon_DB.table_exist(client.client_db_path , channel_name):
+						message_lst = client.c_read(channel_name, 1, read_unread=True)
+						if message_lst == None:
+							error_and_exit("do_iter_poll() return error")
+						for msg in message_lst:
+							fmtd_out = "".join([f"#{msg[0]}: ",
+								f"{msg[1]}\n",
+								f"{msg[2]} ",
+								f"{msg[3]} ",
+								f"[{msg[4]}]\n{msg[5]}\n"])
+							print(fmtd_out)
+		time.sleep(3)
+
+
+if __name__ == '__main__':
+
+	signal(SIGINT, handler)
+	user = os.getlogin()
+	check_all_configs()
+
+	parser = OptionParser()
+	parser.add_option("-m", "--message", dest="msg_channel",
+						help="./udon --msg <channel>", metavar="")
+	parser.add_option("-i", "--input", dest="cli_input",
+						help="./udon -m <channel> --i '<msg_string>'", metavar="")
+	parser.add_option("-p", "--poll", dest="poll_channel",
+						help="./udon --poll <channel>", metavar="")
+	parser.add_option("-P", "--iterated-poll", dest="iterated_poll",
+						help="./udon --iterated-poll", action='store_true',  metavar="")
+	parser.add_option("-r", "--read", dest="read_channel",
+						help="./udon --read <channel>", metavar="")
+	parser.add_option("-n", "--msg-num", dest="msg_num",
+						help="./udon --read <channel> -n <number>", metavar="")
+	parser.add_option("-s", "--sync", dest="sync_channel",
+						help="./udon --sync <channel>", metavar="")
+	parser.add_option("-l", "--list", dest="list",
+						help="./udon --list",
+						action='store_true', metavar="")
+	parser.add_option("-C", "--clean-channel", dest="clean_channel",
+						help="./udon --clean-channel <channel>", metavar="")
+
+	(options, args) = parser.parse_args()
+
+	if options.msg_channel:
+		do_commit_message()
+
+	if options.poll_channel:
+		do_poll_check()
+
+	if options.read_channel:
+		do_read()
+
+	if options.sync_channel:
+		do_check_sync(options.sync_channel)
+
+	if options.list:
+		do_list_channels()
+
+	if options.iterated_poll:
+		do_iter_poll()
+
+	if options.clean_channel:
+		warning = "This operation is DESTRUCTIVE!\nMessages on the server will be sync'ed to the client,\nand then Deleted from the server."
+		confirm = "Do you really want to continue? (y/n):"
+		print(warning)
+		rsp = input(confirm)
+		if rsp.lower() == "y":
+			do_check_sync(options.clean_channel)
+			do_clean_channel(options.clean_channel)
