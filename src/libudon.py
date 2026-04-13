@@ -257,12 +257,6 @@ class udon_client:
 					error('c_send() - chan == None')
 					return False
 
-				""" get digest of msg_sender key """
-				# TODO remove. key hashing already done above
-				msg_sender_hash = None
-				snd_key_path = self.key_paths[msg_sender]
-				msg_sender_hash = udon_utils.utl_file_md5(snd_key_path)
-				msg_sender = msg_sender_hash.encode()
 
 				""" get digest of recip key """
 				hash = None
@@ -271,6 +265,8 @@ class udon_client:
 					key_data = fd.read()
 				hash = hashlib.md5(key_data.encode()).hexdigest()
 				recip_key = hash.encode()
+
+				msg_sender = msg_sender_key_hash.encode()
 
 				resp = self.c_send_commit(breq_src=msg_sender,
 										breq_uuid_sig=bsig,
