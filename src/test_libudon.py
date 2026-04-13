@@ -755,6 +755,10 @@ def verify_channel(cfg: dict, cfg_path: str) -> bool:
 		print(f"Error: invalid channel name - found '-' (hyphen) char in {chan_name}")
 		return False
 
+	if ' ' in chan_name:
+		print(f"Error: invalid channel name - found ' ' (space) char in {chan_name}")
+		return False
+
 	""" Test channel file name is the same channel name defined """
 	file_name = cfg_path.split("/")[-1]
 	if not file_name == chan_name:
