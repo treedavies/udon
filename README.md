@@ -143,29 +143,34 @@ filename: `bob_and_sally`
     ssl_root = '/home/bob/.udon/TLS/udonserver.net-root.crt'
 
 
-# 7. Command line example of usage
+# 7. Command line examples of usage
 
-    $ udon --message floss_chat
+    $ udon --message bob_and_sally
     > Free Software, is Free as in Speech, but beer would be nice also.
     >
     Sending...
     Sent: 2/2
 
-    $ udon --poll floss_chat
-    Key: tree.pub - Local:0 Remote:1
+    $ udon --poll bob_and_sally
+    Key: bob.pub - Local:0 Remote:2
 
-    $ udon --sync floss_chat
-    sync'd: 1
+    $ udon --sync bob_and_sally
+    sync'd: 2
 
-    $ udon --poll floss_chat
-    Key: tree.pub - Local:1 Remote:1
+    $ udon --poll bob_and_sally
+    Key: bob.pub - Local:2 Remote:2
 
-    $ udon --read floss_chat -n 1
-    #1: 2026-04-08 10:09:08:307931
-    [V] tree.pub [floss_chat]
+    $ udon --read bob_and_sally -n 2
+    #1: 2026-04-08 10:06:02:104942
+    [V] sally.pub [bob_and_sally]
+    What is Free Software?
+
+    #2: 2026-04-08 10:09:08:307931
+    [V] bob.pub [bob_and_sally]
     Free Software, is Free as in Speech, but beer would be nice also.
+    LOL :)
 
-    $ udon --clean floss_chat
+    $ udon --clean bob_and_sally
     This operation is DESTRUCTIVE!
     Messages on the server will be sync'ed to the client,
     and then Deleted from the server
