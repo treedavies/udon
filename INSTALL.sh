@@ -65,14 +65,14 @@ fi
 
 
 # VERIFY VENV MODULE IS INSTALLED
-if [ ! -e "/usr/local/bin/udon/udon-venv" ] ; then
-	$PYTHON -c "import venv"
-	if [ $? -ne 0 ] ; then
-		echo "python venv module not installed"
-		exit 1
-	fi
-	echo "[Found] Python module: virtualenv"
+$PYTHON -c "import venv"
+if [ $? -ne 0 ] ; then
+	echo "python venv module not installed"
+	exit 1
+fi
+echo "[Found] Python module: virtualenv"
 
+if [ ! -e "/usr/local/bin/udon/udon-venv" ] ; then
 	$PYTHON -m venv /usr/local/bin/udon/udon-venv
 	if [ $? -ne 0 ] ; then
 		echo "python venv creation failed. Is the venv module installed?"
