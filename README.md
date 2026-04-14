@@ -101,7 +101,7 @@ Server log files. The server only logs errors.
 
 Start the server:
 
-	unon-server
+	udon-server
 
 On the server host, copy the public keys of the users to
 /home/$USER/.udon/keys/server_side_keys/. This allows the server to
