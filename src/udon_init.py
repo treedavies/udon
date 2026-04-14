@@ -343,7 +343,13 @@ ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/root.crt'
 
 
 def init_env():
+
 	i = initialization()
+
+	euid = os.geteuid()
+	if euid == 0:
+		i.error_and_exit("Can not run as root user.\nPlease run again as non-priviledged user.")
+
 	if len(sys.argv) == 2 and sys.argv[1] == "--user":
 		i.ask_to_create_key()
 	else:
