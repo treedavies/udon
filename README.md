@@ -30,7 +30,7 @@ OS platforms
 Run the following install script. This will install files to
 /usr/local/bin/udon/
 
-    ./INSTALL.sh
+    sudo ./INSTALL.sh
 
 Add `/usr/local/bin/udon` to your shell's PATH. Add the following line to your
 .bashrc
@@ -45,7 +45,7 @@ You can verify this by running `ping <hostname>` or `dig <hostname>`.
 
 # 2. Initialization
 
-Run the `udon_init.py` command.
+Run the `udon_init.py` command as a regular user.
 
 `udon_init.py` will perform the following actions:
 
