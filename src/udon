@@ -349,6 +349,11 @@ def do_iter_poll():
 
 if __name__ == '__main__':
 
+	euid = os.geteuid()
+	if euid == 0:
+		print("Can not run as root user.\nPlease run as a non-priviledged user.")
+		sys.exit(1)
+
 	signal(SIGINT, handler)
 	user = os.getlogin()
 	check_all_configs()

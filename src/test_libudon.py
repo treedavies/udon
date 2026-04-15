@@ -1309,6 +1309,10 @@ def run_tests(cfg: str, srv_cfg: str):
 
 
 if __name__ == '__main__':
+	euid = os.geteuid()
+	if euid == 0:
+		print("Can not run as root user.\nPlease run as non-priviledged user.")
+		sys.exit(1)
 
 	user = os.getlogin()
 	home_dir = udon_utils.home_dir()

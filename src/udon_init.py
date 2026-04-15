@@ -357,7 +357,7 @@ def init_env():
 
 	euid = os.geteuid()
 	if euid == 0:
-		i.error_and_exit("Can not run as root user.\nPlease run again as non-priviledged user.")
+		i.error_and_exit("Can not run as root user.\nPlease run as a non-priviledged user.")
 
 	if len(sys.argv) == 2 and sys.argv[1] == "--user":
 		i.ask_to_create_key()
