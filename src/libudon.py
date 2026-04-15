@@ -20,6 +20,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.fernet import Fernet
 import logging
 logger = logging.getLogger(__name__)
+import getpass
 
 """ Global Variables """
 SUCCESS  = 0
@@ -1400,7 +1401,7 @@ class udon_utils:
 			Discover platform to determine home directory of user
 			Returns: string on success, otherwise None
 		"""
-		user = os.getlogin()
+		user = getpass.getuser()
 		if not user:
 			error("udon_utils.home_dir(): user id not found")
 			return None

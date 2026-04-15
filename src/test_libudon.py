@@ -19,6 +19,7 @@ import socket
 import config
 import sys
 import os
+import getpass
 
 try:
 	from libudon import udon_DB
@@ -937,7 +938,7 @@ def verify_recip_keys_end_in_pub(cfg: dict) -> bool:
 
 
 def test_home_dir():
-	user = os.getlogin()
+	user = getpass.getuser()
 	home_dir = udon_utils.home_dir()
 	if not os.path.exists(home_dir):
 		evaluate(True, False, "test_home_dir() path not exist")
@@ -1324,7 +1325,7 @@ if __name__ == '__main__':
 		print("Can not run as root user.\nPlease run as a non-priviledged user.")
 		sys.exit(1)
 
-	user = os.getlogin()
+	user = getpass.getuser()
 	home_dir = udon_utils.home_dir()
 	cfg_name = "test"
 	srv_cfg_name = "server.conf"

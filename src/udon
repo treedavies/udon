@@ -10,6 +10,7 @@ import config
 import time
 import sys
 import os
+import getpass
 
 try:
 	from test_libudon import check_all_configs
@@ -42,7 +43,7 @@ def do_check_sync(channel: str):
 	"""
 	"""
 	cfg_name = channel
-	user = os.getlogin()
+	user = getpass.getuser()
 
 	home_dir = udon_utils.home_dir()
 	if not home_dir:
@@ -355,7 +356,7 @@ if __name__ == '__main__':
 		sys.exit(1)
 
 	signal(SIGINT, handler)
-	user = os.getlogin()
+	user = getpass.getuser()
 	check_all_configs()
 
 	parser = OptionParser()
