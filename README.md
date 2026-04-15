@@ -130,7 +130,7 @@ filename: `bob_and_sally`
     client_private_key = '/home/bob/.udon/keys/client_side_keys/bob'
     client_db_path = '/home/bob/.udon/db/bob.pub-udon-local.db'
     dest_key_name_list = ['bob.pub', 'sally.pub']
-    server_fqdn = 'udonserver.net'
+    server_fqdn = 'example.net'
     server_port = '50051'
     ssl_root = '/home/bob/.udon/TLS/udonserver.net-root.crt'
 
@@ -144,7 +144,7 @@ certificates.
     server_port = '50051'
     server_db_path  = '/home/<user>/.udon/db/udon-server.db'
     ssl_cert = '/home/<user>/.udon/TLS/localhost/localhost.crt'
-    ssl_cert_key = '/home/<tree>/.udon/TLS/localhost.pem'
+    ssl_cert_key = '/home/<user>/.udon/TLS/localhost.pem'
 
 
 # 8. Command line examples of usage
