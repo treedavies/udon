@@ -9,10 +9,7 @@ from cryptography.fernet import Fernet
 from signal import signal
 from signal import SIGINT
 from concurrent import futures
-from libudon import udon_DB
-from libudon import udon_client
-from libudon import udon_server
-from libudon import udon_utils
+from pathlib import Path
 import subprocess
 import platform
 import datetime
@@ -22,6 +19,19 @@ import socket
 import config
 import sys
 import os
+
+try:
+	from libudon import udon_DB
+	from libudon import udon_client
+	from libudon import udon_server
+	from libudon import udon_utils
+except Exception as e:
+	path_str = str(Path(__file__))
+	if "/udon/src/test_libudon.py" in path_str:
+		print(f"Error: Incorrect file path:{path_str}")
+		print("Run from '/usr/local/bin/udon/test_libudon.py'")
+		sys.exit(1)
+
 
 """ Global Variables """
 TEST_DB = "/tmp/test.db"
@@ -1311,7 +1321,7 @@ def run_tests(cfg: str, srv_cfg: str):
 if __name__ == '__main__':
 	euid = os.geteuid()
 	if euid == 0:
-		print("Can not run as root user.\nPlease run as non-priviledged user.")
+		print("Can not run as root user.\nPlease run as a non-priviledged user.")
 		sys.exit(1)
 
 	user = os.getlogin()
