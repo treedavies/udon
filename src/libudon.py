@@ -30,6 +30,7 @@ DEBUG    = False
 UDON_DIR = '.udon'
 UDON_CHAN_DIR = '.udon/channel_cfgs'
 UDON_CLIENT_SIDE_KEYS = '.udon/keys/client_side_keys'
+UDON_SERVER_SIDE_KEYS = '.udon/keys/server_side_keys'
 UDON_TLS_DIR = '.udon/TLS'
 UDON_LOGS_DIR = '.udon/logs'
 
@@ -1023,7 +1024,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 			rename public key files to be the md5sum of the file itself.
 		"""
 		home_dir = udon_utils.home_dir()
-		ssk_dir = f"{home_dir}/.udon/keys/server_side_keys"
+		ssk_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
 
 		key_lst = os.listdir(ssk_dir)
 		if len(key_lst) < 1:
@@ -1047,7 +1048,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		 todo: try or return false
 		"""
 		home_dir = udon_utils.home_dir()
-		srv_side_key_dir = f"{home_dir}/.udon/keys/server_side_keys/"
+		srv_side_key_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
 		klst = os.listdir(srv_side_key_dir)
 		for k in klst:
 			with open(f"{srv_side_key_dir}/{k}") as fd:
@@ -1094,7 +1095,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		home_dir = udon_utils.home_dir()
 
 		if key_id in self.keys_dict.keys():
-			key_path = f"{home_dir}/.udon/keys/server_side_keys/{key_id}"
+			key_path = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/{key_id}"
 		else:
 			return False
 
