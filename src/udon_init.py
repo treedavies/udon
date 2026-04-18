@@ -353,6 +353,8 @@ ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/root.crt'
 
 def init_env():
 	parser = OptionParser()
+	parser.add_option("-u", "--user", dest="new_user_key", action='store_true',
+					help="Create new user public/private key pair", metavar="")
 	(options, args) = parser.parse_args()
 
 	i = initialization()
@@ -361,7 +363,7 @@ def init_env():
 	if euid == 0:
 		i.error_and_exit("Can not run as root user.\nPlease run as a non-priviledged user.")
 
-	if len(sys.argv) == 2 and sys.argv[1] == "--user":
+	if options.new_user_key:
 		i.ask_to_create_key()
 	else:
 		print("Initializing...")
