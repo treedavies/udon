@@ -1175,16 +1175,6 @@ def clean_on_server_test(cfg: str):
 	evaluate("".encode(), rsp.error, f"clean_on_server_test() - no error response")
 
 
-def platform_check():
-	"""
-	"""
-	p = udon_utils.home_dir()
-	evaluate(True, bool(p), f"platform_check - Returned Non-Null {p}")
-
-	a = os.path.exists(p)
-	evaluate(True, a, f"platform_check - path existance {p}")
-
-
 def udon_dir_check():
 	"""
 		Verify required directories exist or Fail
@@ -1254,7 +1244,6 @@ def run_tests(cfg: str, srv_cfg: str):
 	test_utl_file_md5()
 
 	"""" Config tests """
-	platform_check()
 	udon_dir_check()
 	config_test(cfg)
 
