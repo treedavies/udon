@@ -5,6 +5,7 @@ import os
 import sys
 import grpc
 import uuid
+import pathlib
 import datetime
 import udon_pb2 as pb2
 import udon_pb2_grpc as pb2_grpc
@@ -1398,19 +1399,11 @@ class udon_server(pb2_grpc.UnaryServicer):
 class udon_utils:
 	def home_dir() -> str:
 		"""
-			Discover platform to determine home directory of user
-			Returns: string on success, otherwise None
+			Returns: home dir string on success, otherwise None
 		"""
-		user = getpass.getuser()
-		if not user:
-			error("udon_utils.home_dir(): user id not found")
-			return None
-
-		p = platform.system().lower()
-		if p == 'linux':
-			return f"/home/{user}"
-		elif p == 'darwin':
-			return f"/users/{user}"
+		hd = pathlib.Path.home().resolve()
+		if hd:
+			return str(hd)
 		return None
 
 
