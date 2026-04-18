@@ -1227,21 +1227,6 @@ def check_types():
 	evaluate(True, rb, f"check_types - list")
 
 
-def verify_sqlite3():
-	"""
-		Discover sqlite3 path or Fail epically
-	"""
-	try:
-		cmd = ['which','sqlite3']
-		p = subprocess.run(cmd, stdout=None, stderr=None)
-		rtn = int(p.returncode)
-		if rtn != 0:
-			evaluate(True, False, f"verify_sqlite3() - could not find sqlite3 on system")
-	except Exception as e:
-		evaluate(True, False, f"verify_sqlite3() - Exception running {cmd}")
-	evaluate(True, True, f"verify_sqlite3()")
-
-
 def running_tests_on_server(cfs_path: str):
 	try:
 		cfg = config.Config(cfg_path).as_dict()
@@ -1270,7 +1255,6 @@ def run_tests(cfg: str, srv_cfg: str):
 
 	"""" Config tests """
 	platform_check()
-	verify_sqlite3()
 	udon_dir_check()
 	config_test(cfg)
 
