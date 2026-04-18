@@ -143,11 +143,11 @@ class udon_client:
 			error("udon_client:c_load_config() - public key not found")
 
 		""" create maps of public key name, path, and  md5 """
-		klist = os.listdir(f"{home_dir}/.udon/keys/client_side_keys/")
+		klist = os.listdir(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}")
 		for k in klist:
 			if ".pub" in k:
-				md5 = udon_utils.utl_file_md5(f"{home_dir}/.udon/keys/client_side_keys/{k}")
-				self.key_paths[k] = f"{home_dir}/.udon/keys/client_side_keys/{k}"
+				md5 = udon_utils.utl_file_md5(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}")
+				self.key_paths[k] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}"
 				self.keyname_to_hash[k] = md5
 				self.hash_to_keyname[md5] = k
 
