@@ -10,6 +10,7 @@ from signal import signal
 from signal import SIGINT
 from concurrent import futures
 from pathlib import Path
+from optparse import OptionParser
 import subprocess
 import platform
 import datetime
@@ -351,6 +352,8 @@ ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/root.crt'
 
 
 def init_env():
+	parser = OptionParser()
+	(options, args) = parser.parse_args()
 
 	i = initialization()
 
