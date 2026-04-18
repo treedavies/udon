@@ -278,8 +278,7 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/localhost.pem'
 		passwd = udon_DB.dehyphenate_uuid(rand_uuid)
 
 		if not os.path.exists(openssl):
-			print("Error: openssl path not found")
-			# exit?
+			sys.exit("Error: openssl path not found")
 			return
 
 		new_tls = input("\nCreate new TLS Certs? (y/n): ")
