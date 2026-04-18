@@ -12,6 +12,12 @@
 * See Setion 7 for examples of basic usage.
 
 
+# Announcement / FYI
+
+In the spirit of ditching big tech, this project will be leaving github in 
+June 2026. A forwarding reference link will be placed here.
+
+
 # Tested Platforms
 
 This project has been sucessfully installed and tested on the following:
