@@ -43,7 +43,6 @@ def do_check_sync(channel: str):
 	"""
 	"""
 	cfg_name = channel
-	user = getpass.getuser()
 
 	home_dir = udon_utils.home_dir()
 	if not home_dir:
