@@ -690,9 +690,9 @@ class udon_client:
 				error("message timestamp == None")
 				return None
 
-			source = self.c_decrypt_bstring_with_sym_key(rtn[0][2], sym_key)
-			source = source.decode("utf-8")
-			if source == None:
+			source_hash = self.c_decrypt_bstring_with_sym_key(rtn[0][2], sym_key)
+			source_hash = source_hash.decode("utf-8")
+			if source_hash == None:
 				error("message source == None")
 				return None
 
@@ -702,14 +702,15 @@ class udon_client:
 				error("message msg == None")
 				return None
 
-			# TODO this needs fixing
-			# source should be md5
-			source = self.hash_to_keyname[source]
-
-			signature = rtn[0][4]
-			signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
-			validation = self.c_verify_signature(signature,
-								msg.encode(), source)
+			try:
+				source = self.hash_to_keyname[source_hash]
+				signature = rtn[0][4]
+				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
+				validation = self.c_verify_signature(signature,
+									msg.encode(), source)
+			except Exception as e:
+				source = source_hash
+				validation = False
 
 			channel = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
 			channel = channel.decode("utf-8")
