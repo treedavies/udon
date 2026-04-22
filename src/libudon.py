@@ -1728,6 +1728,7 @@ class udon_DB:
 						CHANNEL blob,
 						NEW_MSG blob,
 						KEY blob,
+						SNDR_PUBKEY blob,
 						DIGEST blob,
 						PARTS blob);"""
 		return udon_DB.run_db_commit(init_chan_table, db_path=path)
@@ -1750,6 +1751,7 @@ class udon_DB:
 						MSGSIG blob,
 						CHANNEL blob,
 						KEY blob,
+						SNDR_PUBKEY blob,
 						DIGEST blob,
 						PARTS blob);"""
 		return udon_DB.run_db_commit(init_table, db_path=path)
