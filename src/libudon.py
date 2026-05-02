@@ -1418,13 +1418,20 @@ class udon_utils:
 		"""
 			Verify if 'udon-server' is in system process list
 		"""
+		curr_pid = psutil.Process().pid
+		proc_name = None
+		proc_pid = None
 		for proc in psutil.process_iter(['pid', 'name']):
 			try:
 				info = proc.info
-				if info['name'] == 'udon-server':
-					return True
+				proc_name = info['name']
+				proc_pid = info['pid']
+				if (proc_name == 'udon-server') and (not proc_pid == curr_pid):
+						print(f"Server process: {proc_name}:{proc_pid}")
+						return True
 			except Exception as e:
 				error(e)
+		print(f"Server process: {proc_name}:{proc_pid}")
 		return False
 
 
