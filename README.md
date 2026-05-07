@@ -14,7 +14,7 @@ Author: Tree Davies
 
 * See Setion 7 for examples of basic usage.
 
-* A proof of concept, and hobby project. It is an excuce to play with
+* A proof of concept, and hobby project. It is an excuse to play with
   RPCs over a network. :)
 
 # Announcement / FYI
