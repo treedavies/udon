@@ -385,6 +385,9 @@ def server_laod_test(cfg_path, srv_cfg_path):
 	# r = server.s_load_server_priv_key("/tmp/nope")
 	# evaluate(None, r, "c_load_priv_key(/tmp/nope)")
 
+def is_server_running_test():
+	rtn = udon_utils.is_udon_server_running()
+	evaluate(True, rtn, "is_server_running_test()")
 
 def c_ping_test(cfg):
 	print("\n----------------------")
@@ -1267,6 +1270,9 @@ def run_tests(cfg: str, srv_cfg: str):
 	""" Server object tests """
 	server_init_test(cfg, srv_cfg)
 	server_laod_test(cfg, srv_cfg)
+
+	""" is_server_running() """
+	is_server_running_test()
 
 	""" ping() test """
 	c_ping_test(cfg)

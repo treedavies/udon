@@ -5,6 +5,7 @@ import os
 import sys
 import grpc
 import uuid
+import psutil
 import pathlib
 import datetime
 import udon_pb2 as pb2
@@ -975,6 +976,10 @@ class udon_server(pb2_grpc.UnaryServicer):
 	def s_start_server(server):
 		debug("s_start_server()")
 
+		if udon_utils.is_udon_server_running():
+			error("udon-server is already running")
+			sys.exit(1)
+
 		home_dir = udon_utils.home_dir()
 		if home_dir == None:
 			error("udon_server.s_start_server() -  home_dir() returned None", True)
@@ -1407,6 +1412,27 @@ class udon_utils:
 		if hd:
 			return str(hd)
 		return None
+
+
+	def is_udon_server_running() -> bool:
+		"""
+			Verify if 'udon-server' is in system process list
+		"""
+		curr_pid = psutil.Process().pid
+		proc_name = None
+		proc_pid = None
+		for proc in psutil.process_iter(['pid', 'name']):
+			try:
+				info = proc.info
+				proc_name = info['name']
+				proc_pid = info['pid']
+				if (proc_name == 'udon-server') and (not proc_pid == curr_pid):
+						print(f"Server process: {proc_name}:{proc_pid}")
+						return True
+			except Exception as e:
+				error(e)
+		print(f"Server process: {proc_name}:{proc_pid}")
+		return False
 
 
 	def generate_uuid() -> str:

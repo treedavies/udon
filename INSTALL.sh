@@ -85,6 +85,7 @@ echo "[DONE] Created: /usr/local/bin/udon/udon-venv"
 
 # INSTALL DEPENDENCIES TO VIRTUAL ENVIRONMENT
 /usr/local/bin/udon/udon-venv/bin/python3 -m pip install --upgrade pip
+/usr/local/bin/udon/udon-venv/bin/python3 -m pip install psutil
 /usr/local/bin/udon/udon-venv/bin/python3 -m pip install beautifulsoup4
 /usr/local/bin/udon/udon-venv/bin/python3 -m pip install cffi
 /usr/local/bin/udon/udon-venv/bin/python3 -m pip install config
