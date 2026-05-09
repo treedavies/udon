@@ -428,7 +428,7 @@ def c_send_commit_test(cfg):
 	uuid = udon_utils.generate_uuid()
 	if uuid == None:
 		evaluate(True, bool(uuid), f"c_send_commit_test() generate_uuid()")
-	
+
 	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
 	if uuid_sig == None:
 		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_sign_bstring()")
@@ -460,6 +460,86 @@ def c_send_commit_test(cfg):
 
 	# kpath = client.key_paths[key_name]
 	# req_src = udon_utils.utl_file_md5(kpath)
+	if req_src == None:
+		evaluate(True, bool(req_src), f"c_send_commit_test() utl_file_md5()")
+	evaluate(32, len(req_src), f"c_send_commit_test() utl_file_md5() length")
+	recip_md5 = req_src
+
+	resp = client.c_send_commit(
+							breq_src=req_src.encode(),
+							breq_uuid_sig=uuid_sig,
+							breq_uuid=uuid,
+
+							btime=cipher_time,
+							bdest=recip_md5.encode(),
+							bpayload=cipher_payload,
+							bsource=csrc,
+							bsignature=msg_sig,
+							bchannel=cipher_channel,
+							bsymetric_key=enc_sym_key)
+	evaluate(True, bool(resp), f"c_send_commit_test() resp")
+	evaluate(True, bool(resp.response), f"c_send_committest(): resp.response")
+
+
+def c_send_commit_test_2mb(cfg):
+	print("\n----------------------")
+	print(" gRPC Test")
+	print(" c_send_commit_test_2bm() Test")
+	print("------------------------")
+
+	cfg = config.Config(cfg)
+	client = udon_client()
+	rtn = client.c_load_config(cfg)
+	evaluate(True, rtn, "c_send_test() - c_load_config()")
+
+	key_name = cfg["client_key_name"]
+
+	""" Generate md5sum of key_name """
+	kpath = client.key_paths[key_name]
+	req_src = udon_utils.utl_file_md5(kpath)
+
+	""" Server readable args. Encryption handled by TLS """
+	recip_id    = key_name.encode()
+	sender_id   = key_name.encode()
+
+	""" Server readable arg, Generate uuid and uuid_signature """
+	uuid = udon_utils.generate_uuid()
+	if uuid == None:
+		evaluate(True, bool(uuid), f"c_send_commit_test() generate_uuid()")
+
+	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	if uuid_sig == None:
+		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_sign_bstring()")
+	uuid = uuid.encode()
+
+	""" Generate symetric key """
+	sym_key = Fernet.generate_key()
+	enc_sym_key = client.c_encrypt_bstring_with_public_key(sym_key, key_name)
+
+	""" Recipient args """
+	payload = ""
+	for i in range(3000000):
+		payload = payload + 'X'
+	payload = payload.encode()
+
+	msg_sig = client.c_sign_bstring(payload, key_name)
+	if msg_sig == None:
+		evaluate(True, bool(msg_sig), f"c_send_commit_test() c_sign_bstring() msg_sig")
+
+	""" Generate message timestamp """
+	time_stamp = datetime.datetime.now().strftime('%H:%M:%S').encode()
+	cipher_time = client.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
+
+	"""" Symetric encrypt msg values """
+	cipher_payload = client.c_encrypt_bstring_with_sym_key(payload, sym_key)
+
+	kpath = client.key_paths[key_name]
+	req_src = udon_utils.utl_file_md5(kpath)
+	csrc = client.c_encrypt_bstring_with_sym_key(req_src.encode(), sym_key)
+
+	channel = client.channel_name
+	cipher_channel = client.c_encrypt_bstring_with_sym_key(channel.encode(), sym_key)
+
 	if req_src == None:
 		evaluate(True, bool(req_src), f"c_send_commit_test() utl_file_md5()")
 	evaluate(32, len(req_src), f"c_send_commit_test() utl_file_md5() length")
@@ -1279,6 +1359,7 @@ def run_tests(cfg: str, srv_cfg: str):
 
 	""" Commmit() Tests"""
 	c_send_commit_test(cfg)
+	c_send_commit_test_2mb(cfg)
 	commit_error_replay_test(cfg)
 
 	""" check() Tests """
