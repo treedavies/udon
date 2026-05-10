@@ -17,6 +17,17 @@ Author: Tree Davies
 * A proof of concept, and hobby project. It is an excuse to play with
   RPCs over a network. :)
 
+
+# Why does this exist
+
+This is an experiment to uderstand/learn how to pass End-to-End Encrypted
+messages through an intermediary server in the most simple way possible.
+
+Given the numerous instances of betrayal of privacy and trust by for-profit
+platforms, what is the simplest way to self host private communications
+between known (invited) participants?
+
+
 # Announcement / FYI
 
 In the spirit of ditching big tech, this project will be leaving github in 

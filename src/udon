@@ -134,6 +134,7 @@ def do_read():
 	channel_name = f"chan_{client.channel_name}"
 
 	# List of lists
+	# TODO: rename 'key' to 'source' to stay consistent with c_read()
 	message_lst = client.c_read(channel_name, num)
 	if message_lst == None:
 		error_and_exit("do_read() returned Error")
