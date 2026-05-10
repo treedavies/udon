@@ -4,10 +4,12 @@
 import os
 import sys
 import grpc
+import json
 import uuid
 import psutil
 import pathlib
 import datetime
+import importlib
 import udon_pb2 as pb2
 import udon_pb2_grpc as pb2_grpc
 import config
@@ -46,7 +48,6 @@ def debug(msg: str, enable=False):
 
 
 def error(msg: str, to_file=False):
-	print(f"Error:{msg}")
 	if to_file:
 		home_dir = udon_utils.home_dir()
 		tfmt = '%Y-%m-%d %H:%M:%S'
@@ -54,6 +55,8 @@ def error(msg: str, to_file=False):
 		logfile = f"{home_dir}/{UDON_LOGS_DIR}/log"
 		logging.basicConfig(filename=logfile, level=logging.INFO)
 		logger.error(f"{time_stamp}:{msg}")
+	else:
+		print(f"Error:{msg}")
 
 
 def output(msg: str, to_file=False):
@@ -394,6 +397,42 @@ class udon_client:
 		return resp
 
 
+	def c_module(self, key_id: str, buuid_sig: bytes, buuid: bytes, mod_name: bytes, args: bytes):
+		"""
+			client side prepare and send proto message to clean table
+			data on remote machine
+			returns CleanResponse on sucess, None on error
+		"""
+		debug('c_msg_clean()')
+		if not udon_utils.type_check([(key_id, str),
+								(buuid_sig, bytes),
+								(buuid, bytes), (mod_name, bytes),
+								(args, bytes)]):
+			error('Invalid type - c_module()')
+			return None
+
+		if not self.c_ping():
+			error("Connection to server:{self.server_fqdn} Failed.")
+			return None
+
+		kpath = self.key_paths[key_id]
+		if not os.path.exists(kpath):
+			error(f"c_module() - path not found:{kpath}")
+			return None
+		md5 = udon_utils.utl_file_md5(kpath)
+		key_id = md5.encode()
+
+		resp = None
+		try:
+			req = pb2.ModuleRequest(key_id=key_id, signature=buuid_sig,
+									uuid=buuid, module_name=mod_name, args=args)
+			resp = self.stub.module(req)
+		except Exception as e:
+			error(f'c_module() - Failure connect/Clean() - {e}')
+			return None
+		return  resp
+
+
 	def c_clean(self, key_id: str, buuid_sig: bytes, buuid: bytes, clean_count: bytes):
 		"""
 			client side prepare and send proto message to clean table
@@ -581,6 +620,7 @@ class udon_client:
 			Returns: returns byte string
 		"""
 		debug('c_sign_bstring()')
+		# TODO: key_id is not used in function
 		if not udon_utils.type_check([(message, bytes),(key_id, str)]):
 			error('Invalid type:message - c_sign_bstring()')
 			return None
@@ -952,6 +992,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 
 		self.config_path = f"{home_dir}/{UDON_DIR}/server.conf"
 		self.cfg = config.Config(self.config_path)
+		self.server_mods_allow = f"{home_dir}/{UDON_DIR}/server_mods.allow"
+		self.modules_path = f"{home_dir}/{UDON_DIR}/modules/"
 
 		self.key_paths = {}
 		self.keys_dict = {}
@@ -1217,7 +1259,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 
 		success, err_msg, key_id = self._verify_request(request, op="fetch")
 		if success == False:
-			error(f"fetch:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			error(f"fetch(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
 			return pb2.MessageResponse(**err_msg)
 
 		cipher_value = request.value
@@ -1287,7 +1329,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("\ncheck()")
 		success, err_msg, key_id = self._verify_request(request, op="check")
 		if success == False:
-			error(f"check:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			error(f"check(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
 			return pb2.CheckRequestResponse(**err_msg)
 
 		rows = str(udon_DB.table_row_count(self.srv_db_path, key_id))
@@ -1312,7 +1354,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("clean()")
 		success, err_msg, key_id = self._verify_request(request, op="clean")
 		if success == False:
-			error(f"clean:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			error(f"clean(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
 			return pb2.CleanRequestResponse(**err_msg)
 
 		msg_count = request.clean_count.decode('utf-8')
@@ -1338,6 +1380,128 @@ class udon_server(pb2_grpc.UnaryServicer):
 		return pb2.CleanResponse(**rtn_msg)
 
 
+	def _key_has_mod_perm(self, module_name: str, key_id: str) -> bool:
+		"""
+			Verify if a key has permission to run a module
+		"""
+		try:
+			cfg = config.Config(self.server_mods_allow).as_dict()
+		except Exception as e:
+			error(f"Error: mod_perm - load config at dictionary {e}: {cfg_path}", True)
+			return False
+
+		if module_name in cfg.keys():
+			allow_lst = cfg[module_name]
+			if type(allow_lst) == list:
+				if key_id in cfg[module_name]:
+					return True
+				if "*" in cfg[module_name]:
+					return True
+		return False
+
+
+	def module(self, request, context):
+		"""
+			server side RPC: module
+			Returns: ModuleResponse{rc, data, error}
+
+			Request
+				- request.key_id
+				- request.signature for clear text of message uuid
+				- request.module_name
+				- request.args
+		"""
+		debug("\nmodule()")
+		ModResponse = {}
+
+		success, err_msg, key_id = self._verify_request(request, op="module")
+		if success == False:
+			error(f"module():req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			err_msg['rc'] = "1".encode()
+			return pb2.ModuleResponse(**err_msg)
+
+		""" Check Module Permitions """
+		mod_name = request.module_name.decode('utf-8')
+		stat = self._key_has_mod_perm(mod_name, key_id)
+		if stat == False:
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":"Module Permission Denied".encode()}
+			return pb2.ModuleResponse(**ModResponse)
+
+		mod_args = None
+		if request.args:
+			mod_args = request.args
+			print(f"server: Found Args!:{mod_args}")
+
+		try:
+			print(f"server: mod_args:{mod_args}")
+			print(str(type(mod_args)))
+
+			decoded_args = mod_args.decode('utf-8')
+			print(f"server: Decoded args:{decoded_args}")
+			print(str(type(decoded_args)))
+
+			args = json.loads(decoded_args)
+			print(f"server: json.loads:{args}")
+			print(str(type(args)))
+		except Exception as e:
+			error(f"module(): load args - {e}", True)
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":f"Module load args failure - {e}".encode()}
+			return pb2.ModuleResponse(**ModResponse)			
+
+		""" Load module and initialize object instance """
+		sys.path.append(self.modules_path)
+		try:
+			m = importlib.import_module(mod_name)
+			m = m.module(args)
+		except Exception as e:
+			error(f"module(): load module - {e}", True)
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":"Module load failure".encode()}
+			return pb2.ModuleResponse(**ModResponse)
+		print("Module Loaded")
+
+		""" Call module run() method """
+		try:
+			rc, data, err = m.run()
+		except Exception as e:
+			error(f"module(): module.run() failure - {e}")
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":f"Module.run() failure - {e}".encode()}
+
+		print(f"Server: mod rtn: {rc},\n {data}\n {err}")
+
+
+		""" All returned variables must have a value """
+		if not (rc and data and err):
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":f"Module() Error: One or more of (rc, data, err) do not have a value".encode()}
+
+		""" All returned variables must be byte encoded """
+		type_check_ok = udon_utils.type_check([(rc, bytes),
+												(data, bytes),
+												(err, bytes)])
+
+		if not type_check_ok:
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":f"Module() Error: One or more of (rc, data, err) are not byte encoded".encode()}
+			return pb2.ModuleResponse(**ModResponse)
+
+		ModResponse["rc"] = rc
+		ModResponse["data"] = data
+		ModResponse["error"] = err
+
+		print(f"Module Returning: {ModResponse}")
+		return pb2.ModuleResponse(**ModResponse)
+
+
 	def commit(self, request, context):
 		"""
 			Server side RPC
@@ -1352,7 +1516,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("\ncommit()")
 		success, err_msg, key_id = self._verify_request(request, op='commit')
 		if success == False:
-			error(f"err commit(): _verify_request() - {success}, {err_msg}, {key_id}")
+			error(f"err commit(): _verify_request() - {success}, {err_msg}, {key_id}", to_file=True)
 			return pb2.MessageResponse(**err_msg)
 
 		type_check_ok = udon_utils.type_check([(request.destination, bytes),])
