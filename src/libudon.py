@@ -46,7 +46,6 @@ def debug(msg: str, enable=False):
 
 
 def error(msg: str, to_file=False):
-	print(f"Error:{msg}")
 	if to_file:
 		home_dir = udon_utils.home_dir()
 		tfmt = '%Y-%m-%d %H:%M:%S'
@@ -54,6 +53,8 @@ def error(msg: str, to_file=False):
 		logfile = f"{home_dir}/{UDON_LOGS_DIR}/log"
 		logging.basicConfig(filename=logfile, level=logging.INFO)
 		logger.error(f"{time_stamp}:{msg}")
+	else:
+		print(f"Error:{msg}")
 
 
 def output(msg: str, to_file=False):
@@ -1352,7 +1353,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("\ncommit()")
 		success, err_msg, key_id = self._verify_request(request, op='commit')
 		if success == False:
-			error(f"err commit(): _verify_request() - {success}, {err_msg}, {key_id}")
+			error(f"err commit(): _verify_request() - {success}, {err_msg}, {key_id}", to_file=True)
 			return pb2.MessageResponse(**err_msg)
 
 		type_check_ok = udon_utils.type_check([(request.destination, bytes),])
