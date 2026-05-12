@@ -18,7 +18,7 @@ Author: Tree Davies
   RPCs over a network. :)
 
 
-# Why does this exist
+# Why does this exist?
 
 This is an experiment to uderstand/learn how to pass End-to-End Encrypted
 messages through an intermediary server in the most simple way possible.
