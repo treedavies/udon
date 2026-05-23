@@ -23,9 +23,6 @@ message CleanRequest{
 }
 
 message CleanResponse{
-	bytes key_id = 1;
-	bytes signature = 2;
-	bytes uuid = 3;
 	bytes error = 4;
 }
 
