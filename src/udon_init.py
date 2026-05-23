@@ -89,7 +89,7 @@ class initialization:
 				self.error_and_exit(f"dir_setup(): {ex}")
 
 		for directory in ["channel_cfgs", "db", "keys", "keys/client_side_keys",
-							"keys/server_side_keys", "logs", "TLS"]:
+							"keys/server_side_keys", "logs", "TLS", "modules"]:
 			dpath = f"{self.udon_dir}/{directory}"
 			if not os.path.exists(dpath):
 				print(f" Creating: {dpath}")
