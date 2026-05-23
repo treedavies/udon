@@ -231,6 +231,16 @@ class initialization:
 		return (private_pem, public_pem)
 
 
+	def create_server_mods_allow(self):
+		""" Check server_mods.allow file """
+		mod_file = f"{self.home_dir}/{UDON_DIR}/server_mods.allow"
+		if not os.path.exists(mod_file):
+			with open(mod_file, "w") as fd:
+				print(f" Created {mod_file}")
+		else:
+			print(f" [Exists] {mod_file} - Doing nothing...")
+
+
 	def create_server_config(self):
 		""" Check server config """
 		server_cfg = f"{self.home_dir}/{UDON_DIR}/server.conf"
@@ -371,6 +381,7 @@ def init_env():
 		i.create_test_keys()
 		i.create_tls_certs()
 		i.create_server_config()
+		i.create_server_mods_allow()
 		i.ask_to_create_key()
 		sys.exit(0)
 
