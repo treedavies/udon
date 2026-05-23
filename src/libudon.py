@@ -395,6 +395,41 @@ class udon_client:
 		return resp
 
 
+	def c_module(self, key_id: str, buuid_sig: bytes, buuid: bytes, mod_name: str):
+		"""
+			client side prepare and send proto message to clean table
+			data on remote machine
+			returns CleanResponse on sucess, None on error
+		"""
+		debug('c_msg_clean()')
+		if not udon_utils.type_check([(key_id, str),
+								(buuid_sig, bytes),
+								(buuid, bytes), (mod_name, bytes)]):
+			error('Invalid type - c_clean')
+			return None
+
+		if not self.c_ping():
+			error("Connection to server:{self.server_fqdn} Failed.")
+			return None
+
+		kpath = self.key_paths[key_id]
+		if not os.path.exists(kpath):
+			error(f"c_module() - path not found:{kpath}")
+			return None
+		md5 = udon_utils.utl_file_md5(kpath)
+		key_id = md5.encode()
+
+		resp = None
+		try:
+			req = pb2.ModuleRequest(key_id=key_id, signature=buuid_sig,
+									uuid=buuid, module_name=mod_name)
+			resp = self.stub.module(req)
+		except Exception as e:
+			error(f'c_module() - Failure connect/Clean()')
+			return None
+		return  resp
+
+
 	def c_clean(self, key_id: str, buuid_sig: bytes, buuid: bytes, clean_count: bytes):
 		"""
 			client side prepare and send proto message to clean table
@@ -1337,6 +1372,28 @@ class udon_server(pb2_grpc.UnaryServicer):
 
 		rtn_msg = {"error":"".encode(),}
 		return pb2.CleanResponse(**rtn_msg)
+
+
+	def module(self, request, context):
+		"""
+			server side RPC module
+			Returns: ModuleResponse{rc, data, error}
+
+			Request
+				- request.key_id
+				- request.signature for clear text of message uuid
+				- request.module_name
+		"""
+		debug("\nmodule()")
+		success, err_msg, key_id = self._verify_request(request, op="module")
+		if success == False:
+			error(f"check:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			return pb2.CheckRequestResponse(**err_msg)
+
+		ModResponse = {"rc":"0".encode(),
+						"data":"".encode(),
+						"error":"".encode()}
+		return pb2.ModuleResponse(**ModResponse)
 
 
 	def commit(self, request, context):

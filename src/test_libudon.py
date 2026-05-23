@@ -1258,6 +1258,28 @@ def clean_on_server_test(cfg: str):
 	evaluate("".encode(), rsp.error, f"clean_on_server_test() - no error response")
 
 
+def rpc_module_test(cfg: str):
+	"""
+	"""
+	print("\n----------------------")
+	print(" RPC Module Test")
+	print("------------------------")
+
+	cfg = config.Config(cfg)
+	client = udon_client()
+	rtn = client.c_load_config(cfg)
+	evaluate(True, rtn, "rpc_module_test() - c_load_config()")
+
+	key_id = client.key_name
+	uuid = udon_utils.generate_uuid()
+	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid = uuid.encode()
+
+	nothing = "-1".encode()
+	rsp = client.c_module(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid, mod_name="blah".encode())
+	evaluate("0".encode(), rsp.rc, f"rpc_module_test() - no error response")
+
+
 def udon_dir_check():
 	"""
 		Verify required directories exist or Fail
@@ -1373,6 +1395,8 @@ def run_tests(cfg: str, srv_cfg: str):
 	""" clean() test"""
 	db_clean_test()
 	clean_on_server_test(cfg)
+
+	rpc_module_test(cfg)
 
 	""" cleanup test related data """
 	drop_test_table(cfg, srv_cfg)
