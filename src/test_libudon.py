@@ -1276,8 +1276,15 @@ def rpc_module_test(cfg: str):
 	uuid = uuid.encode()
 
 	nothing = "-1".encode()
-	rsp = client.c_module(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid, mod_name="blah".encode())
+	rsp = client.c_module(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid, mod_name="hello_world".encode())
 	evaluate("0".encode(), rsp.rc, f"rpc_module_test() - no error response")
+
+	""" Trigger request verify and get failed response """
+	uuid = udon_utils.generate_uuid()
+	uuid_sig = client.c_sign_bstring(uuid.encode(), "test_key_B.pub")
+	uuid = uuid.encode()
+	rsp = client.c_module(key_id="test_key_B.pub", buuid_sig=uuid_sig, buuid=uuid, mod_name="hello_world".encode())
+	evaluate("1".encode(), rsp.rc, f"rpc_module_test(): verify_request(): {rsp.error}")
 
 
 def udon_dir_check():

@@ -988,6 +988,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 
 		self.config_path = f"{home_dir}/{UDON_DIR}/server.conf"
 		self.cfg = config.Config(self.config_path)
+		self.server_mods_allow = f"{home_dir}/{UDON_DIR}/server_mods.allow"
 
 		self.key_paths = {}
 		self.keys_dict = {}
@@ -1374,9 +1375,27 @@ class udon_server(pb2_grpc.UnaryServicer):
 		return pb2.CleanResponse(**rtn_msg)
 
 
+	def _key_has_mod_perm(self, module_name: str, key_id: str) -> bool:
+		"""
+			Verify if a key has permission to run a module
+		"""
+		try:
+			cfg = config.Config(self.server_mods_allow).as_dict()
+		except Exception as e:
+			error(f"Error: mod_perm - load config at dictionary {e}: {cfg_path}", True)
+			return False
+
+		if module_name in cfg.keys():
+			allow_lst = cfg[module_name]
+			if type(allow_lst) == list:
+				if key_id in cfg[module_name]:
+					return True
+		return False
+
+
 	def module(self, request, context):
 		"""
-			server side RPC module
+			server side RPC: module
 			Returns: ModuleResponse{rc, data, error}
 
 			Request
@@ -1387,8 +1406,21 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("\nmodule()")
 		success, err_msg, key_id = self._verify_request(request, op="module")
 		if success == False:
-			error(f"check:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
-			return pb2.CheckRequestResponse(**err_msg)
+			error(f"module:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			err_msg['rc'] = "1".encode()
+			return pb2.ModuleResponse(**err_msg)
+
+		""" Check Module Permitions """
+		mod_name = request.module_name.decode('utf-8')
+		stat = self._key_has_mod_perm(mod_name, key_id)
+		if stat == False:
+			ModResponse = {"rc":"1".encode(),
+							"data":"".encode(),
+							"error":"Module Permission Denied".encode()}
+			return pb2.ModuleResponse(**ModResponse)
+
+		""" Load module """
+		""" Initialize Module and call run() """
 
 		ModResponse = {"rc":"0".encode(),
 						"data":"".encode(),
