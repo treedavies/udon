@@ -8,6 +8,7 @@ import uuid
 import psutil
 import pathlib
 import datetime
+import importlib
 import udon_pb2 as pb2
 import udon_pb2_grpc as pb2_grpc
 import config
@@ -989,6 +990,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		self.config_path = f"{home_dir}/{UDON_DIR}/server.conf"
 		self.cfg = config.Config(self.config_path)
 		self.server_mods_allow = f"{home_dir}/{UDON_DIR}/server_mods.allow"
+		self.modules_path = f"{home_dir}/{UDON_DIR}/modules/"
 
 		self.key_paths = {}
 		self.keys_dict = {}
@@ -1420,7 +1422,18 @@ class udon_server(pb2_grpc.UnaryServicer):
 			return pb2.ModuleResponse(**ModResponse)
 
 		""" Load module """
+		sys.path.append(self.modules_path)
+		try:
+			m = importlib.import_module(mod_name)
+		except Exception as e:
+			error(f"module(): load module - {e}", True)
+			ModResponse = {"rc":"1".encode(),
+							"data":"".encode(),
+							"error":"Module load failure".encode()}
+			return pb2.ModuleResponse(**ModResponse)
+
 		""" Initialize Module and call run() """
+		print("Module loaded!!!")
 
 		ModResponse = {"rc":"0".encode(),
 						"data":"".encode(),

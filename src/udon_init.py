@@ -382,6 +382,7 @@ def init_env():
 		i.create_tls_certs()
 		i.create_server_config()
 		i.create_server_mods_allow()
+		# Add hello_world,test_key_A to server_mods.allow
 		i.ask_to_create_key()
 		sys.exit(0)
 
