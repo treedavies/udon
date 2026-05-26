@@ -4,6 +4,7 @@
 import os
 import sys
 import grpc
+import json
 import uuid
 import psutil
 import pathlib
@@ -426,7 +427,7 @@ class udon_client:
 									uuid=buuid, module_name=mod_name)
 			resp = self.stub.module(req)
 		except Exception as e:
-			error(f'c_module() - Failure connect/Clean()')
+			error(f'c_module() - Failure connect/Clean() - {e}')
 			return None
 		return  resp
 
@@ -1406,6 +1407,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 				- request.module_name
 		"""
 		debug("\nmodule()")
+		ModResponse = {}
+
 		success, err_msg, key_id = self._verify_request(request, op="module")
 		if success == False:
 			error(f"module:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
@@ -1428,16 +1431,26 @@ class udon_server(pb2_grpc.UnaryServicer):
 		except Exception as e:
 			error(f"module(): load module - {e}", True)
 			ModResponse = {"rc":"1".encode(),
-							"data":"".encode(),
 							"error":"Module load failure".encode()}
 			return pb2.ModuleResponse(**ModResponse)
 
 		""" Initialize Module and call run() """
 		print("Module loaded!!!")
+		try:
+			rc, data, err = m.run()
+		except Exception as e:
+			error(f"module(): module.run() failure - {e}")
+			ModResponse = {"rc":"1".encode(),
+							"error":f"Module.run() failure - {e}".encode()}
 
-		ModResponse = {"rc":"0".encode(),
-						"data":"".encode(),
-						"error":"".encode()}
+		if rc:
+			ModResponse["rc"] = rc
+		if data:
+			ModResponse["data"] = data
+		if err:
+			ModResponse["error"] = err
+
+		print(f"Returning: {ModResponse}")
 		return pb2.ModuleResponse(**ModResponse)
 
 
