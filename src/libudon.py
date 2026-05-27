@@ -1420,7 +1420,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		stat = self._key_has_mod_perm(mod_name, key_id)
 		if stat == False:
 			ModResponse = {"rc":"1".encode(),
-							"data":"".encode(),
+							"data":"null".encode(),
 							"error":"Module Permission Denied".encode()}
 			return pb2.ModuleResponse(**ModResponse)
 
@@ -1431,6 +1431,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		except Exception as e:
 			error(f"module(): load module - {e}", True)
 			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
 							"error":"Module load failure".encode()}
 			return pb2.ModuleResponse(**ModResponse)
 
@@ -1441,16 +1442,25 @@ class udon_server(pb2_grpc.UnaryServicer):
 		except Exception as e:
 			error(f"module(): module.run() failure - {e}")
 			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
 							"error":f"Module.run() failure - {e}".encode()}
 
 		if rc:
 			ModResponse["rc"] = rc
+		else:
+			ModResponse["rc"] = "null".encode()
+
 		if data:
 			ModResponse["data"] = data
+		else:
+			ModResponse["data"] = "null".encode()
+
 		if err:
 			ModResponse["error"] = err
+		else:
+			ModResponse["error"] = "null".encode()
 
-		print(f"Returning: {ModResponse}")
+		print(f"Module Returning: {ModResponse}")
 		return pb2.ModuleResponse(**ModResponse)
 
 
