@@ -1257,7 +1257,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 
 		success, err_msg, key_id = self._verify_request(request, op="fetch")
 		if success == False:
-			error(f"fetch:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			error(f"fetch(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
 			return pb2.MessageResponse(**err_msg)
 
 		cipher_value = request.value
@@ -1327,7 +1327,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("\ncheck()")
 		success, err_msg, key_id = self._verify_request(request, op="check")
 		if success == False:
-			error(f"check:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			error(f"check(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
 			return pb2.CheckRequestResponse(**err_msg)
 
 		rows = str(udon_DB.table_row_count(self.srv_db_path, key_id))
@@ -1352,7 +1352,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("clean()")
 		success, err_msg, key_id = self._verify_request(request, op="clean")
 		if success == False:
-			error(f"clean:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			error(f"clean(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
 			return pb2.CleanRequestResponse(**err_msg)
 
 		msg_count = request.clean_count.decode('utf-8')
@@ -1411,7 +1411,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 
 		success, err_msg, key_id = self._verify_request(request, op="module")
 		if success == False:
-			error(f"module:req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			error(f"module():req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
 			err_msg['rc'] = "1".encode()
 			return pb2.ModuleResponse(**err_msg)
 
@@ -1445,20 +1445,14 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"data":"null".encode(),
 							"error":f"Module.run() failure - {e}".encode()}
 
-		if rc:
+		if not (rc and data and err):
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":f"Module() Error: One or more of (rc, data, err) do not have a value".encode()}
+		else:
 			ModResponse["rc"] = rc
-		else:
-			ModResponse["rc"] = "null".encode()
-
-		if data:
 			ModResponse["data"] = data
-		else:
-			ModResponse["data"] = "null".encode()
-
-		if err:
 			ModResponse["error"] = err
-		else:
-			ModResponse["error"] = "null".encode()
 
 		print(f"Module Returning: {ModResponse}")
 		return pb2.ModuleResponse(**ModResponse)

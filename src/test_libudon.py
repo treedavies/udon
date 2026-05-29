@@ -1279,6 +1279,7 @@ def rpc_module_test(cfg: str):
 	rsp = client.c_module(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid, mod_name="hello_world".encode())
 	evaluate("0".encode(), rsp.rc, f"rpc_module_test() - rc response")
 	evaluate("Hello, World".encode(), rsp.data, f"rpc_module_test() - data response")
+	evaluate("null".encode(), rsp.error, f"rpc_module_test() - error response")
 
 	""" Trigger request verify and get failed response """
 	uuid = udon_utils.generate_uuid()
