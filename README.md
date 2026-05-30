@@ -232,3 +232,11 @@ From Bob's perspective:
 
 Udon can be extended using user defined python modules in the
 `/home/$USER/.udon/modules/` directory.
+
+Modules must:
+  * Be a class called module
+  * Have have a run method
+  * return a tuple of byte encoded variables (rc, data, error)
+
+Use the hello_world module as a template example
+
