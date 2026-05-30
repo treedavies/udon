@@ -232,10 +232,16 @@ class initialization:
 
 
 	def create_server_mods_allow(self):
-		""" Check server_mods.allow file """
+		"""
+			Create server_mods.allow file
+			Default: set hello_world module to be called by everyone
+		"""
+		cfg = "{\n\"hello_world\" = [\"*\"]\n}"
+
 		mod_file = f"{self.home_dir}/{UDON_DIR}/server_mods.allow"
 		if not os.path.exists(mod_file):
 			with open(mod_file, "w") as fd:
+				fd.write(cfg)
 				print(f" Created {mod_file}")
 		else:
 			print(f" [Exists] {mod_file} - Doing nothing...")
