@@ -1393,6 +1393,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 			if type(allow_lst) == list:
 				if key_id in cfg[module_name]:
 					return True
+				if "*" in cfg[module_name]:
+					return True
 		return False
 
 
@@ -1437,7 +1439,6 @@ class udon_server(pb2_grpc.UnaryServicer):
 			return pb2.ModuleResponse(**ModResponse)
 
 		""" Call module run() method """
-		print("Module loaded!!!")
 		try:
 			rc, data, err = m.run()
 		except Exception as e:
@@ -1461,7 +1462,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		if not type_check_ok:
 			ModResponse = {"rc":"1".encode(),
 							"data":"null".encode(),
-							"error":f"Module() Error: One or more of (rc, data, err) do not byte encoded".encode()}
+							"error":f"Module() Error: One or more of (rc, data, err) are not byte encoded".encode()}
 			return pb2.ModuleResponse(**ModResponse)
 
 		ModResponse["rc"] = rc
