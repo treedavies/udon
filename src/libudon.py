@@ -1424,10 +1424,11 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"error":"Module Permission Denied".encode()}
 			return pb2.ModuleResponse(**ModResponse)
 
-		""" Load module """
+		""" Load module and initialize object instance """
 		sys.path.append(self.modules_path)
 		try:
 			m = importlib.import_module(mod_name)
+			m = m.module()
 		except Exception as e:
 			error(f"module(): load module - {e}", True)
 			ModResponse = {"rc":"1".encode(),
@@ -1435,7 +1436,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"error":"Module load failure".encode()}
 			return pb2.ModuleResponse(**ModResponse)
 
-		""" Initialize Module and call run() """
+		""" Call module run() method """
 		print("Module loaded!!!")
 		try:
 			rc, data, err = m.run()
@@ -1445,14 +1446,27 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"data":"null".encode(),
 							"error":f"Module.run() failure - {e}".encode()}
 
+
+		""" All returned variables must have a value """
 		if not (rc and data and err):
 			ModResponse = {"rc":"1".encode(),
 							"data":"null".encode(),
 							"error":f"Module() Error: One or more of (rc, data, err) do not have a value".encode()}
-		else:
-			ModResponse["rc"] = rc
-			ModResponse["data"] = data
-			ModResponse["error"] = err
+
+		""" All returned variables must be byte encoded """
+		type_check_ok = udon_utils.type_check([(rc, bytes),
+												(data, bytes),
+												(err, bytes)])
+
+		if not type_check_ok:
+			ModResponse = {"rc":"1".encode(),
+							"data":"null".encode(),
+							"error":f"Module() Error: One or more of (rc, data, err) do not byte encoded".encode()}
+			return pb2.ModuleResponse(**ModResponse)
+
+		ModResponse["rc"] = rc
+		ModResponse["data"] = data
+		ModResponse["error"] = err
 
 		print(f"Module Returning: {ModResponse}")
 		return pb2.ModuleResponse(**ModResponse)
