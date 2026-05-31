@@ -1275,18 +1275,28 @@ def rpc_module_test(cfg: str):
 	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
 	uuid = uuid.encode()
 
-	nothing = "-1".encode()
-	rsp = client.c_module(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid, mod_name="hello_world".encode())
-	evaluate("0".encode(), rsp.rc, f"rpc_module_test() - rc response")
-	evaluate("Hello, World".encode(), rsp.data, f"rpc_module_test() - data response")
-	evaluate("null".encode(), rsp.error, f"rpc_module_test() - error response")
+	""" Hello world """
+	rsp = client.c_module(key_id=key_id,
+							 buuid_sig=uuid_sig,
+							 buuid=uuid,
+							 mod_name="hello_world".encode(),
+							 args="".encode())
+	evaluate("0".encode(), rsp.rc, f"rpc_module_test() - Hello world response")
+	evaluate("Hello, World!".encode(), rsp.data, f"rpc_module_test() - hello world response")
+	evaluate("null".encode(), rsp.error, f"rpc_module_test() - hello world response")
 
-	""" Trigger request verify and get failed response """
+	""" Hello Dave """
 	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), "test_key_B.pub")
+	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
 	uuid = uuid.encode()
-	rsp = client.c_module(key_id="test_key_B.pub", buuid_sig=uuid_sig, buuid=uuid, mod_name="hello_world".encode())
-	evaluate("1".encode(), rsp.rc, f"rpc_module_test(): verify_request(): {rsp.error}")
+	rsp = client.c_module(key_id=key_id,
+						buuid_sig=uuid_sig,
+						buuid=uuid,
+						mod_name="hello_world".encode(),
+						args="Dave".encode())
+	evaluate("0".encode(), rsp.rc, f"rpc_module_test() - Hello Dave response: {rsp.error}")
+	evaluate("Hello, Dave!".encode(), rsp.data, f"rpc_module_test() - Hello Dave response")
+	evaluate("null".encode(), rsp.error, f"rpc_module_test() - Hello Dave response")	
 
 
 def udon_dir_check():

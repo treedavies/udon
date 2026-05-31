@@ -397,7 +397,7 @@ class udon_client:
 		return resp
 
 
-	def c_module(self, key_id: str, buuid_sig: bytes, buuid: bytes, mod_name: str):
+	def c_module(self, key_id: str, buuid_sig: bytes, buuid: bytes, mod_name: bytes, args: bytes):
 		"""
 			client side prepare and send proto message to clean table
 			data on remote machine
@@ -406,8 +406,9 @@ class udon_client:
 		debug('c_msg_clean()')
 		if not udon_utils.type_check([(key_id, str),
 								(buuid_sig, bytes),
-								(buuid, bytes), (mod_name, bytes)]):
-			error('Invalid type - c_clean')
+								(buuid, bytes), (mod_name, bytes),
+								(args, bytes)]):
+			error('Invalid type - c_module()')
 			return None
 
 		if not self.c_ping():
@@ -424,7 +425,7 @@ class udon_client:
 		resp = None
 		try:
 			req = pb2.ModuleRequest(key_id=key_id, signature=buuid_sig,
-									uuid=buuid, module_name=mod_name)
+									uuid=buuid, module_name=mod_name, args=args)
 			resp = self.stub.module(req)
 		except Exception as e:
 			error(f'c_module() - Failure connect/Clean() - {e}')
@@ -619,6 +620,7 @@ class udon_client:
 			Returns: returns byte string
 		"""
 		debug('c_sign_bstring()')
+		# TODO: key_id is not used in function
 		if not udon_utils.type_check([(message, bytes),(key_id, str)]):
 			error('Invalid type:message - c_sign_bstring()')
 			return None
@@ -1426,11 +1428,15 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"error":"Module Permission Denied".encode()}
 			return pb2.ModuleResponse(**ModResponse)
 
+		mod_args = None
+		if request.args:
+			mod_args = request.args
+
 		""" Load module and initialize object instance """
 		sys.path.append(self.modules_path)
 		try:
 			m = importlib.import_module(mod_name)
-			m = m.module()
+			m = m.module(mod_args)
 		except Exception as e:
 			error(f"module(): load module - {e}", True)
 			ModResponse = {"rc":"1".encode(),

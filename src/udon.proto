@@ -16,6 +16,7 @@ message ModuleRequest{
 	bytes signature = 2;
 	bytes uuid = 3;
 	bytes module_name = 4;
+	bytes args = 5;
 }
 
 message ModuleResponse{
