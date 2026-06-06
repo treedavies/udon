@@ -235,8 +235,8 @@ Udon can be extended using user defined python modules in the
 
 Modules must:
   * Be a class called module
-  * Have have a run method
-  * return a tuple of byte encoded variables (rc, data, error)
+  * Have a run method
+  * return a tuple of byte encoded variables (return-code, data, error)
 
 Use the hello_world module as a template example
 

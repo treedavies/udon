@@ -7,6 +7,7 @@ from signal import signal
 from signal import SIGINT
 from pathlib import Path
 import config
+import json
 import time
 import sys
 import os
@@ -348,6 +349,31 @@ def do_iter_poll():
 		time.sleep(3)
 
 
+def load_arg_file(path: str):
+	if not os.path.exists(path):
+		print(f"Error: Path not found: {path}")
+		return None
+
+	with open(path, "r") as fd:
+		content = ""
+		lst = fd.readlines()
+		for ln in lst:
+			content = content + ln
+
+	if content == "":
+		print("Error: no content")
+		return None
+
+	try:
+		test_ld = json.loads(content)
+		j = json.dumps(content)
+	except Exception as e:
+		print(f"Error: {e}")
+		return None
+
+	return j
+
+
 if __name__ == '__main__':
 
 	euid = os.geteuid()
@@ -379,6 +405,9 @@ if __name__ == '__main__':
 						action='store_true', metavar="")
 	parser.add_option("-C", "--clean-channel", dest="clean_channel",
 						help="./udon --clean-channel <channel>", metavar="")
+	parser.add_option("-j", "--call-module", dest="call_mod_channel",
+						help="./udon --call-module <channel> --file <file-path>", metavar="")
+	parser.add_option("-f", "--file", dest="file", metavar="")
 
 	(options, args) = parser.parse_args()
 
@@ -408,3 +437,13 @@ if __name__ == '__main__':
 		if rsp.lower() == "y":
 			do_check_sync(options.clean_channel)
 			do_clean_channel(options.clean_channel)
+
+	if options.call_mod_channel and options.file:
+		print(options.call_mod_channel, options.file)
+
+		r = load_arg_file(options.file)
+		if r != None:
+			r = r.encode()
+			print(r)
+		else:
+			print("Error loading arts file")
