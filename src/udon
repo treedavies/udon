@@ -349,6 +349,26 @@ def do_iter_poll():
 		time.sleep(3)
 
 
+def do_call_module(channel: str, mod_name: str, args: str):
+	cfg_name = channel
+
+	home_dir = udon_utils.home_dir()
+	if not home_dir:
+		error_and_exit("Error: udon.do_call_module(): home_dir() return None")
+
+	cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+	if not os.path.exists(cfg_path):
+		error_and_exit(f"Error: udon.do_call_module(): config path not found: {cfg_path}")
+
+	cfg = config.Config(cfg_path)
+	client = udon_client()
+	if not client.c_load_config(cfg):
+		error_and_exit(f"Error: udon.do_call_module(): c_load_config() failed")
+	
+	client.c_call_module(mod_name, args)
+
+
+
 def load_arg_file(path: str):
 	if not os.path.exists(path):
 		print(f"Error: Path not found: {path}")
@@ -405,9 +425,11 @@ if __name__ == '__main__':
 						action='store_true', metavar="")
 	parser.add_option("-C", "--clean-channel", dest="clean_channel",
 						help="./udon --clean-channel <channel>", metavar="")
-	parser.add_option("-j", "--call-module", dest="call_mod_channel",
+
+	parser.add_option("-x", "--module_call", dest="mod_call",
 						help="./udon --call-module <channel> --file <file-path>", metavar="")
-	parser.add_option("-f", "--file", dest="file", metavar="")
+	parser.add_option("-f", "--module_file", dest="mod_file", metavar="")
+	parser.add_option("-y", "--module_channel", dest="mod_channel", metavar="")
 
 	(options, args) = parser.parse_args()
 
@@ -438,12 +460,15 @@ if __name__ == '__main__':
 			do_check_sync(options.clean_channel)
 			do_clean_channel(options.clean_channel)
 
-	if options.call_mod_channel and options.file:
-		print(options.call_mod_channel, options.file)
-
-		r = load_arg_file(options.file)
-		if r != None:
-			r = r.encode()
-			print(r)
+	if options.mod_call and options.mod_file and options.mod_channel:
+		args = load_arg_file(options.mod_file)
+		if args != None:
+			args = args.encode()
+			print(args)
 		else:
 			print("Error loading arts file")
+
+		print(f"Module:{options.mod_call}")
+		print(f"Args:{options.mod_file}")
+		print(f"Channel:{options.mod_channel}")
+		do_call_module(options.mod_channel, options.mod_call, args)
