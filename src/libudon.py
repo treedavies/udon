@@ -902,8 +902,6 @@ class udon_client:
 			output(f"Sync'd: {nr_synced}")
 		return diff
 
-	def c_call_module(self, args: str):
-		pass
 
 	def local_remote_count(self):
 		"""
