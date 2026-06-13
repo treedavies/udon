@@ -1,3 +1,4 @@
+import json
 version = "1.0"
 
 class module:
@@ -5,20 +6,21 @@ class module:
 		self.module_args = args
 
 	def run(self):
-		rc = "0".encode()
-		data = "null".encode()
-		error = "null".encode()
-		
+		if type(dict) == type(self.module_args):
+			rc = "1".encode()
+			data = f"null".encode()
+			error = f"hello_world(): rtn() arg != dict".encode()
+			return (rc, data, error)
+
 		try:
-			if self.module_args:
-				name = self.module_args.decode("utf-8")
-				data = f"Hello, {name}!".encode()
-			else:
-				data = "Hello, World!".encode()
+			if "name" in self.module_args.keys():
+				name = self.module_args["name"]
+				data = f"Hello, {name}!"
 		except Exception as e:
 			rc = "1".encode()
-			error = f"{e}".encode()	
-			return (rc, data, error)	
+			data = f"null".encode()
+			error = f"hello_world(): rtn {e}".encode()
+			return (rc, data, error)
 
-		return (rc, data, error)
+		return ("0".encode(), data.encode(), "null".encode())
 
