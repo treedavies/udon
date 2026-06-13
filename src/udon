@@ -392,20 +392,19 @@ def load_arg_file(path: str) -> str:
 			content = content + ln
 
 	if content == "":
-		print("Error: no content")
+		print("Error: No content - {path}")
 		return None
 
+	# TODO: investigate this a bit... too many dumps!
 	try:
 		test_ld = json.loads(content)
 		args = json.dumps(content)
 
 		""" Verify it loads as json """
 		args = json.loads(args)
-		#print(f"client: json.loads returns {str(type(args))}: {args}\n")
 
 		""" Verify if dumps json to string (also lint) """
 		args = json.dumps(args)
-		#print(f"client: json.dumps returns {str(type(args))}: {args}\n")
 
 		""" load as json (again)"""
 		j = json.loads(args)
@@ -491,15 +490,13 @@ if __name__ == '__main__':
 
 		if type(args) != dict:
 			args = json.loads(args)
-			print(f"client: 2nd json.loads returns {str(type(args))}: {args}\n")
 			args = json.dumps(args)
 			args = args.encode()
 			print(f"{type(args)}")
 
-		print(f"* Module:{options.mod_call}")
-		print(f"* File:{options.mod_file}")
-		print(f"* Channel:{options.mod_channel}")
-		print(f"* args : {args}")
-		print(f"* args type: {type(args)}")
+		# print(f"* Module:{options.mod_call}")
+		# print(f"* File:{options.mod_file}")
+		# print(f"* Channel:{options.mod_channel}")
+		# print(f"* args : {args}")
 
 		do_call_module(options.mod_channel, options.mod_call, args)
