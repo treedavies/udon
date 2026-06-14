@@ -2,7 +2,7 @@
 # Udon Client Methods
 
 
-## c_send(recip_key, msg, signature, channel)
+## `c_send(recip_key, msg, signature, channel)`
 
 * Send a message to another user by committing it to the server. 
   This calls the lower level method c_send_commit()
