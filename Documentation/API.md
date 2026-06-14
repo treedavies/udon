@@ -32,40 +32,40 @@
 
 ## `c_ping()`
 
-## `c_msg_check(self, breq_src: bytes, breq_uuid_sig: bytes, breq_uuid: bytes)`
+## `c_msg_check(breq_src, breq_uuid_sig, breq_uuid)`
 
-## `c_poll(self, sync=False, quiet=False)`
+## `c_poll(sync=False, quiet=False)`
 
-## `c_clean(self, key_id: str, buuid_sig: bytes, buuid: bytes, clean_count: bytes)`
+## `c_clean(key_id, buuid_sig, buuid, clean_count)`
 
-## `c_msg_fetch(self, bval: bytes, breq_src: bytes, breq_uuid_sig: bytes, breq_uuid: bytes)`
+## `c_msg_fetch(bval, breq_src, breq_uuid_sig, breq_uuid)`
 
-## `c_load_pub_key(self, key_path: str)`
+## `c_load_pub_key(key_path)`
 
-## `c_load_priv_key(self, key_path: str)`
+## `c_load_priv_key(key_path)`
 
-## `c_encrypt_bstring_with_sym_key(self, byte_str: bytes, sym_key: bytes) `
+## `c_encrypt_bstring_with_sym_key(byte_str, sym_key) `
 
-## `c_decrypt_bstring_with_sym_key(self, byte_str: bytes, sym_key: str)`
+## `c_decrypt_bstring_with_sym_key(byte_str, sym_key)`
 
-## `c_encrypt_bstring_with_public_key(self, byte_str: bytes,	key_id: str)`
+## `c_encrypt_bstring_with_public_key(byte_str,	key_id)`
 
-## `c_decrypt_bstring_with_key(self, cipher_msg: bytes)`
+## `c_decrypt_bstring_with_key(cipher_msg)`
 
-## `c_sign_bstring(self, message: bytes, key_id: str)`
+## `c_sign_bstring(message, key_id)`
 
-## `c_verify_signature(self, signature: bytes, message: bytes, key_id: str)`
+## `c_verify_signature(signature, message, key_id)`
 
-## `c_mark_msg_as_read(self, channel: str, num: int)`
+## `c_mark_msg_as_read(channel, num)`
 
-## `read_range(self, start, local_count, table, read_unread=False)`
+## `read_range(self, start, local_count, table, read_unread)`
 
-## `c_read(self, table: str, num: int, read_unread=False)`
+## `c_read(table, num, read_unread)`
 
-## `c_check_sync(self, first: int, last: int, diff: int, quiet: bool)`
+## `c_check_sync(first, last, diff, quiet)`
 
 ## `local_remote_count(self)`
 
-## `c_poll(self, sync=False, quiet=False)`
+## `c_poll(sync, quiet)`
 
 
