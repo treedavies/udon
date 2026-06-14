@@ -14,18 +14,21 @@
   * channel: string channel name
 
 
-## c_send_commit(breq_src: bytes,
-			  breq_uuid_sig: bytes,
-			  breq_uuid: bytes,
-			  btime: bytes,
-			  bdest: bytes,
-			  bpayload: bytes,
-			  bsource: bytes,
-			  bsignature: bytes,
-			  bchannel: bytes,
-			  bsymetric_key: bytes)
+## `c_send_commit(...)`
 
 * Prepares, validates message field for commitment to the server. 
+
+* Arguments:
+  * breq_src: bytes,
+  * breq_uuid_sig: bytes,
+  * breq_uuid: bytes,
+  * btime: bytes,
+  * bdest: bytes,
+  * bpayload: bytes,
+  * bsource: bytes,
+  * bsignature: bytes,
+  * bchannel: bytes,
+  * bsymetric_key: bytes
 
 ## `c_ping()`
 
