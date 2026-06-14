@@ -14,7 +14,7 @@
   * channel: string channel name
 
 
-c_send_commit(breq_src: bytes,
+## `c_send_commit(breq_src: bytes,
 			  breq_uuid_sig: bytes,
 			  breq_uuid: bytes,
 			  btime: bytes,
@@ -23,20 +23,13 @@ c_send_commit(breq_src: bytes,
 			  bsource: bytes,
 			  bsignature: bytes,
 			  bchannel: bytes,
-			  bsymetric_key: bytes)
+			  bsymetric_key: bytes)`
 
+* Prepares, validates message field for commitment to the server. 
 
-  Prepares, validates message field for commitment to the server. 
+## `c_ping()`
 
-  Arguments:
-    - breq_src: byte string. md5 sum of the senders public key.
-
-
-
-c_ping()
-
-c_msg_check(self, breq_src: bytes, breq_uuid_sig: bytes,
-					breq_uuid: bytes)
+## `c_msg_check(self, breq_src: bytes, breq_uuid_sig: bytes, breq_uuid: bytes)`
 
 c_poll(self, sync=False, quiet=False)
 
