@@ -65,6 +65,10 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
+mkdir -p -m 755 $UDON_DIR/modules
+for file in `find ./src/modules/` ; do
+    install -m 555 -o root $file $UDON_DIR/modules/
+done
 
 # VERIFY VENV MODULE IS INSTALLED
 $PYTHON -c "import venv"
