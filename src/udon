@@ -451,7 +451,7 @@ if __name__ == '__main__':
 
 	parser.add_option("-x", "--module_call", dest="mod_call",
 						help="./udon --call-module <channel> --file <file-path>", metavar="")
-	parser.add_option("-f", "--module_file", dest="mod_file", metavar="")
+	parser.add_option("-f", "--file", dest="file", metavar="")
 	parser.add_option("-y", "--module_channel", dest="mod_channel", metavar="")
 
 	(options, args) = parser.parse_args()
@@ -483,8 +483,8 @@ if __name__ == '__main__':
 			do_check_sync(options.clean_channel)
 			do_clean_channel(options.clean_channel)
 
-	if options.mod_call and options.mod_file and options.mod_channel:
-		args = load_arg_file(options.mod_file)
+	if options.mod_call and options.file and options.mod_channel:
+		args = load_arg_file(options.file)
 		if args == None:
 			sys.exit("fail arg input bleh")
 
@@ -495,7 +495,7 @@ if __name__ == '__main__':
 			print(f"{type(args)}")
 
 		# print(f"* Module:{options.mod_call}")
-		# print(f"* File:{options.mod_file}")
+		# print(f"* File:{options.file}")
 		# print(f"* Channel:{options.mod_channel}")
 		# print(f"* args : {args}")
 
