@@ -231,7 +231,7 @@ From Bob's perspective:
 # 9. User define modules
 
 Udon can be extended using user defined python modules in the
-`/home/$USER/.udon/modules/` directory.
+`/usr/local/bin/udon/modules/` directory.
 
 Modules must:
   * Be a class called module
