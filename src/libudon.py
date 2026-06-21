@@ -993,7 +993,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		self.config_path = f"{home_dir}/{UDON_DIR}/server.conf"
 		self.cfg = config.Config(self.config_path)
 		self.server_mods_allow = f"{home_dir}/{UDON_DIR}/server_mods.allow"
-		self.modules_path = f"{home_dir}/{UDON_DIR}/modules/"
+		self.modules_path = f"/usr/local/bin/udon/modules/"
 
 		self.key_paths = {}
 		self.keys_dict = {}
