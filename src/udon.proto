@@ -8,6 +8,21 @@ service Unary{
  rpc fetch(Request)  returns (MessageResponse) {}
  rpc clean(CleanRequest) returns (CleanResponse) {}
  rpc ping(PingRequest) returns (PingResponse) {}
+ rpc module(ModuleRequest) returns (ModuleResponse) {}
+}
+
+message ModuleRequest{
+	bytes key_id = 1;
+	bytes signature = 2;
+	bytes uuid = 3;
+	bytes module_name = 4;
+	bytes args = 5;
+}
+
+message ModuleResponse{
+	bytes rc = 1;
+	bytes data = 2;
+	bytes error = 3;
 }
 
 message PingRequest{}

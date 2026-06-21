@@ -89,7 +89,7 @@ class initialization:
 				self.error_and_exit(f"dir_setup(): {ex}")
 
 		for directory in ["channel_cfgs", "db", "keys", "keys/client_side_keys",
-							"keys/server_side_keys", "logs", "TLS"]:
+							"keys/server_side_keys", "logs", "TLS", "modules"]:
 			dpath = f"{self.udon_dir}/{directory}"
 			if not os.path.exists(dpath):
 				print(f" Creating: {dpath}")
@@ -229,6 +229,22 @@ class initialization:
 			format=serialization.PublicFormat.SubjectPublicKeyInfo
 		)
 		return (private_pem, public_pem)
+
+
+	def create_server_mods_allow(self):
+		"""
+			Create server_mods.allow file
+			Default: set hello_world module to be called by everyone
+		"""
+		cfg = "{\n\"hello_world\" = [\"*\"]\n}"
+
+		mod_file = f"{self.home_dir}/{UDON_DIR}/server_mods.allow"
+		if not os.path.exists(mod_file):
+			with open(mod_file, "w") as fd:
+				fd.write(cfg)
+				print(f" Created {mod_file}")
+		else:
+			print(f" [Exists] {mod_file} - Doing nothing...")
 
 
 	def create_server_config(self):
@@ -371,6 +387,8 @@ def init_env():
 		i.create_test_keys()
 		i.create_tls_certs()
 		i.create_server_config()
+		i.create_server_mods_allow()
+		# Add hello_world,test_key_A to server_mods.allow
 		i.ask_to_create_key()
 		sys.exit(0)
 

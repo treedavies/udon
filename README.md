@@ -227,3 +227,16 @@ From Bob's perspective:
     # Continuously poll/sync from server, and print messages to terminal as they arrive.
     $ udon --iterated-poll
     Waiting for messages...
+
+# 9. User define modules
+
+Udon can be extended using user defined python modules in the
+`/home/$USER/.udon/modules/` directory.
+
+Modules must:
+  * Be a class called module
+  * Have a run method
+  * return a tuple of byte encoded variables (return-code, data, error)
+
+Use the hello_world module as a template example
+

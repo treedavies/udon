@@ -7,6 +7,7 @@ from signal import signal
 from signal import SIGINT
 from pathlib import Path
 import config
+import json
 import time
 import sys
 import os
@@ -348,6 +349,74 @@ def do_iter_poll():
 		time.sleep(3)
 
 
+def do_call_module(channel: str, mod_name: str, args: dict):
+	cfg_name = channel
+
+	home_dir = udon_utils.home_dir()
+	if not home_dir:
+		error_and_exit("Error: udon.do_call_module(): home_dir() return None")
+
+	cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+	if not os.path.exists(cfg_path):
+		error_and_exit(f"Error: udon.do_call_module(): config path not found: {cfg_path}")
+
+	cfg = config.Config(cfg_path)
+	client = udon_client()
+	if not client.c_load_config(cfg):
+		error_and_exit(f"Error: udon.do_call_module(): c_load_config() failed")
+
+	key_id = client.key_name
+	uuid = udon_utils.generate_uuid()
+	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid = uuid.encode()
+
+	rsp = client.c_module(key_id=key_id,
+							 buuid_sig=uuid_sig,
+							 buuid=uuid,
+							 mod_name=mod_name.encode(),
+							 args=args)
+	print(f"Client Response: {rsp}")
+
+
+
+
+def load_arg_file(path: str) -> str:
+	if not os.path.exists(path):
+		print(f"Error: Path not found: {path}")
+		return None
+
+	with open(path, "r") as fd:
+		content = ""
+		lst = fd.readlines()
+		for ln in lst:
+			content = content + ln
+
+	if content == "":
+		print("Error: No content - {path}")
+		return None
+
+	# TODO: investigate this a bit... too many dumps!
+	try:
+		test_ld = json.loads(content)
+		args = json.dumps(content)
+
+		""" Verify it loads as json """
+		args = json.loads(args)
+
+		""" Verify if dumps json to string (also lint) """
+		args = json.dumps(args)
+
+		""" load as json (again)"""
+		j = json.loads(args)
+
+	except Exception as e:
+		print(f"Error: {e}")
+		return None
+
+	print(f"Returning: {type(j)}")
+	return j
+
+
 if __name__ == '__main__':
 
 	euid = os.geteuid()
@@ -380,6 +449,11 @@ if __name__ == '__main__':
 	parser.add_option("-C", "--clean-channel", dest="clean_channel",
 						help="./udon --clean-channel <channel>", metavar="")
 
+	parser.add_option("-x", "--module_call", dest="mod_call",
+						help="./udon --call-module <channel> --file <file-path>", metavar="")
+	parser.add_option("-f", "--file", dest="file", metavar="")
+	parser.add_option("-y", "--module_channel", dest="mod_channel", metavar="")
+
 	(options, args) = parser.parse_args()
 
 	if options.msg_channel:
@@ -408,3 +482,21 @@ if __name__ == '__main__':
 		if rsp.lower() == "y":
 			do_check_sync(options.clean_channel)
 			do_clean_channel(options.clean_channel)
+
+	if options.mod_call and options.file and options.mod_channel:
+		args = load_arg_file(options.file)
+		if args == None:
+			sys.exit("fail arg input bleh")
+
+		if type(args) != dict:
+			args = json.loads(args)
+			args = json.dumps(args)
+			args = args.encode()
+			print(f"{type(args)}")
+
+		# print(f"* Module:{options.mod_call}")
+		# print(f"* File:{options.file}")
+		# print(f"* Channel:{options.mod_channel}")
+		# print(f"* args : {args}")
+
+		do_call_module(options.mod_channel, options.mod_call, args)
