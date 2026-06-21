@@ -1432,19 +1432,19 @@ class udon_server(pb2_grpc.UnaryServicer):
 		mod_args = None
 		if request.args:
 			mod_args = request.args
-			print(f"server: Found Args!:{mod_args}")
+			# print(f"server: Found Args!:{mod_args}")
 
 		try:
-			print(f"server: mod_args:{mod_args}")
-			print(str(type(mod_args)))
+			# print(f"server: mod_args:{mod_args}")
+			# print(str(type(mod_args)))
 
 			decoded_args = mod_args.decode('utf-8')
-			print(f"server: Decoded args:{decoded_args}")
-			print(str(type(decoded_args)))
+			# print(f"server: Decoded args:{decoded_args}")
+			# print(str(type(decoded_args)))
 
 			args = json.loads(decoded_args)
-			print(f"server: json.loads:{args}")
-			print(str(type(args)))
+			# print(f"server: json.loads:{args}")
+			# print(str(type(args)))
 		except Exception as e:
 			error(f"module(): load args - {e}", True)
 			ModResponse = {"rc":"1".encode(),
@@ -1463,7 +1463,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"data":"null".encode(),
 							"error":"Module load failure".encode()}
 			return pb2.ModuleResponse(**ModResponse)
-		print("Module Loaded")
+		# print("Module Loaded")
 
 		""" Call module run() method """
 		try:
@@ -1474,7 +1474,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"data":"null".encode(),
 							"error":f"Module.run() failure - {e}".encode()}
 
-		print(f"Server: mod rtn: {rc},\n {data}\n {err}")
+		# print(f"Server: mod rtn: {rc},\n {data}\n {err}")
 
 
 		""" All returned variables must have a value """
@@ -1498,7 +1498,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		ModResponse["data"] = data
 		ModResponse["error"] = err
 
-		print(f"Module Returning: {ModResponse}")
+		# print(f"Module Returning: {ModResponse}")
 		return pb2.ModuleResponse(**ModResponse)
 
 
