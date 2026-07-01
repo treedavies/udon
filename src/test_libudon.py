@@ -1270,9 +1270,9 @@ def rpc_module_test(cfg: str):
 	evaluate(True, rtn, "0 rpc_module_test() - c_load_config()")
 
 	key_id = client.key_name
-	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
-	uuid = uuid.encode()
+	#uuid = udon_utils.generate_uuid()
+	#uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	#uuid = uuid.encode()
 
 	d = {}
 	d["name"] = "Dave"
@@ -1281,8 +1281,8 @@ def rpc_module_test(cfg: str):
 
 	""" Hello world """
 	rsp = client.c_module(key_id=key_id,
-							 buuid_sig=uuid_sig,
-							 buuid=uuid,
+							 # buuid_sig=uuid_sig,
+							 # buuid=uuid,
 							 mod_name="hello_world".encode(),
 							 args=j)
 	evaluate("0".encode(), rsp.rc, f"1 rpc_module_test() - Hello world response")

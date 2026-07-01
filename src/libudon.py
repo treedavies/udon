@@ -405,8 +405,9 @@ class udon_client:
 		"""
 		debug('c_msg_clean()')
 		if not udon_utils.type_check([(key_id, str),
-								(buuid_sig, bytes),
-								(buuid, bytes), (mod_name, bytes),
+								# (buuid_sig, bytes),
+								# (buuid, bytes),
+								(mod_name, bytes),
 								(args, bytes)]):
 			error('Invalid type - c_module()')
 			return None
@@ -414,6 +415,10 @@ class udon_client:
 		if not self.c_ping():
 			error("Connection to server:{self.server_fqdn} Failed.")
 			return None
+
+		uuid = udon_utils.generate_uuid()
+		uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+		uuid = uuid.encode()
 
 		kpath = self.key_paths[key_id]
 		if not os.path.exists(kpath):

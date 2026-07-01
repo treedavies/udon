@@ -101,6 +101,8 @@ echo "[DONE] Created: /usr/local/bin/udon/udon-venv"
 /usr/local/bin/udon/udon-venv/bin/python3 -m pip install pycparser
 /usr/local/bin/udon/udon-venv/bin/python3 -m pip install setuptools
 /usr/local/bin/udon/udon-venv/bin/python3 -m pip install soupsieve
+/usr/local/bin/udon/udon-venv/bin/python3 -m pip install python-daemon
+
 
 # BUILD PROTOS
 PROTO_PATH='/usr/local/bin/udon/'

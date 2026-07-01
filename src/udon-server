@@ -4,6 +4,7 @@
 
 import os
 import sys
+import daemon
 import libudon as udon
 from signal import signal
 from signal import SIGINT
@@ -27,5 +28,10 @@ if not os.path.exists("./config"):
 	srv = udon.udon_server()
 	print("Server instantiated")
 	print("Starting Server")
-	srv.s_start_server()
 
+	if len(sys.argv) > 1:
+		if sys.argv[1] == "--daemon":
+			with daemon.DaemonContext():
+				srv.s_start_server()
+	else:
+		srv.s_start_server()
