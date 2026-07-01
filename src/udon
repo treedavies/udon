@@ -366,13 +366,8 @@ def do_call_module(channel: str, mod_name: str, args: dict):
 		error_and_exit(f"Error: udon.do_call_module(): c_load_config() failed")
 
 	key_id = client.key_name
-	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
-	uuid = uuid.encode()
 
 	rsp = client.c_module(key_id=key_id,
-							 buuid_sig=uuid_sig,
-							 buuid=uuid,
 							 mod_name=mod_name.encode(),
 							 args=args)
 	print(f"Client Response: {rsp}")

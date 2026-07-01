@@ -397,7 +397,7 @@ class udon_client:
 		return resp
 
 
-	def c_module(self, key_id: str, buuid_sig: bytes, buuid: bytes, mod_name: bytes, args: bytes):
+	def c_module(self, key_id: str, mod_name: bytes, args: bytes):
 		"""
 			client side prepare and send proto message to clean table
 			data on remote machine
@@ -417,8 +417,8 @@ class udon_client:
 			return None
 
 		uuid = udon_utils.generate_uuid()
-		uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
-		uuid = uuid.encode()
+		buuid_sig = self.c_sign_bstring(uuid.encode(), self.key_name)
+		buuid = uuid.encode()
 
 		kpath = self.key_paths[key_id]
 		if not os.path.exists(kpath):
@@ -435,7 +435,7 @@ class udon_client:
 		except Exception as e:
 			error(f'c_module() - Failure connect/Clean() - {e}')
 			return None
-		return  resp
+		return resp
 
 
 	def c_clean(self, key_id: str, buuid_sig: bytes, buuid: bytes, clean_count: bytes):
