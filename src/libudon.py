@@ -405,8 +405,6 @@ class udon_client:
 		"""
 		debug('c_msg_clean()')
 		if not udon_utils.type_check([(key_id, str),
-								# (buuid_sig, bytes),
-								# (buuid, bytes),
 								(mod_name, bytes),
 								(args, bytes)]):
 			error('Invalid type - c_module()')
@@ -417,8 +415,8 @@ class udon_client:
 			return None
 
 		uuid = udon_utils.generate_uuid()
-		buuid_sig = self.c_sign_bstring(uuid.encode(), self.key_name)
 		buuid = uuid.encode()
+		buuid_sig = self.c_sign_bstring(buuid, self.key_name)
 
 		kpath = self.key_paths[key_id]
 		if not os.path.exists(kpath):
@@ -1468,7 +1466,6 @@ class udon_server(pb2_grpc.UnaryServicer):
 							"data":"null".encode(),
 							"error":"Module load failure".encode()}
 			return pb2.ModuleResponse(**ModResponse)
-		# print("Module Loaded")
 
 		""" Call module run() method """
 		try:
@@ -1478,9 +1475,6 @@ class udon_server(pb2_grpc.UnaryServicer):
 			ModResponse = {"rc":"1".encode(),
 							"data":"null".encode(),
 							"error":f"Module.run() failure - {e}".encode()}
-
-		# print(f"Server: mod rtn: {rc},\n {data}\n {err}")
-
 
 		""" All returned variables must have a value """
 		if not (rc and data and err):
