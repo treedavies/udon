@@ -441,12 +441,18 @@ if __name__ == '__main__':
 	parser.add_option("-l", "--list", dest="list",
 						help="./udon --list",
 						action='store_true', metavar="")
+
+	# TODO: remove '-C' short flag. Accident prone
+	# TODO: change --clean-channel to --clean-messages
 	parser.add_option("-C", "--clean-channel", dest="clean_channel",
 						help="./udon --clean-channel <channel>", metavar="")
 
+	# TODO: change to --call
 	parser.add_option("-x", "--module_call", dest="mod_call",
 						help="./udon --call-module <channel> --file <file-path>", metavar="")
 	parser.add_option("-f", "--file", dest="file", metavar="")
+
+	#TODO: change to --channel
 	parser.add_option("-y", "--module_channel", dest="mod_channel", metavar="")
 
 	(options, args) = parser.parse_args()
