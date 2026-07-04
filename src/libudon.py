@@ -440,7 +440,7 @@ class udon_client:
 		"""
 			client side prepare and send proto message to clean table
 			data on remote machine
-			returns CleanResponse on sucess, None on error
+			Returns CleanResponse on sucess, None on error
 		"""
 		debug('c_msg_clean()')
 		if not udon_utils.type_check([(key_id, str),
