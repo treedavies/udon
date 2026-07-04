@@ -6,11 +6,6 @@ class module:
 		self.module_args = args
 
 	def run(self) -> ():
-		if type(dict) == type(self.module_args):
-			return ("1".encode(),
-					f"null".encode(),
-					f"hello_world(): rtn() arg != dict".encode())
-
 		try:
 			if "name" in self.module_args.keys():
 				name = self.module_args["name"]

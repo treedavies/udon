@@ -240,5 +240,5 @@ Modules must:
   * Have a run method
   * return a tuple of byte encoded variables (return-code, data, error)
 
-Use the hello_world module as a template example
+Use the hello module as a template example
 

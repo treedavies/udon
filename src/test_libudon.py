@@ -1276,13 +1276,13 @@ def rpc_module_test(cfg: str):
 	t = json.dumps(d)
 	j = t.encode()
 
-	""" Hello world """
+	""" Hello """
 	rsp = client.c_module(key_id=key_id,
-							 mod_name="hello_world".encode(),
+							 mod_name="hello".encode(),
 							 args=j)
-	evaluate("0".encode(), rsp.rc, f"1 rpc_module_test() - Hello world response")
-	evaluate("Hello, Dave!".encode(), rsp.data, f"2 rpc_module_test() - hello world response:{rsp.data}")
-	#evaluate("null".encode(), rsp.error, f"3 rpc_module_test() - hello world response")
+	evaluate("0".encode(), rsp.rc, f"1 rpc_module_test() - Hello() response: {rsp.error}")
+	evaluate("Hello, Dave!".encode(), rsp.data, f"2 rpc_module_test() - hello response:{rsp.data}")
+	#evaluate("null".encode(), rsp.error, f"3 rpc_module_test() - hello  response")
 
 
 def udon_dir_check():

@@ -66,9 +66,9 @@ if [ $? -ne 0 ] ; then
 fi
 
 mkdir -p -m 755 $UDON_DIR/modules
-mkdir -p -m 755 $UDON_DIR/modules/hello_world
+mkdir -p -m 755 $UDON_DIR/modules/hello
 for file in `find ./src/modules/` ; do
-    install -m 555 -o root $file $UDON_DIR/modules/hello_world
+    install -m 555 -o root $file $UDON_DIR/modules/hello
 done
 
 # VERIFY VENV MODULE IS INSTALLED

@@ -370,9 +370,11 @@ def do_call_module(channel: str, mod_name: str, args: dict):
 	rsp = client.c_module(key_id=key_id,
 							 mod_name=mod_name.encode(),
 							 args=args)
-	print(f"Client Response: {rsp}")
-
-
+	if rsp:
+		tpl = (rsp.rc.decode('utf-8'),
+			rsp.data.decode('utf-8'),
+			rsp.error.decode('utf-8'))
+		print(f"{tpl}")
 
 
 def load_arg_file(path: str) -> str:
@@ -408,7 +410,6 @@ def load_arg_file(path: str) -> str:
 		print(f"Error: {e}")
 		return None
 
-	print(f"Returning: {type(j)}")
 	return j
 
 
@@ -493,7 +494,6 @@ if __name__ == '__main__':
 			args = json.loads(args)
 			args = json.dumps(args)
 			args = args.encode()
-			print(f"{type(args)}")
 
 		# print(f"* Module:{options.mod_call}")
 		# print(f"* File:{options.file}")
