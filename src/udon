@@ -6,6 +6,8 @@ from optparse import OptionParser
 from signal import signal
 from signal import SIGINT
 from pathlib import Path
+import libudon as udon
+import daemon
 import config
 import json
 import time
@@ -38,6 +40,29 @@ def handler(signal_received, frame):
 
 def error_and_exit(msg: str):
 	sys.exit(str(msg))
+
+
+def do_start_server(start_daemon=False):
+	if not os.path.exists("./config"):
+		home_dir = udon.udon_utils.home_dir()
+		if home_dir == None:
+			sys.exit("Error: Platform not identified.")
+
+		cfg = f"{home_dir}/.udon/server.conf"
+		if not os.path.exists(cfg):
+			print(f"Error: server Config not found: {cfg}")
+			print("Try running: `udon_init.py --init`")
+			sys.exit(1)
+
+	srv = udon.udon_server()
+	print("Server instantiated")
+	print("Starting Server")
+
+	if start_daemon:
+		with daemon.DaemonContext():
+			srv.s_start_server()
+	else:
+		srv.s_start_server()
 
 
 def do_check_sync(channel: str):
@@ -456,6 +481,9 @@ if __name__ == '__main__':
 	#TODO: change to --channel
 	parser.add_option("-y", "--module_channel", dest="mod_channel", metavar="")
 
+	parser.add_option("--server", dest="start_server", action='store_true', metavar="")
+	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="")
+
 	(options, args) = parser.parse_args()
 
 	if options.msg_channel:
@@ -501,3 +529,8 @@ if __name__ == '__main__':
 		# print(f"* args : {args}")
 
 		do_call_module(options.mod_channel, options.mod_call, args)
+
+	if options.start_server:
+		do_start_server()
+	if options.start_daemon:
+		do_start_server(True)
