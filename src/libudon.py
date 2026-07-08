@@ -1022,12 +1022,12 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("s_start_server()")
 
 		if udon_utils.is_udon_server_running():
-			error("udon-server is already running")
+			error("s_start_server() - udon-server is already running")
 			sys.exit(1)
 
 		home_dir = udon_utils.home_dir()
 		if home_dir == None:
-			error("udon_server.s_start_server() -  home_dir() returned None", True)
+			error("s_start_server() -  home_dir() returned None")
 			sys.exit(1)
 
 		cfg = f"{home_dir}/{UDON_DIR}/server.conf"
@@ -1040,7 +1040,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		ssl_cert = f"{home_dir}/{UDON_TLS_DIR}/localhost.crt"
 
 		if not os.path.exists(ssl_cert_key) and os.path.exists(ssl_cert):
-			error(f"Keys not found!\n {server.ssl_cert_key}\n {server.ssl_cert}", True)
+			error(f"s_start_server() - Keys not found!\n {server.ssl_cert_key}\n {server.ssl_cert}")
 			sys.exit(1)
 		else:
 			output(f"Found ssl_cert_key: {server.ssl_cert_key}", True)
@@ -1151,7 +1151,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 			return False
 
 		if not os.path.exists(key_path):
-			error(f"s_verify_signature() - key_path not found: {key_path}")
+			error(f"s_verify_signature() - key_path not found: {key_path}", True)
 			return Fasle
 		return udon_utils.utl_verify_signature(self, sig, message, key_path)
 
@@ -1471,7 +1471,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		try:
 			rc, data, err = m.run()
 		except Exception as e:
-			error(f"module(): module.run() failure - {e}")
+			error(f"module(): module.run() failure - {e}", True)
 			ModResponse = {"rc":"1".encode(),
 							"data":"null".encode(),
 							"error":f"Module.run() failure - {e}".encode()}
@@ -1515,14 +1515,14 @@ class udon_server(pb2_grpc.UnaryServicer):
 		debug("\ncommit()")
 		success, err_msg, key_id = self._verify_request(request, op='commit')
 		if success == False:
-			error(f"err commit(): _verify_request() - {success}, {err_msg}, {key_id}", to_file=True)
+			error(f"commit(): _verify_request() - {success}, {err_msg}, {key_id}", True)
 			return pb2.MessageResponse(**err_msg)
 
 		type_check_ok = udon_utils.type_check([(request.destination, bytes),])
 		if not type_check_ok:
 			err = f"Error: commit() - typecheck".encode()
 			err_resp = {"error":err}
-			error(f"commit(): type_check")
+			error(f"commit(): type_check", True)
 			return pb2.MessageResponse(**err_resp)
 
 		""" Verify destination arg """
@@ -1530,14 +1530,14 @@ class udon_server(pb2_grpc.UnaryServicer):
 		if not req_dest:
 			err = f"Error: commit() - missing arg: distination".encode()
 			err_resp = {"error":err}
-			error(f"commit(): commit() - missing arg: distination")
+			error(f"commit(): commit() - missing arg: distination", True)
 			return pb2.MessageResponse(**err_resp)
 		dest_key_id = req_dest.decode('utf-8')
 
 		""" Create DB Table if it doesn't exist - table name is des_key_id """
 		rtn = udon_DB.init_primary_table(self.srv_db_path, dest_key_id)
 		if rtn != 0:
-			error(f"init_primary_tables() Failures {dest_key_id.decode('utf-8')}")
+			error(f"commit():init_primary_tables() Failures {dest_key_id.decode('utf-8')}", True)
 
 		# Write entry to table
 		rtn = udon_DB.write_msg_table_entry(db_path=self.srv_db_path,
@@ -1593,7 +1593,7 @@ class udon_utils:
 						print(f"Server process: {proc_name}:{proc_pid}")
 						return True
 			except Exception as e:
-				error(e)
+				error(f"is_udon_server_running() - {e}", True)
 		print(f"Server process: {proc_name}:{proc_pid}")
 		return False
 
@@ -1607,7 +1607,7 @@ class udon_utils:
 		try:
 			id = str(uuid.uuid4())
 		except Exception as e:
-			error(f"Error: generate_uuid(): {e}")
+			error(f"generate_uuid() - {e}", True)
 			return None
 		return id
 
@@ -1638,7 +1638,7 @@ class udon_utils:
 			return None
 
 		if not os.path.exists(key_path):
-			error(f"Error: utl_load_priv_key() - Path not exists: {key_path}")
+			error(f"utl_load_priv_key() - Path not exists: {key_path}", True)
 			return None
 
 		try: 
@@ -1649,7 +1649,7 @@ class udon_utils:
 					return None
 				return pk 
 		except Exception as e:
-			error(str(e))
+			error(f"utl_load_priv_key() - {e}")
 			return None
 
 
@@ -1666,11 +1666,11 @@ class udon_utils:
 			return None
 
 		if key_path == "":
-			error(f"Error: {key_path} == "" - utl_load_pub_key()")
+			error(f"utl_load_pub_key() - {key_path} == ''", True)
 			return None
 
 		if not os.path.exists(key_path):
-			error(f"Error: {key_path} not exist - utl_load_pub_key()")
+			error(f"utl_load_pub_key() - {key_path} not exist", True)
 			return None
 
 		pk = None
@@ -1686,7 +1686,7 @@ class udon_utils:
 				if str(kf) == "" or pk == "":
 					return None
 		except Exception as e:
-			error(str(e))
+			error(f"utl_load_pub_key() - {e}", True)
 			return None
 		return pk
 
@@ -1705,11 +1705,11 @@ class udon_utils:
 			return None
 
 		if key_path == "":
-			error(f"Error: {key_path} == "" - utl_load_pub_key()")
+			error(f"utl_file_md5() - {key_path} == ''", True)
 			return None
 
 		if not os.path.exists(key_path):
-			error(f"Error: {key_path} not exist - utl_load_pub_key()")
+			error(f"utl_file_md5() - {key_path} not exist", True)
 			return None
 
 		hash = None
@@ -1718,7 +1718,7 @@ class udon_utils:
 				data = fd.read()
 				hash = hashlib.md5(data).hexdigest()
 		except Exception as e:
-			error(str(e))
+			error(f"utl_file_md5() - {e}", True)
 			return None
 		return hash
 
@@ -1764,7 +1764,7 @@ class udon_utils:
 		debug('utl_verify_signature()')
 		if not udon_utils.type_check([(sig, bytes),(message, bytes),
 								(key_path, str)]):
-			error('Error: Invalid inputs - s_verify_signature()')
+			error('Invalid inputs - utl_verify_signature()', True)
 			return False
 
 		if not os.path.exists(key_path):
@@ -1772,7 +1772,7 @@ class udon_utils:
 		
 		public_key = udon_utils.utl_load_pub_key(key_path)
 		if public_key == None:
-			error(f"utl_verify_signature() - utl_load_pub_key() returned: None")
+			error(f"utl_verify_signature() - utl_load_pub_key() returned: None", True)
 			return False
 
 		try:
@@ -1782,7 +1782,7 @@ class udon_utils:
 							salt_length=padding.PSS.MAX_LENGTH),
 							hashes.SHA256())
 		except Exception as e:
-			error(str(e))
+			error(f"utl_verify_signature() - {e}", True)
 			return False
 		return True
 
@@ -1793,7 +1793,7 @@ class udon_utils:
 			return None on error
 		"""
 		if not os.path.exists(filepath):
-			error(f"load_credential_from_file(): file not found {filepath}")
+			error(f"load_credential_from_file(): file not found {filepath}", True)
 			return None
 
 		real_path = os.path.join(os.path.dirname(__file__), filepath)
@@ -1811,7 +1811,7 @@ class udon_DB:
 		try:
 			conn = sqlite3.connect(db_path)
 		except Exception as e:
-			error(f"Error: udon_DB.open_db_connection():{db_path} -- {e}")
+			error(f"udon_DB.open_db_connection():{db_path} -- {e}", True)
 			return None
 		return conn
 
@@ -1832,7 +1832,7 @@ class udon_DB:
 			conn.close()
 		except Exception as e:
 			conn.close()
-			error(f"Error: udon_DB.run_db_commit(): query:{query} - {e}")
+			error(f"udon_DB.run_db_commit(): query:{query} - {e}", True)
 			return FAILURE
 		return SUCCESS
 
@@ -1854,7 +1854,7 @@ class udon_DB:
 			conn.close()
 		except Exception as e:
 			conn.close()
-			error(f"Error: udon_DB.run_db_commit_values() - query: {e}")
+			error(f"run_db_commit_values() - query: {e}", True)
 			return FAILURE
 		return SUCCESS
 
@@ -1881,7 +1881,7 @@ class udon_DB:
 			conn.close()
 		except Exception as e:
 			conn.close()
-			error(f"Error: read_msg_table_entry(): - {e}")
+			error(f"run_db_fetch(): - {e}", True)
 			return None
 		return records
 
@@ -2028,7 +2028,7 @@ class udon_DB:
 			[(db_path, str),
 			(table, str),
 			(id, int)]):
-			error('Error: invalid type - read_msg_table_entry()')
+			error('invalid type - read_msg_table_entry()')
 			return []
 
 		records = []
@@ -2036,7 +2036,7 @@ class udon_DB:
 		try:
 			tmp = int(id)
 		except:
-			error('Error: type error: id - int')
+			error('read_msg_table_entry() - type error: id - int', True)
 			return []
 
 		conn = udon_DB.open_db_connection(db_path=db_path)
@@ -2112,30 +2112,29 @@ class udon_DB:
 		debug('table_row_count()', enable=False)
 		if not udon_utils.type_check([(db_path, str),
 										(table, str)]):
-			error('Error: invalid type - table_row_count()')
+			error('invalid type - table_row_count()', True)
 			return None
 
 		conn = udon_DB.open_db_connection(db_path=db_path)
 		if conn == None:
-			error("table_row_count(): open_db_connection() returned None")
+			error("table_row_count(): open_db_connection() returned None", True)
 			return None
 		conn.close()
 
 		if not udon_DB.table_exist(db_path=db_path, table=table):
-			# error(f"table_row_count() udon_DB.table_exist() {db_path} {table} - False")
 			return 0
 
 		sql_read_row = f"""SELECT COUNT() FROM "{table}";"""
 		records = udon_DB.run_db_fetch(query=sql_read_row, db_path=db_path)
 		if records == None:
-			error("table_row_count(): udon_DB.run_db_fetch() returned error ")
+			error("table_row_count(): udon_DB.run_db_fetch() returned None", True)
 			return None
 		return records[0][0]
 
 
 	def channel_table_exists(db_path: str, channel: str):
 		if not udon_utils.type_check([(db_path, str), (channel, str)]):
-			error('Error: input type error')
+			error('input type error - channel_table_exists()', True)
 			return False
 		if not channel.startswith("chan_"):
 			channel = f"chan_{channel}"
@@ -2150,16 +2149,16 @@ class udon_DB:
 		"""
 		debug('table_exist()')
 		if not udon_utils.type_check([(db_path, str), (table, str)]):
-			error('Error: input type error')
+			error('input type error - table_exist()', True)
 			return False
 
 		if not os.path.exists(db_path):
-			error(f"table_exist() - path does not exist: {db_path}")
+			error(f"table_exist() - path does not exist: {db_path}", True)
 			return False
 
 		conn = udon_DB.open_db_connection(db_path=db_path)
 		if conn == None:
-			error('table_exist() - DB connection failed')
+			error('table_exist() - DB connection failed', True)
 			return None
 		conn.close()
 		
@@ -2184,12 +2183,12 @@ class udon_DB:
 			Returns: list on success, None on error
 		"""
 		if not udon_utils.type_check([(lst, list)]):
-			error('Error: input type error')
+			error('input type error - get_client_db_paths()', True)
 			return None
 
 		home_dir = udon_utils.home_dir()
 		if home_dir == None:
-			error('Error: udon_DB.get_client_db_paths() home_dir() return None')
+			error('udon_DB.get_client_db_paths() home_dir() return None', True)
 			return None
 
 		rtn = []
@@ -2198,7 +2197,7 @@ class udon_DB:
 			try:
 				cfg = config.Config(cfg_path)
 			except Exception as e:
-				error(f"Error: udon_DB.get_client_db_paths() opening Config() {cfg_path} {e}")
+				error(f"get_client_db_paths() opening Config() {cfg_path} {e}", True)
 				return None
 			cfg = cfg.as_dict()
 			if "client_db_path" in cfg.keys():
@@ -2218,14 +2217,14 @@ class udon_DB:
 			Returns: list
 		"""
 		if not udon_utils.type_check([(db_path, str)]):
-			error('Error: input type error')
+			error('input type error - get_table_list()', True)
 			return None
 
 		rtn = []
 		if os.path.exists(db_path):
 			table_lst = udon_DB.list_db_tables(db_path=db_path)
 			if not table_lst:
-				error("get_table_list: list_db_tables() returned None (error)")
+				error("get_table_list: list_db_tables() returned None", True)
 		else:
 			table_lst = []
 		return table_lst
@@ -2238,12 +2237,12 @@ class udon_DB:
 		"""
 		home_dir = udon_utils.home_dir()
 		if home_dir == None:
-			error("Error: udon_DB.get_config_list() - home_dir() return None")
+			error("get_channel_list() - home_dir() return None", True)
 			return None
 
 		channels_dir = f"{home_dir}/{UDON_CHAN_DIR}"
 		if not os.path.exists(channels_dir):
-			error(f"Error: udon_DB.get_config_list() - path not exist {channels_dir}")
+			error(f"get_channel_list() - path not exist {channels_dir}", True)
 			return None
 
 		lst = os.listdir(channels_dir)
@@ -2264,16 +2263,17 @@ class udon_DB:
 		"""
 		debug("list_db_tables()")
 		if not udon_utils.type_check([(db_path, str)]):
-			error('Error: input type error')
+			error('input type error - list_db_tables()', True)
 			return None
 
+		# TODO Fix/rm duplicate type_check
 		rtn = []
 		if not udon_utils.type_check([(db_path, str)]):
-			error('Error: input type error: db_path : list_db_tables()')
+			error('input type error: db_path : list_db_tables()', True)
 			return []
 
 		if not os.path.exists(db_path):
-			error(f"Error: path does not exist: {db_path}")
+			error(f"list_db_tables() - path does not exist: {db_path}", True)
 			return []
 
 		conn = udon_DB.open_db_connection(db_path=db_path)
@@ -2294,13 +2294,13 @@ class udon_DB:
 
 	def dehyphenate_uuid(uid: str):
 		if not udon_utils.type_check([(uid, str)]):
-			error('Error: input type error')
+			error('input type error - dehyphenate_uuid()', True)
 			return None
 
 		try:
 			return uid.replace("-","")
 		except Exception as e:
-			error(f"dehyphenate_uuid(): {e}")
+			error(f"dehyphenate_uuid(): {e}", True)
 			return None
 
 
@@ -2315,22 +2315,22 @@ class udon_DB:
 		if not udon_utils.type_check([
 			(db_path, str),
 			(uid, str)]):
-			error('Error: invalid type - write_uuid_entry()')
+			error('invalid type - write_uuid_entry()', True)
 			return FAILURE
 
 		conn = udon_DB.open_db_connection(db_path=db_path)
 		if conn == None:
-			error('Error: write_uuid_entry() - failed connection')
+			error('write_uuid_entry() - failed connection', True)
 			return FAILURE
 
 		exist = udon_DB.table_exist(db_path=db_path, table="UUID")
 		if not exist:
-			error("UUID Table does not exist")
+			error("write_uuid_entry() - UUID Table does not exist", True)
 			return FAILURE
 
 		uid = udon_DB.dehyphenate_uuid(uid)
 		if uid == None:
-			error("write_uuid_entry(): dehyphenate_uuid returned None")
+			error("write_uuid_entry(): dehyphenate_uuid returned None", True)
 			return FAILURE
 
 		sql_write_uuid = f"""INSERT INTO UUID VALUES(?);""" 
@@ -2343,7 +2343,7 @@ class udon_DB:
 			conn.close()
 		except Exception as e:
 			conn.close()
-			error(f"Error: write_uuid_entry {e}")
+			error(f"write_uuid_entry(): {e}", True)
 			return FAILURE
 		return SUCCESS
 
@@ -2371,7 +2371,7 @@ class udon_DB:
 		sql_read_row = f"""SELECT COUNT() FROM UUID WHERE UUID = '{uid}';"""
 
 		if not udon_DB.table_exist(db_path, table):
-			error('replayed_uuid(): - DB Table not found')
+			error('replayed_uuid(): - DB Table not found', True)
 			return -1
 		
 		""" records = [(blah,)] """
@@ -2398,7 +2398,7 @@ class udon_DB:
 		if not udon_utils.type_check([
 			(db_path, str),
 			(table, str)]):
-			error('Error: invalid type - write_msg_table_entry()')
+			error('invalid type - write_msg_table_entry()', True)
 			return FAILURE
 
 		NULL = "".encode()
