@@ -1590,7 +1590,7 @@ class udon_utils:
 				proc_name = info['name']
 				proc_pid = info['pid']
 				if (proc_name == 'udon') and (not proc_pid == curr_pid):
-						print(f"Server process: {proc_name}:{proc_pid}")
+						output(f"Server process: {proc_name}:{proc_pid}")
 						return True
 			except Exception as e:
 				error(f"is_udon_server_running() - {e}", True)
