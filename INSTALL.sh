@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2025 Tree Davies
 
-UDON_DIR=/usr/local/bin/udon/
+UDON_DIR=/usr/bin/udon.d
 
 PYTHON=`which python3`
 if [ "$PYTHON" = "" ] ; then
@@ -53,17 +53,15 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
-install -m 755 -o root ./src/udon-server $UDON_DIR
-if [ $? -ne 0 ] ; then
-	echo "Error: install failed - src/udon-server"
-	exit 1
-fi
-
 install -m 755 -o root ./src/test_libudon.py $UDON_DIR
 if [ $? -ne 0 ] ; then
 	echo "Error: install failed src/test_libudon.py"
 	exit 1
 fi
+
+ln -s $UDON_DIR/udon /usr/bin/udon
+ln -s $UDON_DIR/test_libudon.py /usr/bin/test_udon.py
+ln -s $UDON_DIR/udon_init.py /usr/bin/udon_init.py
 
 mkdir -p -m 755 $UDON_DIR/modules
 mkdir -p -m 755 $UDON_DIR/modules/hello
@@ -79,34 +77,32 @@ if [ $? -ne 0 ] ; then
 fi
 echo "[Found] Python module: virtualenv"
 
-if [ ! -e "/usr/local/bin/udon/udon-venv" ] ; then
-	$PYTHON -m venv /usr/local/bin/udon/udon-venv
+if [ ! -e "/usr/bin/udon/udon-venv" ] ; then
+	$PYTHON -m venv /usr/bin/udon.d/udon-venv
 	if [ $? -ne 0 ] ; then
 		echo "python venv creation failed. Is the venv module installed?"
 		exit 1
 	fi
 fi
-echo "[DONE] Created: /usr/local/bin/udon/udon-venv"
+echo "[DONE] Created: /usr/bin/udon.d/udon-venv"
 
 # INSTALL DEPENDENCIES TO VIRTUAL ENVIRONMENT
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install --upgrade pip
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install psutil
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install beautifulsoup4
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install cffi
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install config
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install cryptography
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install google
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install grpcio-tools
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install protobuf
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install pycparser
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install setuptools
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install soupsieve
-/usr/local/bin/udon/udon-venv/bin/python3 -m pip install python-daemon
-
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install beautifulsoup4
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install cffi
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install config
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install cryptography
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install google
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install grpcio-tools
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install protobuf
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install pycparser
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install setuptools
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install soupsieve
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install python-daemon
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install psutil
 
 # BUILD PROTOS
-PROTO_PATH='/usr/local/bin/udon/'
-/usr/local/bin/udon/udon-venv/bin/python3 -m grpc_tools.protoc --proto_path=$PROTO_PATH udon.proto --python_out=$PROTO_PATH --grpc_python_out=$PROTO_PATH
+PROTO_PATH='/usr/bin/udon.d/'
+/usr/bin/udon.d/udon-venv/bin/python3 -m grpc_tools.protoc --proto_path=$PROTO_PATH udon.proto --python_out=$PROTO_PATH --grpc_python_out=$PROTO_PATH
 
 exit 0
 

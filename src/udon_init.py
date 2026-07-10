@@ -1,4 +1,4 @@
-#!/usr/local/bin/udon/udon-venv/bin/python3
+#!/usr/bin/udon.d/udon-venv/bin/python3
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2025 Tree Davies
 
@@ -30,7 +30,7 @@ except Exception as e:
 	path_str = str(Path(__file__))
 	if "/udon/src/udon_init.py" in path_str:
 		print(f"Error: Incorrect file path:{path_str}")
-		print("Run from '/usr/local/bin/udon/udon_init.py'")
+		print("Run from '/usr/bin/udon.d/udon_init.py'")
 		sys.exit(1)
 
 """ Global Variables """
