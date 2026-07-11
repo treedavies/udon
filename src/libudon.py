@@ -1594,7 +1594,7 @@ class udon_utils:
 						return True
 			except Exception as e:
 				error(f"is_udon_server_running() - {e}", True)
-		print(f"Server process: {proc_name}:{proc_pid}")
+		output(f"Server process: {proc_name}:{proc_pid}")
 		return False
 
 
