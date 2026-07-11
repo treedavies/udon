@@ -94,9 +94,11 @@ Run the `udon_init.py` command as a regular user.
 
 Starting the server as a daemon (background) process:
 
-	udon-server --daemon
+	udon --daemon
 
-Exclude the `--daemon` flag to start server in (foreground) terminal.
+Starting the server as a terminal-bound (foreground) process:
+
+  udon --server
 
 On the server host, copy the public keys of the users to
 /home/$USER/.udon/keys/server_side_keys/. This allows the server to
