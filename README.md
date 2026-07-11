@@ -98,7 +98,7 @@ Starting the server as a daemon (background) process:
 
 Starting the server as a terminal-bound (foreground) process:
 
-  udon --server
+	udon --server
 
 On the server host, copy the public keys of the users to
 /home/$USER/.udon/keys/server_side_keys/. This allows the server to
