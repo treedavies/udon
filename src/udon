@@ -236,9 +236,9 @@ def do_commit_message():
 		if not msg:
 			return
 
-	sig = client.c_sign_bstring(msg.encode(), client.key_name)
+	sig = client.c_gen_signature(msg.encode(), client.key_name)
 	if sig == None:
-		error_and_exit(f"Error: udon.commit_message() - c_sign_bstring() failure")
+		error_and_exit(f"Error: udon.commit_message() - c_gen_signatire() failure")
 
 	sent = 0
 	total = len(client.recipients)
@@ -285,7 +285,7 @@ def do_clean_channel(chan: str):
 
 	key_id = client.key_name
 	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 	uuid = uuid.encode()
 
 	rsp = client.c_clean(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid,

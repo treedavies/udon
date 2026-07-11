@@ -249,8 +249,8 @@ def client_encrypt_decrypt_test(cfg: str):
 		data = eight_bytes * 10 * i
 		d = data.encode()
 
-		sig  = client.c_sign_bstring(d, client.key_name)
-		evaluate(True, bool(sig), "c_sign_bstring()")
+		sig  = client.c_gen_signature(d, client.key_name)
+		evaluate(True, bool(sig), "c_gen_signature()")
 
 		cipher = client.c_encrypt_bstring_with_public_key(d, client.key_name)
 		evaluate(True, bool(cipher), "Result Returned c_encrypt_bstring()", quiet=True)
@@ -282,7 +282,7 @@ def client_signature_test(cfg):
 			payload = eight_bytes * i
 			payload = payload.encode()
 
-			sig = client.c_sign_bstring(payload, key)
+			sig = client.c_gen_signature(payload, key)
 			rtn = client.c_verify_signature(sig, payload, key)
 			evaluate(True, rtn, f"client_signature_tests(key:{key} size:{i})")
 
@@ -430,9 +430,9 @@ def c_send_commit_test(cfg):
 	if uuid == None:
 		evaluate(True, bool(uuid), f"c_send_commit_test() generate_uuid()")
 
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 	if uuid_sig == None:
-		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_sign_bstring()")
+		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_gen_signature()")
 	uuid = uuid.encode()
 
 	""" Generate symetric key """
@@ -441,9 +441,9 @@ def c_send_commit_test(cfg):
 
 	""" Recipient args """
 	payload = f"This is a test Payload for {req_src}".encode()
-	msg_sig = client.c_sign_bstring(payload, key_name)
+	msg_sig = client.c_gen_signature(payload, key_name)
 	if msg_sig == None:
-		evaluate(True, bool(msg_sig), f"c_send_commit_test() c_sign_bstring() msg_sig")
+		evaluate(True, bool(msg_sig), f"c_send_commit_test() c_gen_signature() msg_sig")
 
 	""" Generate message timestamp """
 	time_stamp = datetime.datetime.now().strftime('%H:%M:%S').encode()
@@ -508,9 +508,9 @@ def c_send_commit_test_2mb(cfg):
 	if uuid == None:
 		evaluate(True, bool(uuid), f"c_send_commit_test() generate_uuid()")
 
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 	if uuid_sig == None:
-		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_sign_bstring()")
+		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_gen_signature()")
 	uuid = uuid.encode()
 
 	""" Generate symetric key """
@@ -523,9 +523,9 @@ def c_send_commit_test_2mb(cfg):
 		payload = payload + 'X'
 	payload = payload.encode()
 
-	msg_sig = client.c_sign_bstring(payload, key_name)
+	msg_sig = client.c_gen_signature(payload, key_name)
 	if msg_sig == None:
-		evaluate(True, bool(msg_sig), f"c_send_commit_test() c_sign_bstring() msg_sig")
+		evaluate(True, bool(msg_sig), f"c_send_commit_test() c_gen_signature() msg_sig")
 
 	""" Generate message timestamp """
 	time_stamp = datetime.datetime.now().strftime('%H:%M:%S').encode()
@@ -590,9 +590,9 @@ def commit_error_replay_test(cfg):
 	if uuid == None:
 		evaluate(True, bool(uuid), f"c_send_commit_test() generate_uuid()")
 	
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 	if uuid_sig == None:
-		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_sign_bstring()")
+		evaluate(True, bool(uuid_sig), f"c_send_commit_test() c_gen_signature()")
 	uuid = uuid.encode()
 
 	""" Generate symetric key """
@@ -601,9 +601,9 @@ def commit_error_replay_test(cfg):
 
 	""" Recipient args """
 	payload = f"This is a test Payload for {key_name}".encode()
-	msg_sig = client.c_sign_bstring(payload, key_name)
+	msg_sig = client.c_gen_signature(payload, key_name)
 	if msg_sig == None:
-		evaluate(True, bool(msg_sig), f"c_send_commit_test() c_sign_bstring() msg_sig")
+		evaluate(True, bool(msg_sig), f"c_send_commit_test() c_gen_signature() msg_sig")
 
 	""" Generate message timestamp """
 	time_stamp = datetime.datetime.now().strftime('%H:%M:%S').encode()
@@ -683,7 +683,7 @@ def check_tests(cfg):
 	""" Test 2 """
 	req_uuid = udon_utils.generate_uuid()
 	req_uuid = req_uuid.encode()
-	uuid_sig = client.c_sign_bstring(req_uuid, client.key_name)
+	uuid_sig = client.c_gen_signature(req_uuid, client.key_name)
 
 	resp = client.c_msg_check(breq_src=key_id, breq_uuid_sig=uuid_sig, breq_uuid=req_uuid)
 	evaluate(False, bool(resp.error), f"check_tests() Test 2 - resp.error: {resp.error}")
@@ -703,7 +703,7 @@ def check_error_tests(cfg):
 	Test: Send empty key_id
 	"""
 	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 
 	resp = client.c_msg_check(breq_src="".encode(), breq_uuid_sig=uuid_sig, breq_uuid=uuid.encode())
 	expected = "Error: check() - missing arg: key_id"
@@ -724,7 +724,7 @@ def check_error_tests(cfg):
 	uuid = udon_utils.generate_uuid()
 	print("Wrong key test")
 	""" Sign with wrong key """
-	uuid_sig = client.c_sign_bstring(uuid.encode(), "test_key_B")
+	uuid_sig = client.c_gen_signature(uuid.encode(), "test_key_B")
 	resp = client.c_msg_check(
 		breq_src="test_key_A".encode(),
 		breq_uuid_sig=uuid_sig,
@@ -748,7 +748,7 @@ def fetch_tests(cfg):
 	key_id = client.key_name
 	for i in range(1,2):
 		uuid = udon_utils.generate_uuid()
-		uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+		uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 		cipher_uuid = uuid.encode()
 
 		value  = str(i).encode()
@@ -790,7 +790,7 @@ def fetch_error_tests(cfg):
 
 	""" Test: Send empty message value """
 	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 	mvalue = "".encode()
 	response = client.c_msg_fetch(bval=mvalue, breq_src=key_md5.encode(), 
 							  breq_uuid_sig=uuid_sig, 
@@ -811,7 +811,7 @@ def fetch_error_tests(cfg):
 	value  = "X".encode()
 	key_id = client.key_name.encode()
 	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 	response = client.c_msg_fetch(bval=value, breq_src=key_md5.encode(),
 							  breq_uuid_sig=uuid_sig, 
 							  breq_uuid=uuid.encode())
@@ -1250,7 +1250,7 @@ def clean_on_server_test(cfg: str):
 
 	key_id = client.key_name
 	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_sign_bstring(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
 	uuid = uuid.encode()
 
 	nothing = "-1".encode()
