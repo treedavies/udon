@@ -234,9 +234,9 @@ class initialization:
 	def create_server_mods_allow(self):
 		"""
 			Create server_mods.allow file
-			Default: set hello_world module to be called by everyone
+			Default: allow hello module to be called by everyone
 		"""
-		cfg = "{\n\"hello_world\" = [\"*\"]\n}"
+		cfg = "{\n\"hello\" = [\"*\"]\n}"
 
 		mod_file = f"{self.home_dir}/{UDON_DIR}/server_mods.allow"
 		if not os.path.exists(mod_file):
