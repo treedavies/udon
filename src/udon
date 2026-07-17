@@ -236,7 +236,7 @@ def do_commit_message():
 		if not msg:
 			return
 
-	sig = client.c_gen_signature(msg.encode(), client.key_name)
+	sig = client.c_gen_signature(msg.encode())
 	if sig == None:
 		error_and_exit(f"Error: udon.commit_message() - c_gen_signatire() failure")
 

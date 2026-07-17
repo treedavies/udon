@@ -254,7 +254,7 @@ class udon_client:
 					return False
 
 				uuid = udon_utils.generate_uuid().encode()
-				bsig = self.c_gen_signature(uuid, self.key_name)
+				bsig = self.c_gen_signature(uuid)
 				if not bsig:
 					error('c_send() - bsig == None')
 					return False
@@ -416,7 +416,7 @@ class udon_client:
 
 		uuid = udon_utils.generate_uuid()
 		buuid = uuid.encode()
-		buuid_sig = self.c_gen_signature(buuid, self.key_name)
+		buuid_sig = self.c_gen_signature(buuid)
 
 		kpath = self.key_paths[key_id]
 		if not os.path.exists(kpath):
@@ -617,14 +617,14 @@ class udon_client:
 		return plaintext
 
 
-	def c_gen_signature(self, message: bytes, key_id: str) -> bytes:
+	def c_gen_signature(self, message: bytes) -> bytes:
 		"""
 			Generate Signature of a byte string
 			Returns: returns byte string
 		"""
 		debug('c_gen_signature()')
 		# TODO: key_id is not used in function
-		if not udon_utils.type_check([(message, bytes),(key_id, str)]):
+		if not udon_utils.type_check([(message, bytes)]):
 			error('Invalid type:message - c_gen_signature()')
 			return None
 
@@ -831,7 +831,7 @@ class udon_client:
 		for i in range(first, last):
 			uuid = udon_utils.generate_uuid()
 			uuid = uuid.encode()
-			uuid_sig = self.c_gen_signature(uuid, self.key_name)
+			uuid_sig = self.c_gen_signature(uuid)
 			if not uuid_sig:
 				error("c_check_sync(): c_gen_signature()")
 				return -1
@@ -913,7 +913,7 @@ class udon_client:
 			return (-1,-1,-1) on error
 		"""
 		req_uuid = udon_utils.generate_uuid()
-		uuid_sig = self.c_gen_signature(req_uuid.encode(), self.key_name)
+		uuid_sig = self.c_gen_signature(req_uuid.encode())
 		if uuid_sig == None:
 			error("local_remote_count() - uuid_siq = None")
 			return (-1,-1,-1)
