@@ -318,7 +318,6 @@ def server_init_test(cfg_path, srv_cfg_path):
 	server = udon_server()
 	evaluate(True, bool(server), "Init Server")
 
-	# TODO: use test key's md5 - this isn't working!
 	home_dir = udon_utils.home_dir()
 	md5 = udon_utils.utl_file_md5(f"{home_dir}/{UDON_KEYS_DIR}/client_side_keys/test_key_A")
 	print(f"{md5}")
@@ -1056,7 +1055,6 @@ List of what is verified for all channel configs
 	- verify server_port defined
 	- verify recipient keys exist
 	- verify public keys end in .pub
-	TODO: error message should call out the config that failed
 """
 def config_test(cfg_path: str, silent_flag=False):
 		if not os.path.exists(cfg_path):
