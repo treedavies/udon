@@ -253,8 +253,8 @@ class initialization:
 		test = f"""
 server_port = '50051'
 server_db_path  = '{self.home_dir}/{UDON_DB_DIR}/udon-server.db'
-ssl_cert = '{self.home_dir}/{UDON_TLS_DIR}/localhost/localhost.crt'
-ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/localhost.pem'
+ssl_cert = '{self.home_dir}/{UDON_TLS_DIR}/localhost.crt'
+ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/localhost.key'
 	"""
 		if not os.path.exists(server_cfg):
 			with open(server_cfg, "x") as fd:

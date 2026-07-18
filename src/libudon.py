@@ -1036,10 +1036,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 		srv_port = '[::]:'+port
 		output("Serving on port: "+srv_port)
 
-		# TODO Pull from server.conf
-		ssl_cert_key = f"{home_dir}/{UDON_TLS_DIR}/localhost.key"
-		ssl_cert = f"{home_dir}/{UDON_TLS_DIR}/localhost.crt"
-
+		ssl_cert_key = server.ssl_cert_key
+		ssl_cert = server.ssl_cert
 		if not os.path.exists(ssl_cert_key) and os.path.exists(ssl_cert):
 			error(f"s_start_server() - Keys not found!\n {server.ssl_cert_key}\n {server.ssl_cert}")
 			sys.exit(1)
