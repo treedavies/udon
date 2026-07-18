@@ -522,7 +522,6 @@ class udon_client:
 			load client private key
 			Returns: string on success
 					 None on Error
-			TODO: Is there a test that tests .pub and priv match up?
 		"""
 		debug("c_load_priv_key()")
 		if not udon_utils.type_check([(key_path, str)]):
