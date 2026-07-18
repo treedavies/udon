@@ -690,7 +690,7 @@ class udon_client:
 
 	def read_range(self, start, local_count, table, read_unread=False) -> list:
 		"""
-			Reatd/Print a range of messages from the client's local DB
+			Read/Print a range of messages from the client's local DB
 			Return: list of messages on success
 			        None on error
 			todo: happsn on client rename to c_?
@@ -778,7 +778,8 @@ class udon_client:
 
 	def c_read(self, table: str, num: int, read_unread=False) -> list:
 		"""
-			0. get local table row count
+			Returns: list on success
+			         None on error
 		"""
 		if not udon_utils.type_check([
 				(table, str),
