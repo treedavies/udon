@@ -1094,10 +1094,16 @@ class udon_server(pb2_grpc.UnaryServicer):
 
 	def s_load_pub_keys(self) -> bool:
 		"""
-		 todo: try or return false
+			Load public keys from ../server_side_keys dir
+			Returns True on success
+			        False on failure
 		"""
 		home_dir = udon_utils.home_dir()
+
 		srv_side_key_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
+		if not os.path.exists(srv_side_key_dir):
+			return False
+
 		klst = os.listdir(srv_side_key_dir)
 		for k in klst:
 			with open(f"{srv_side_key_dir}/{k}") as fd:
