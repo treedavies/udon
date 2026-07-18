@@ -2266,11 +2266,6 @@ class udon_DB:
 			returns list
 		"""
 		debug("list_db_tables()")
-		if not udon_utils.type_check([(db_path, str)]):
-			error('input type error - list_db_tables()', True)
-			return None
-
-		# TODO Fix/rm duplicate type_check
 		rtn = []
 		if not udon_utils.type_check([(db_path, str)]):
 			error('input type error: db_path : list_db_tables()', True)
