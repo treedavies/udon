@@ -623,7 +623,6 @@ class udon_client:
 			Returns: returns byte string
 		"""
 		debug('c_gen_signature()')
-		# TODO: key_id is not used in function
 		if not udon_utils.type_check([(message, bytes)]):
 			error('Invalid type:message - c_gen_signature()')
 			return None
