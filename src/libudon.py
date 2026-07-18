@@ -1035,6 +1035,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 		port = cfg["server_port"]
 		srv_port = '[::]:'+port
 		output("Serving on port: "+srv_port)
+
+		# TODO Pull from server.conf
 		ssl_cert_key = f"{home_dir}/{UDON_TLS_DIR}/localhost.key"
 		ssl_cert = f"{home_dir}/{UDON_TLS_DIR}/localhost.crt"
 
