@@ -284,7 +284,7 @@ def do_clean_channel(chan: str):
 
 	key_id = client.key_name
 	uuid = udon_utils.generate_uuid()
-	uuid_sig = client.c_gen_signature(uuid.encode(), client.key_name)
+	uuid_sig = client.c_gen_signature(uuid.encode())
 	uuid = uuid.encode()
 
 	rsp = client.c_clean(key_id=key_id, buuid_sig=uuid_sig, buuid=uuid,
@@ -467,9 +467,8 @@ if __name__ == '__main__':
 						help="./udon --list",
 						action='store_true', metavar="")
 
-	# TODO: remove '-C' short flag. Accident prone
 	# TODO: change --clean-channel to --clean-messages
-	parser.add_option("-C", "--clean-channel", dest="clean_channel",
+	parser.add_option("--clean-channel", dest="clean_channel",
 						help="./udon --clean-channel <channel>", metavar="")
 
 	# TODO: change to --call
