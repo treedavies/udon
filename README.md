@@ -12,7 +12,7 @@ Author: Tree Davies
 
 * No GUI. Let the command line be thy interface.
 
-* See Setion 7 for examples of basic usage.
+* See Setion 8 for examples of basic usage.
 
 * A proof of concept, and hobby project. It is an excuse to play with
   RPCs over a network. :)

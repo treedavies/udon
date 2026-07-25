@@ -248,6 +248,7 @@ class udon_client:
 
 				tfmt = '%Y-%m-%d %H:%M:%S:%f'
 				time_stamp = datetime.datetime.now().strftime(tfmt).encode()
+				# TODO: Add some timestamp garbage to prevent guessing
 				ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
 				if not ctime:
 					error('c_send() - ctime == None')
@@ -362,12 +363,17 @@ class udon_client:
 
 
 	def c_ping(self) -> bool:
-		""" """
+		""" 
+			client side passthrough for proto message to ping() on remote
+			machine
+		"""
+		debug('c_ping()')
 		resp = None
 		try:
 			preq = pb2.PingRequest()
 			resp = self.stub.ping(preq)
 		except Exception as e:
+			error(str(e), to_file=True)
 			return False
 		return True
 

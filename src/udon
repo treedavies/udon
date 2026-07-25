@@ -472,12 +472,12 @@ if __name__ == '__main__':
 						help="./udon --clean-channel <channel>", metavar="")
 
 	# TODO: change to --call
-	parser.add_option("-x", "--module_call", dest="mod_call",
-						help="./udon --call-module <channel> --file <file-path>", metavar="")
+	parser.add_option("--call-mod", dest="mod_call",
+						help="./udon --call-mod <mod> --channel  <chan> <channel> --file <file-path>", metavar="")
 	parser.add_option("-f", "--file", dest="file", metavar="")
 
 	#TODO: change to --channel
-	parser.add_option("-y", "--module_channel", dest="mod_channel", metavar="")
+	parser.add_option("--channel", dest="mod_channel", metavar="")
 
 	parser.add_option("--server", dest="start_server", action='store_true', metavar="")
 	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="")
