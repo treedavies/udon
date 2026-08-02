@@ -88,9 +88,10 @@ class udon_client:
 			key_name       -- name of client key
 			key_paths      -- dict: Resolves key names to key paths
 			recipients     -- list[str]: key names
-			server_fqdn      -- str: IP address of remote Udon server
+			server_fqdn    -- str: IP address of remote Udon server
 			server_port    -- str: remote udon server port
 			channel_name   -- str: name of channel (not the gRPC channel)
+			ssl_root       -- ssl root cert path 
 		"""
 		debug("client.__init__():")
 		self.client_db_path = None
@@ -249,6 +250,7 @@ class udon_client:
 				tfmt = '%Y-%m-%d %H:%M:%S:%f'
 				time_stamp = datetime.datetime.now().strftime(tfmt).encode()
 				# TODO: Add some timestamp garbage to prevent guessing
+				#       which could lead to potential clear text attack
 				ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
 				if not ctime:
 					error('c_send() - ctime == None')
@@ -265,8 +267,7 @@ class udon_client:
 					error('c_send() - chan == None')
 					return False
 
-
-				""" get digest of recip key """
+				""" Generate md5 digest of recipient key """
 				hash = None
 				rkey_path = self.key_paths[recip_key]
 				with open(rkey_path, "r") as fd:
@@ -628,6 +629,8 @@ class udon_client:
 			Returns: returns byte string
 		"""
 		debug('c_gen_signature()')
+		signature = None
+
 		if not udon_utils.type_check([(message, bytes)]):
 			error('Invalid type:message - c_gen_signature()')
 			return None
@@ -637,18 +640,21 @@ class udon_client:
 			error("c_gen_signature() - path not found: {key_path}")
 			return None
 
-		# try
-		with open(key_path, "rb") as key_file:
+		try:
+			key_file = open(key_path, "rb")
 			private_key = serialization.load_pem_private_key(
-			key_file.read(),
-			password=None, )
+				key_file.read(),
+				password=None, )
 
 			signature = private_key.sign(message,
 				padding.PSS(
 					mgf=padding.MGF1(hashes.SHA256()),
 					salt_length=padding.PSS.MAX_LENGTH),
 					hashes.SHA256())
-			return signature
+		except Exception as e:
+			error(str(e), True)
+			return None
+		return signature
 
 
 	def c_verify_signature(self, signature: bytes,

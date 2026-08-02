@@ -1,0 +1,4 @@
+
+* Add a bool ReturnCert proto field to the ping RPC
+  RPC will return root certificate to simplify setup.
+
