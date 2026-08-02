@@ -2,3 +2,44 @@
 * Add a bool ReturnCert proto field to the ping RPC
   RPC will return root certificate to simplify setup.
 
+* File Upload work
+
+ - db.init_owner_table() -> int SUCCESS/FAIL
+   - table_exist() returns bool
+   - Create if not exist
+     - run_db_commit()
+     - wrtie test
+
+
+ - db.init_chunk_table() -> int SUCCESS/FAIL
+   - table_exist() returns bool
+     - Create if not exist
+       - run_db_commit()
+
+
+  - db.write_owner_table_entry() int:SUCCESS/FAIL 
+    - table_exist() return bool
+      - yes/No: init_owner_table()
+      - Check if entry exists:
+      - run_db_fetch()
+      - YES/NO: write_owner_entry()
+
+
+  - db.write_chunk() - [number, chunk]
+        - chunk_number_exist() - return bool
+        - exists: return error
+          - !exists: db.write_chunk()
+
+  - upload()
+    db.write_chunk(number chunk)
+
+  - c_upload()
+	- calc_num_chunks()
+	- for num in num_chunks:
+       chunk = get_chunk(file, num)
+       bchunk = enc_chunk()
+       upload(number, bchunk, channel)
+    - send_upload_to_users(md5, key,)
+
+
+
