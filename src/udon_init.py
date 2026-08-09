@@ -247,14 +247,14 @@ class initialization:
 			print(f" [Exists] {mod_file} - Doing nothing...")
 
 
-	def create_server_config(self):
-		""" Check server config """
+	def create_server_config(self, subject: str):
+		""" Create server config """
 		server_cfg = f"{self.home_dir}/{UDON_DIR}/server.conf"
 		test = f"""
 server_port = '50051'
 server_db_path  = '{self.home_dir}/{UDON_DB_DIR}/udon-server.db'
-ssl_cert = '{self.home_dir}/{UDON_TLS_DIR}/localhost.crt'
-ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/localhost.key'
+ssl_cert = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.crt'
+ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 	"""
 		if not os.path.exists(server_cfg):
 			with open(server_cfg, "x") as fd:
@@ -324,14 +324,14 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/localhost.key'
 		F = [openssl, "pkcs8", "-topk8", "-nocrypt", "-passin", f"pass:{passwd}",
 		 		"-in", f"{tls_dir}/server.key", "-out", f"{tls_dir}/server.pem"]
 		
-		G = ['cp', f'{tls_dir}/server.pem', f'{tls_dir}/localhost.key']
-		H = ['cp', f'{tls_dir}/server.crt', f'{tls_dir}/localhost.crt']
-		I = ['cp', f'{tls_dir}/ca.crt', f'{tls_dir}/root.crt']
+		#G = ['cp', f'{tls_dir}/server.pem', f'{tls_dir}/localhost.key']
+		G = ['cp', f'{tls_dir}/server.pem', f'{tls_dir}/{hostname}.key']
+		# H = ['cp', f'{tls_dir}/server.crt', f'{tls_dir}/localhost.crt']
+		H = ['cp', f'{tls_dir}/server.crt', f'{tls_dir}/{hostname}.crt']
 		J = ['cp', f'{tls_dir}/ca.crt', f'{tls_dir}/{hostname}-root.crt']
-
 		K = ['rm', f'{tls_dir}/server.csr']
 
-		for cmd in [A, B, C, D, E, F, G, H, I, J, K]:
+		for cmd in [A, B, C, D, E, F, G, H, J, K]:
 			try:
 				c = " ".join(cmd)
 				print(f" Running: `{c}`")
@@ -342,6 +342,7 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/localhost.key'
 					return
 			except Exception as e:
 				print("error")
+		return subject.replace('/CN=','')
 
 
 	def create_self_config(self, name: str, pkn:str, privkn:str, fqdn: str):
@@ -356,7 +357,7 @@ client_db_path = '{self.home_dir}/{UDON_DB_DIR}/{pkn}-udon-local.db'
 dest_key_name_list = ['{pkn}']
 server_fqdn = '{fqdn}'
 server_port = '50051'
-ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/root.crt'
+ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/{fqdn}-root.crt'
 """
 		if not os.path.exists(chan_cfg_path):
 			with open(chan_cfg_path, "x") as fd:
@@ -386,9 +387,9 @@ def init_env():
 	else:
 		print("Initializing...")
 		i.dir_setup()
+		subject = i.create_tls_certs()
+		i.create_server_config(subject)
 		i.create_test_keys()
-		i.create_tls_certs()
-		i.create_server_config()
 		i.create_server_mods_allow()
 		# Add hello_world,test_key_A to server_mods.allow
 		i.ask_to_create_key()
