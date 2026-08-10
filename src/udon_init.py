@@ -34,7 +34,6 @@ except Exception as e:
 		sys.exit(1)
 
 """ Global Variables """
-TEST_DB = "/tmp/test.db"
 UDON_DIR = ".udon"
 UDON_CHAN_DIR = f"{UDON_DIR}/channel_cfgs"
 UDON_KEYS_DIR = f"{UDON_DIR}/keys"
