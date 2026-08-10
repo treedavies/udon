@@ -216,6 +216,8 @@ class udon_client:
 				if not channel:
 					error('c_send() - channel = Null')
 					return False
+				PADDING = "%" + udon_utils.generate_uuid()
+				channel = channel + PADDING
 				channel = channel.encode()
 
 				""" create sym key and encrypt it with recipient pub key"""
@@ -239,6 +241,8 @@ class udon_client:
 
 				kpath = self.key_paths[msg_sender]
 				msg_sender_key_hash = udon_utils.utl_file_md5(kpath)
+				PADDING = "%" + udon_utils.generate_uuid()
+				msg_sender_key_hash = msg_sender_key_hash + PADDING
 				csrc = self.c_encrypt_bstring_with_sym_key(
 														msg_sender_key_hash.encode(),
 														sym_key
@@ -248,9 +252,9 @@ class udon_client:
 					return False
 
 				tfmt = '%Y-%m-%d %H:%M:%S:%f'
-				time_stamp = datetime.datetime.now().strftime(tfmt).encode()
-				# TODO: Add some timestamp garbage to prevent guessing
-				#       which could lead to potential clear text attack
+				PADDING = "%" + udon_utils.generate_uuid()
+				time_stamp = datetime.datetime.now().strftime(tfmt) + PADDING
+				time_stamp = time_stamp.encode()
 				ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
 				if not ctime:
 					error('c_send() - ctime == None')
@@ -743,11 +747,17 @@ class udon_client:
 				error("message timestamp == None")
 				return None
 
+			""" Strip off the Garbage Padding """
+			time_stamp = time_stamp.split("%")[0]
+
 			source_hash = self.c_decrypt_bstring_with_sym_key(rtn[0][2], sym_key)
 			source_hash = source_hash.decode("utf-8")
 			if source_hash == None:
 				error("message source == None")
 				return None
+
+			""" Strip off the Garbage Padding """
+			source_hash = source_hash.split("%")[0]
 
 			msg = self.c_decrypt_bstring_with_sym_key(rtn[0][3], sym_key)
 			msg = msg.decode("utf-8")
@@ -767,6 +777,8 @@ class udon_client:
 
 			channel = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
 			channel = channel.decode("utf-8")
+			""" Strip Garbage padding """
+			channel = channel.split("%")[0]
 			if channel == None:
 				error("message channel == None")
 				return None
@@ -870,6 +882,7 @@ class udon_client:
 				error("c_poll_sync(): resp channel:")
 				return -1
 			channel = channel.decode('utf-8')
+			channel = channel.split("%")[0]
 	
 			""" Write message to local primary table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
@@ -1212,7 +1225,9 @@ class udon_server(pb2_grpc.UnaryServicer):
 			err_resp = {"error":err}
 			return (False, err_resp, None)
 
+		""" Strip garbage padding from key_id """
 		key_id = sender_key_id.decode('utf-8')
+		key_id = key_id.split("%")[0]
 
 		if not key_id in self.keys_dict.keys():
 			self.conform_server_side_keys()
