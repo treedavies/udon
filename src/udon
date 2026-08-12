@@ -16,7 +16,8 @@ import os
 import getpass
 
 try:
-	from test_libudon import check_all_configs
+	#from test_libudon import check_all_configs
+	from test_libudon import Test
 	from libudon import udon_DB
 	from libudon import udon_client
 	from libudon import udon_utils
@@ -446,7 +447,9 @@ if __name__ == '__main__':
 
 	signal(SIGINT, handler)
 	user = getpass.getuser()
-	check_all_configs()
+	
+	t = Test()
+	t.check_all_configs()
 
 	parser = OptionParser()
 	parser.add_option("-m", "--message", dest="msg_channel",
