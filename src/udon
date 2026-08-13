@@ -3,6 +3,7 @@
 # Copyright (c) 2025 Tree Davies
 
 from optparse import OptionParser
+import test_libudon
 from signal import signal
 from signal import SIGINT
 from pathlib import Path
@@ -484,6 +485,7 @@ if __name__ == '__main__':
 
 	parser.add_option("--server", dest="start_server", action='store_true', metavar="")
 	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="")
+	parser.add_option("--test", dest="test", action='store_true', metavar="")
 
 	(options, args) = parser.parse_args()
 
@@ -535,3 +537,6 @@ if __name__ == '__main__':
 		do_start_server()
 	if options.start_daemon:
 		do_start_server(True)
+	if options.test:
+		t = test_libudon.Test()
+		t.run()

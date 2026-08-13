@@ -70,7 +70,7 @@ class Test:
 		self.srvr_cfg_path = f"{self.home_dir}/{self.UDON_DIR}/{self.srv_cfg_name}"
 
 	def run(self):
-		t.run_tests(self.cfg_path, self.srvr_cfg_path)
+		self.run_tests(self.cfg_path, self.srvr_cfg_path)
 		self.evaluate(True, True, "All Tests Ccompleted")
 
 	def evaluate(self, expected, recvd, name, quiet=False, silent=False) -> int:
