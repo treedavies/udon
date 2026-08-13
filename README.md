@@ -74,8 +74,7 @@ Run the `udon_init.py` command as a regular user.
 * Setup a '.udon' directory in your home directory (`/home/$USER/.udon`).
   See Section 3 for directory structure.
 
-* Ask to create test keys. These are used for running the tests in
-  `test_libudon.py`
+* Ask to create test keys. These are used for running the tests.
 
 * Create TLS/SSL Certificates. This will create a self signed cerificate.
   Even if you do not intend to run a server, creating a cert will allow you
@@ -108,7 +107,7 @@ authenticate user requests.
 
 With the server running, run the tests:
 
-    test_libudon.py
+    udon --test
 
 # 5. [Informational] The /home/$USER/.udon directory tree
 
