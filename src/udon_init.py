@@ -323,9 +323,7 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		F = [openssl, "pkcs8", "-topk8", "-nocrypt", "-passin", f"pass:{passwd}",
 		 		"-in", f"{tls_dir}/server.key", "-out", f"{tls_dir}/server.pem"]
 		
-		#G = ['cp', f'{tls_dir}/server.pem', f'{tls_dir}/localhost.key']
 		G = ['cp', f'{tls_dir}/server.pem', f'{tls_dir}/{hostname}.key']
-		# H = ['cp', f'{tls_dir}/server.crt', f'{tls_dir}/localhost.crt']
 		H = ['cp', f'{tls_dir}/server.crt', f'{tls_dir}/{hostname}.crt']
 		J = ['cp', f'{tls_dir}/ca.crt', f'{tls_dir}/{hostname}-root.crt']
 		K = ['rm', f'{tls_dir}/server.csr']
