@@ -367,30 +367,30 @@ ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/{fqdn}-root.crt'
 			print(f"[Exists] {chan_cfg_path} - Doing nothing...")
 
 
-def init_env():
-	parser = OptionParser()
-	parser.add_option("-u", "--user", dest="new_user_key", action='store_true',
-					help="Create new user public/private key pair", metavar="")
-	(options, args) = parser.parse_args()
+	def init_env(self):
+		#parser = OptionParser()
+		#parser.add_option("-u", "--user", dest="new_user_key", action='store_true',
+		#				help="Create new user public/private key pair", metavar="")
+		#(options, args) = parser.parse_args()
 
-	i = initialization()
+		euid = os.geteuid()
+		if euid == 0:
+			self.error_and_exit("Can not run as root user.\nPlease run as a non-priviledged user.")
 
-	euid = os.geteuid()
-	if euid == 0:
-		i.error_and_exit("Can not run as root user.\nPlease run as a non-priviledged user.")
-
-	if options.new_user_key:
-		i.ask_to_create_key()
-	else:
+		#if options.new_user_key:
+		#	i.ask_to_create_key()
+		#else:
 		print("Initializing...")
-		i.dir_setup()
-		subject = i.create_tls_certs()
-		i.create_server_config(subject)
-		i.create_test_keys()
-		i.create_server_mods_allow()
+		self.dir_setup()
+		subject = self.create_tls_certs()
+		self.create_server_config(subject)
+		self.create_test_keys()
+		self.create_server_mods_allow()
 		# Add hello_world,test_key_A to server_mods.allow
-		i.ask_to_create_key()
+		self.ask_to_create_key()
 		sys.exit(0)
 
 if __name__ == '__main__':
-	init_env()
+	i = initialization()
+	i.init_env()
+
