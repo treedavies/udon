@@ -67,9 +67,11 @@ You can verify this by running `ping <hostname>` or `dig <hostname>`.
 
 # 2. Initialization
 
-Run the `udon_init.py` command as a regular user.
+Run the `--init` command as a regular user.
 
-`udon_init.py` will perform the following actions:
+  `udon --init`
+
+Initialization will perform the following actions:
 
 * Setup a '.udon' directory in your home directory (`/home/$USER/.udon`).
   See Section 3 for directory structure.
