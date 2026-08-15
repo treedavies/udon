@@ -60,8 +60,6 @@ if [ $? -ne 0 ] ; then
 fi
 
 ln -s $UDON_DIR/udon /usr/bin/udon
-# ln -s $UDON_DIR/test_libudon.py /usr/bin/test_udon.py
-ln -s $UDON_DIR/udon_init.py /usr/bin/udon_init.py
 
 mkdir -p -m 755 $UDON_DIR/modules
 mkdir -p -m 755 $UDON_DIR/modules/hello
