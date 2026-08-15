@@ -448,9 +448,6 @@ if __name__ == '__main__':
 
 	signal(SIGINT, handler)
 	user = getpass.getuser()
-	
-	t = Test()
-	t.check_all_configs()
 
 	parser = OptionParser()
 	parser.add_option("-m", "--message", dest="msg_channel",
@@ -490,24 +487,31 @@ if __name__ == '__main__':
 	(options, args) = parser.parse_args()
 
 	if options.msg_channel:
+		t = Test().check_all_configs
 		do_commit_message()
 
 	if options.poll_channel:
+		t = Test().check_all_configs
 		do_poll_check()
 
 	if options.read_channel:
+		t = Test().check_all_configs
 		do_read()
 
 	if options.sync_channel:
+		t = Test().check_all_configs
 		do_check_sync(options.sync_channel)
 
 	if options.list:
+		t = Test().check_all_configs
 		do_list_channels()
 
 	if options.iterated_poll:
+		t = Test().check_all_configs
 		do_iter_poll()
 
 	if options.clean_channel:
+		t = Test().check_all_configs
 		warning = "This operation is DESTRUCTIVE!\nMessages on the server will be sync'ed to the client,\nand then Deleted from the server."
 		confirm = "Do you really want to continue? (y/n):"
 		print(warning)
@@ -517,6 +521,7 @@ if __name__ == '__main__':
 			do_clean_channel(options.clean_channel)
 
 	if options.mod_call and options.file and options.mod_channel:
+		t = Test().check_all_configs
 		args = load_arg_file(options.file)
 		if args == None:
 			sys.exit("fail arg input bleh")
@@ -534,8 +539,10 @@ if __name__ == '__main__':
 		do_call_module(options.mod_channel, options.mod_call, args)
 
 	if options.start_server:
+		t = Test().check_all_configs
 		do_start_server()
 	if options.start_daemon:
+		t = Test().check_all_configs
 		do_start_server(True)
 	if options.test:
 		t = test_libudon.Test()
