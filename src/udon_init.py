@@ -390,7 +390,7 @@ ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/{fqdn}-root.crt'
 		self.ask_to_create_key()
 		sys.exit(0)
 
-if __name__ == '__main__':
-	i = initialization()
-	i.init_env()
+#if __name__ == '__main__':
+#	i = initialization()
+#	i.init_env()
 

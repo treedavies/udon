@@ -8,6 +8,7 @@ from signal import signal
 from signal import SIGINT
 from pathlib import Path
 import libudon as udon
+import udon_init
 import daemon
 import config
 import json
@@ -483,6 +484,7 @@ if __name__ == '__main__':
 	parser.add_option("--server", dest="start_server", action='store_true', metavar="")
 	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="")
 	parser.add_option("--test", dest="test", action='store_true', metavar="")
+	parser.add_option("--init", dest="init", action='store_true', metavar="")
 
 	(options, args) = parser.parse_args()
 
@@ -547,3 +549,6 @@ if __name__ == '__main__':
 	if options.test:
 		t = test_libudon.Test()
 		t.run()
+	if options.init:
+		i = udon_init.initialization()
+		i.init_env()
