@@ -84,10 +84,9 @@ Initialization will perform the following actions:
   the server's DNS record.
 
 * Create a user public/private key pair. These are written to
-  `cleint_side_key/` and `server_side_key/` directories. If you only
-  want to create a user key pair, run: `udon_init.py --user`
+  `cleint_side_key/` and `server_side_key/` directories.
 
-* If you created a user key, `udon_init.py` will generate a channel config
+* If you created a user key, `udon --init` will generate a channel config
   with the same name as the key, at `/home/.udon/channel_cfs/`. This will
   allow you to test the key by sending messages to yourself.
 
