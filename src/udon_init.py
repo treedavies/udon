@@ -325,10 +325,10 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		
 		G = ['cp', f'{tls_dir}/server.pem', f'{tls_dir}/{hostname}.key']
 		H = ['cp', f'{tls_dir}/server.crt', f'{tls_dir}/{hostname}.crt']
-		J = ['cp', f'{tls_dir}/ca.crt', f'{tls_dir}/{hostname}-root.crt']
-		K = ['rm', f'{tls_dir}/server.csr']
+		I = ['cp', f'{tls_dir}/ca.crt', f'{tls_dir}/{hostname}-root.crt']
+		J = ['rm', f'{tls_dir}/server.csr']
 
-		for cmd in [A, B, C, D, E, F, G, H, J, K]:
+		for cmd in [A, B, C, D, E, F, G, H, I, J]:
 			try:
 				c = " ".join(cmd)
 				print(f" Running: `{c}`")
