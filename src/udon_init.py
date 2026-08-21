@@ -352,6 +352,7 @@ client_key_name = '{pkn}'
 client_private_key = '{self.home_dir}/{UDON_KEYS_DIR}/client_side_keys/{privkn}'
 client_db_path = '{self.home_dir}/{UDON_DB_DIR}/{pkn}-udon-local.db'
 dest_key_name_list = ['{pkn}']
+clean_on_sync = 'disable'
 server_fqdn = '{fqdn}'
 server_port = '50051'
 ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/{fqdn}-root.crt'

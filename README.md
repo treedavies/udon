@@ -152,6 +152,11 @@ the intended recipeints, message databases, and the keys by which to communicate
 Configs are located in the `/home/$USER/.udon/channel_cfgs/` directory after
 `udon --init` is run.
 
+Note: When enabled, the `clean_on_sync` option will delete all messages
+from the remote server after they have been sync'd to the client. This
+keeps the server storage usage at a minimum and also provides a amall
+security value.
+
 The following are examples of bob and sally's channel configs. They are
 almost the same with the exception of paths, and key names.
 
@@ -163,6 +168,7 @@ filename: `bob_and_sally`
     client_private_key = '/home/bob/.udon/keys/client_side_keys/bob'
     client_db_path = '/home/bob/.udon/db/bob.pub-udon-local.db'
     dest_key_name_list = ['bob.pub', 'sally.pub']
+    clean_on_sync = 'disable'
     server_fqdn = 'example.net'
     server_port = '50051'
     ssl_root = '/home/bob/.udon/TLS/udonserver.net-root.crt'
@@ -175,6 +181,7 @@ filename: `bob_and_sally`
     client_private_key = '/home/sally/.udon/keys/client_side_keys/sally'
     client_db_path = '/home/sally/.udon/db/sally.pub-udon-local.db'
     dest_key_name_list = ['bob.pub', 'sally.pub']
+    clean_on_sync = 'disable'
     server_fqdn = 'example.net'
     server_port = '50051'
     ssl_root = '/home/sally/.udon/TLS/udonserver.net-root.crt'

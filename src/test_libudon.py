@@ -926,6 +926,21 @@ class Test:
 		return False
 
 
+	def	verify_clean_on_sync(self, cfg: dict):
+		""" verify clean_on_sync is set accurately """
+		if 'clean_on_sync' in cfg.keys():
+			cos = cfg['clean_on_sync']
+			_cos = cfg['clean_on_sync'].lower()
+
+			if cos != _cos:
+				print(f"Error: verify_clean_on_sync() - Incorrect case {cos}")
+				return False
+
+			if cos == 'enable' or cos == 'disable':
+				return True
+		return False
+
+
 	def	verify_key_name_not_equal_to_channel_names(self, cfg: dict) -> bool:
 		home_dir = udon_utils.home_dir()
 		chan_file_list = os.listdir(f"{home_dir}/{self.UDON_CHAN_DIR}")
@@ -1164,6 +1179,12 @@ class Test:
 					silent=silent_flag)
 
 			""" TODO: Verify client_key_name is named correctly. No Hyphens! """
+
+			""" Verify clean_on_sync is set properly"""
+			if self.verify_clean_on_sync(cfg):
+				self.evaluate(True, True, "verify_clean_on_sync()")
+			else:
+				self.evaluate(True, False, "verify_clean_on_sync() - invalid setting")
 
 			""" Verify channel names are not same as key names. """
 			if self.verify_key_name_not_equal_to_channel_names(cfg):

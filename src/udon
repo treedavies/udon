@@ -90,7 +90,13 @@ def do_check_sync(channel: str):
 	rc = udon_DB.init_primary_table(client.client_db_path, client.key_name)
 	if rc != 0:
 		error_and_exit(f"Error: udon.check_sync(): udon_DB.init_primary_table() failed")
-	client.c_poll(sync=True)
+	rtn = client.c_poll(sync=True)
+
+	clean_on_sync = client.config['clean_on_sync'].lower()
+	if rtn > 0 and clean_on_sync == "enable":
+		do_clean_channel(options.sync_channel)
+		print(f"clean_on_sync: {clean_on_sync}")
+	return rtn
 
 
 def do_poll_check():
@@ -513,7 +519,7 @@ if __name__ == '__main__':
 
 	if options.sync_channel:
 		t = Test().check_all_configs
-		do_check_sync(options.sync_channel)
+		s = do_check_sync(options.sync_channel)
 
 	if options.list:
 		t = Test().check_all_configs
