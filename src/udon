@@ -31,9 +31,6 @@ except Exception as e:
 
 """ Global Variables """
 UDON_CHAN_DIR = '.udon/channel_cfgs'
-#UDON_DB_DIR = '.udon/dbn'
-#UDON_TLS_DIR = '.udon/TLS'
-#UDON_LOGS_DIR = '.udon/logs'
 
 
 def handler(signal_received, frame):
