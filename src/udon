@@ -31,9 +31,9 @@ except Exception as e:
 
 """ Global Variables """
 UDON_CHAN_DIR = '.udon/channel_cfgs'
-UDON_DB_DIR = '.udon/dbn'
-UDON_TLS_DIR = '.udon/TLS'
-UDON_LOGS_DIR = '.udon/logs'
+#UDON_DB_DIR = '.udon/dbn'
+#UDON_TLS_DIR = '.udon/TLS'
+#UDON_LOGS_DIR = '.udon/logs'
 
 
 def handler(signal_received, frame):
@@ -338,6 +338,25 @@ def do_list_channels():
 				print(f" * {chan}: Unread:{unread_msgs} Total:{total}")
 
 
+def output_new_messages(client, chan_lst: list):
+	"""
+		Iterate over channels and output newly arrived messages.
+	"""
+	for channel_name in chan_lst:
+		channel_name = f'chan_{channel_name}'
+		if udon_DB.table_exist(client.client_db_path , channel_name):
+			message_lst = client.c_read(channel_name, 1, read_unread=True)
+			if message_lst == None:
+				error_and_exit("do_iter_poll():output_new_messages() return error")
+			for msg in message_lst:
+				fmtd_out = "".join([f"#{msg[0]}: ",
+					f"{msg[1]}\n",
+					f"{msg[2]} ",
+					f"{msg[3]} ",
+					f"[{msg[4]}]\n{msg[5]}\n"])
+				print(f"Channel: {channel_name}")
+				print(fmtd_out)
+
 
 def do_iter_poll():
 	"""
@@ -375,19 +394,7 @@ def do_iter_poll():
 				sys.exit("Error: udon.iter_poll() - poll() return -1")
 			if diff > 0:
 				chan_lst = udon_DB.get_channel_list()
-				for channel_name in chan_lst:
-					channel_name = f'chan_{channel_name}'
-					if udon_DB.table_exist(client.client_db_path , channel_name):
-						message_lst = client.c_read(channel_name, 1, read_unread=True)
-						if message_lst == None:
-							error_and_exit("do_iter_poll() return error")
-						for msg in message_lst:
-							fmtd_out = "".join([f"#{msg[0]}: ",
-								f"{msg[1]}\n",
-								f"{msg[2]} ",
-								f"{msg[3]} ",
-								f"[{msg[4]}]\n{msg[5]}\n"])
-							print(fmtd_out)
+				output_new_messages(client, chan_lst)
 		time.sleep(3)
 
 
@@ -550,22 +557,20 @@ if __name__ == '__main__':
 			args = json.dumps(args)
 			args = args.encode()
 
-		# print(f"* Module:{options.mod_call}")
-		# print(f"* File:{options.file}")
-		# print(f"* Channel:{options.mod_channel}")
-		# print(f"* args : {args}")
-
 		do_call_module(options.mod_channel, options.mod_call, args)
 
 	if options.start_server:
 		t = Test().check_all_configs
 		do_start_server()
+
 	if options.start_daemon:
 		t = Test().check_all_configs
 		do_start_server(True)
+
 	if options.test:
 		t = test_libudon.Test()
 		t.run()
+
 	if options.init:
 		i = udon_init.initialization()
 		i.init_env()
