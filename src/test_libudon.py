@@ -925,6 +925,15 @@ class Test:
 					return True
 		return False
 
+	def verify_no_hyphon_client_key_name(self, cfg: dict):
+		if not 'client_key_name' in cfg.keys():
+			return False
+		else:
+			a = cfg['client_key_name']
+			b = a.replace('-','')
+			if a == b:
+				return True
+		return False
 
 	def	verify_clean_on_sync(self, cfg: dict):
 		""" verify clean_on_sync is set accurately """
@@ -1178,13 +1187,19 @@ class Test:
 				self.evaluate(True, False, f"config_test() channel:{chan} client_key_name extension NOT '.pub'",
 					silent=silent_flag)
 
-			""" TODO: Verify client_key_name is named correctly. No Hyphens! """
+			""" Verify client_key_name is named correctly. No Hyphens! """
+			if self.verify_no_hyphon_client_key_name(cfg):
+				self.evaluate(True, True, f"config_test() channel:{chan} client_key_name no hyphon",
+					silent=silent_flag)
+			else:
+				self.evaluate(True, False, f"config_test() channel:{chan} client_key_name no hyphon",
+					silent=silent_flag)
 
 			""" Verify clean_on_sync is set properly"""
 			if self.verify_clean_on_sync(cfg):
-				self.evaluate(True, True, "verify_clean_on_sync()")
+				self.evaluate(True, True, "verify_clean_on_sync()", silent=silent_flag)
 			else:
-				self.evaluate(True, False, "verify_clean_on_sync() - invalid setting")
+				self.evaluate(True, False, "verify_clean_on_sync() - invalid setting", silent=silent_flag)
 
 			""" Verify channel names are not same as key names. """
 			if self.verify_key_name_not_equal_to_channel_names(cfg):
