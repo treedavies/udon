@@ -378,10 +378,10 @@ class Test:
 
 		if udon_DB.table_exist(srv_config["server_db_path"], md5_table_name):
 			rtn = udon_DB.run_db_commit(f"drop table '{md5_table_name}'", srv_config["server_db_path"])
-			self.evaluate(0, rtn, "Error: drop table test_key_A", quiet=False)
+			self.evaluate(0, rtn, "drop table test_key_A", quiet=False)
 
 		rtn = udon_DB.table_exist(srv_config["server_db_path"], md5_table_name)
-		self.evaluate(False, rtn, f"Error: drop_test_table: test_key_A:{md5_table_name}", quiet=False)
+		self.evaluate(False, rtn, f"drop_test_table: test_key_A:{md5_table_name}", quiet=False)
 
 
 	def server_laod_test(self, cfg_path, srv_cfg_path):
