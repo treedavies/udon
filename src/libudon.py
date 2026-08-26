@@ -202,7 +202,10 @@ class udon_client:
 				if not msg:
 					error('c_send() - msg = Null')
 					return False
-				payload = msg.rstrip().encode()
+				payload = msg.rstrip()
+				PADDING = "%" + udon_utils.generate_uuid()
+				payload = payload + PADDING
+				payload = payload.encode()
 
 				if not signature:
 					error('c_send() - signature = Null')
@@ -748,7 +751,7 @@ class udon_client:
 				return None
 
 			""" Strip off the Garbage Padding """
-			time_stamp = time_stamp.split("%")[0]
+			time_stamp = time_stamp[:-37]
 
 			source_hash = self.c_decrypt_bstring_with_sym_key(rtn[0][2], sym_key)
 			source_hash = source_hash.decode("utf-8")
@@ -757,13 +760,16 @@ class udon_client:
 				return None
 
 			""" Strip off the Garbage Padding """
-			source_hash = source_hash.split("%")[0]
+			source_hash = source_hash[:-37]
 
 			msg = self.c_decrypt_bstring_with_sym_key(rtn[0][3], sym_key)
 			msg = msg.decode("utf-8")
 			if msg == None:
 				error("message msg == None")
 				return None
+
+			""" Strip off the Garbage Padding """
+			msg = msg[:-37]
 
 			try:
 				source = self.hash_to_keyname[source_hash]
@@ -778,7 +784,7 @@ class udon_client:
 			channel = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
 			channel = channel.decode("utf-8")
 			""" Strip Garbage padding """
-			channel = channel.split("%")[0]
+			channel = channel[:-37]
 			if channel == None:
 				error("message channel == None")
 				return None
@@ -787,7 +793,6 @@ class udon_client:
 			if validation == True:
 				validity = VALID
 
-			# TRranslate MD5 to pub key name
 			msg_as_lst = [i, time_stamp, validity, source, channel, msg]
 			msg_list.append(msg_as_lst)
 
