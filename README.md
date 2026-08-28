@@ -46,17 +46,14 @@ OS platforms
 
 * Raspian (Bookworm)
 
+* MacOsX
+
 # 0. Installation
 
 Run the following install script. This will install files to
 `/usr/local/bin/udon/`
 
     sudo ./INSTALL.sh
-
-Add `/usr/local/bin/udon` to your shell's PATH. Add the following line to your
-.bashrc
-
-    PATH=$PATH:/usr/local/bin/udon
 
 # 1 DNS
 
@@ -83,7 +80,7 @@ Initialization will perform the following actions:
   the server's DNS record.
 
   If you have a certificate provided by a Certificate Authority (CA), see
-  section 7.1, which explains how setup with LetsEncrypt Certbot Certs.
+  section 7.1, which explains how to setup with LetsEncrypt Certbot Certs.
 
 * Create a user public/private key pair. These are written to
   `cleint_side_key/` and `server_side_key/` directories.
@@ -256,7 +253,7 @@ From Bob's perspective:
 # 9. User define modules
 
 Udon can be extended using user defined python modules in the
-`/usr/local/bin/udon/modules/` directory.
+`/usr/bin/udon.d/modules/` directory.
 
 Modules must:
   * Be a class called module
