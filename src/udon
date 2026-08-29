@@ -351,7 +351,6 @@ def output_new_messages(client, chan_lst: list):
 					f"{msg[2]} ",
 					f"{msg[3]} ",
 					f"[{msg[4]}]\n{msg[5]}\n"])
-				print(f"Channel: {channel_name}")
 				print(fmtd_out)
 
 
@@ -569,3 +568,4 @@ if __name__ == '__main__':
 	if options.init:
 		i = udon_init.initialization()
 		i.init_env()
+
