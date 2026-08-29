@@ -486,6 +486,35 @@ class udon_client:
 		return  resp
 
 
+	def c_fetchkey(self, bval: bytes, breq_src: bytes,
+				breq_uuid_sig: bytes, breq_uuid: bytes):
+		"""
+			client side prepare and send proto message to fetchkey() on remote machine
+			returns MessageResponse on success or None on error
+		"""
+		debug('c_fetchkey()')
+		types_lst = [
+			(bval, bytes),
+			(breq_src, bytes),
+			(breq_uuid_sig, bytes),
+			(breq_uuid, bytes)
+			]
+		if not udon_utils.type_check(types_lst):
+			error('c_msg_fetch() - invalid types')
+			return None
+
+		resp = None
+		try:
+			message = pb2.Request(value=bval, key_id=breq_src,
+									signature=breq_uuid_sig,
+									uuid=breq_uuid)
+			resp = self.stub.fetchkey(message)
+		except Exception as e:
+			error(f"c_fetchkey() {e}")
+			return None
+		return resp
+
+
 	def c_msg_fetch(self, bval: bytes, breq_src: bytes,
 				breq_uuid_sig: bytes, breq_uuid: bytes):
 		"""
@@ -728,6 +757,17 @@ class udon_client:
 		if read_unread == True:
 			start = 1
 
+		"""
+		Channel Message indexing
+			rtn[0][0] ID integer PRIMARY KEY AUTOINCREMENT
+			rtn[0][1] TIME blob NOT NUL
+			rtn[0][2] SRC blob,
+			rtn[0][3] MSG blob,
+			rtn[0][4] MSGSIG blob,
+			rtn[0][5] CHANNEL blob,
+			rtn[0][6] NEW_MSG blob,
+			rtn[0][7] KEY blob,
+		"""
 		for i in range(start, local_count+1):
 			rtn = udon_DB.read_msg_table_entry(self.client_db_path,
 													table, i)
@@ -1346,6 +1386,54 @@ class udon_server(pb2_grpc.UnaryServicer):
 			"error":b""
 			}
 		return pb2.MessageResponse(**MessageResponse)
+
+
+	def fetchkey(self, request, context):
+		"""
+			Server side RPC to fetch a public key from ssrver
+			keyword arguments:
+			request: proto request
+		"""
+		debug("fetchkey()")
+		row_entry = ''
+
+		success, err_msg, key_id = self._verify_request(request, op="keyfetch")
+		if success == False:
+			error(f"keyfetch(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			return pb2.MessageResponse(**err_msg)
+
+		value = request.value
+		key_id_req = value.decode('utf-8')
+		if len(key_id_req) == 0:
+			err_resp = "Error: keyfetch() - missing arg: value".encode()
+			response = {"error":err_resp}
+			return pb2.FetchKeyResponse(**response)
+
+		if not key_id_req in self.keys_dict.keys():
+			FKResponse = {
+				"key":b"",
+				"error":b"Error:Key Not Found."
+				}
+			return pb2.FetchKeyResponse(**FKResponse)
+
+		key = self.keys_dict[key_id_req]
+
+		""" Verify the key being retruned is public """
+		B = "-----BEGIN PUBLIC KEY-----"
+		E = "-----END PUBLIC KEY-----"
+		if not (B in key) and (E in key):
+			FKResponse = {
+				"key":b"",
+				"error":b"Error:Non Public Key Found."
+				}
+			return pb2.FetchKeyResponse(**FKResponse)
+
+		key = key.encode()
+		FKResponse = {
+			"key":key,
+			"error":b""
+			}
+		return pb2.FetchKeyResponse(**FKResponse)
 
 
 	def ping(self, request, context):

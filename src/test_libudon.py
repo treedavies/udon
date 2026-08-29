@@ -757,6 +757,39 @@ class Test:
 		#evaluate(expected, resp.error.decode("utf-8"), "check() Error")
 
 
+	def fetchkey_test(self, cfg):
+		print("\n----------------------")
+		print(" gRPC Test")
+		print(" fetchkey()")
+		print("----------------------")
+
+		cfg = config.Config(cfg)
+		client = udon_client()
+		rtn = client.c_load_config(cfg)
+		self.evaluate(True, rtn, "fetchkey() - c_load_config()")
+
+		""" Test 1 - Fetch the same key which requests it request"""
+		key_path = client.key_paths[client.key_name]
+		key_md5 = udon_utils.utl_file_md5(key_path)
+		print(f"key_md5: {key_md5}")
+		print(f"key_path: {key_path}")
+		key_id = key_md5.encode()
+		bkey_md5 = key_md5.encode()
+		self.evaluate(True, bool(key_id), "client.c_encrypt_bstring_with_key()")
+
+		req_uuid = udon_utils.generate_uuid()
+		req_uuid = req_uuid.encode()
+		uuid_sig = client.c_gen_signature(req_uuid)
+
+		resp = client.c_fetchkey(bkey_md5, key_id, uuid_sig, req_uuid)
+		rtnd_key = resp.key.decode("utf-8")
+
+		local_key = client.c_load_pub_key(key_path)
+		with open(key_path, "r") as fd:
+			local_key = fd.read()
+		self.evaluate(local_key, rtnd_key, f"fetchkey() Key match", quiet=True)
+
+
 	def fetch_tests(self, cfg):
 		print("\n----------------------")
 		print(" gRPC Tests")
@@ -1454,6 +1487,8 @@ class Test:
 		self.fetch_tests(cfg)
 		self.fetch_error_tests(cfg)
 
+		self.fetchkey_test(cfg)
+
 		""" clean() test"""
 		self.db_clean_test()
 		self.clean_on_server_test(cfg)
@@ -1463,7 +1498,6 @@ class Test:
 		""" cleanup test related data """
 		self.drop_test_table(cfg, srv_cfg)
 		self.clean_up(cfg)
-
 
 if __name__ == '__main__':
 	t = Test()
