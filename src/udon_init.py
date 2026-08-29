@@ -21,17 +21,8 @@ import uuid
 import sys
 import os
 
-try:
-	from libudon import udon_DB
-	from libudon import udon_client
-	from libudon import udon_server
-	from libudon import udon_utils
-except Exception as e:
-	path_str = str(Path(__file__))
-	if "/udon/src/udon_init.py" in path_str:
-		print(f"Error: Incorrect file path:{path_str}")
-		print("Run from '/usr/bin/udon.d/udon_init.py'")
-		sys.exit(1)
+import libudon as udon
+
 
 """ Global Variables """
 UDON_DIR = ".udon"
@@ -48,10 +39,10 @@ def handler(signal_received, frame):
     sys.exit(' exiting...')
 signal(SIGINT, handler)
 
-class initialization:
+class Initialization:
 
 	def __init__(self):
-		self.home_dir = udon_utils.home_dir()
+		self.home_dir = udon.udon_utils.home_dir()
 
 		# Directories
 		self.udon_dir    = f"{self.home_dir}/{UDON_DIR}"
@@ -157,7 +148,9 @@ class initialization:
 				with open(skp_path, 'wb') as f:
 					print(f" Writing Public key: {skp_path}")
 					f.write(pub)
-				self.create_self_config(name, name+'.pub', name, hostname)
+
+				dest_lst = [f"{name}.pub"]
+				self.create_config('create', name, name+'.pub', name, hostname, dest_lst)
 
 
 	def create_test_keys(self):
@@ -204,7 +197,8 @@ class initialization:
 			print(f" Creating public key: {sk_B_pub}")
 			f.write(pub)
 
-		self.create_self_config('test', 'test_key_A.pub', 'test_key_A', hostname)
+		dest_lst = ["test_key_A.pub",]
+		self.create_config('create', 'test', 'test_key_A.pub', 'test_key_A', hostname, dest_lst)
 
 
 	def create_keys(self, key_size: int):
@@ -291,7 +285,7 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		key_size = str(5120)
 
 		rand_uuid = str(uuid.uuid4())
-		passwd = udon_DB.dehyphenate_uuid(rand_uuid)
+		passwd = udon.udon_DB.dehyphenate_uuid(rand_uuid)
 
 		if not os.path.exists(openssl):
 			sys.exit("Error: openssl path not found")
@@ -342,52 +336,48 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		return subject.replace('/CN=','')
 
 
-	def create_self_config(self, name: str, pkn:str, privkn:str, fqdn: str):
+	def create_config(self, mode: str, channel: str, pkn: str, privkn: str, fqdn: str, dest_lst: list):
 		""" Check test config """
-		chan_cfg_path = f"{self.home_dir}/{UDON_CHAN_DIR}/{name}"
+		chan_cfg_path = f"{self.home_dir}/{UDON_CHAN_DIR}/{channel}"
+		dest_lst = str(dest_lst)
 
 		test = f"""
-channel = "{name}"
+channel = "{channel}"
 client_key_name = '{pkn}'
 client_private_key = '{self.home_dir}/{UDON_KEYS_DIR}/client_side_keys/{privkn}'
 client_db_path = '{self.home_dir}/{UDON_DB_DIR}/{pkn}-udon-local.db'
-dest_key_name_list = ['{pkn}']
+dest_key_name_list = {dest_lst}
 clean_on_sync = 'disable'
 server_fqdn = '{fqdn}'
 server_port = '50051'
 ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/{fqdn}-root.crt'
 """
-		if not os.path.exists(chan_cfg_path):
-			with open(chan_cfg_path, "x") as fd:
-				fd.write(test)
-				print(f" Created {chan_cfg_path}")
-			os.chmod(chan_cfg_path, 0o400)
+
+		if mode == 'create':
+			file_mode = "x"
+		if mode == 'update':
+			file_mode = "w"
+
+		with open(chan_cfg_path, file_mode) as fd:
+			fd.write(test)
 			print(f" Created {chan_cfg_path}")
-			return
-		else:
-			print(f"[Exists] {chan_cfg_path} - Doing nothing...")
+		os.chmod(chan_cfg_path, 0o700)
+		print(f" Created {chan_cfg_path}")
+		return
 
 
 	def init_env(self):
-		#parser = OptionParser()
-		#parser.add_option("-u", "--user", dest="new_user_key", action='store_true',
-		#				help="Create new user public/private key pair", metavar="")
-		#(options, args) = parser.parse_args()
 
 		euid = os.geteuid()
 		if euid == 0:
 			self.error_and_exit("Can not run as root user.\nPlease run as a non-priviledged user.")
 
-		#if options.new_user_key:
-		#	i.ask_to_create_key()
-		#else:
 		print("Initializing...")
 		self.dir_setup()
 		subject = self.create_tls_certs()
 		self.create_server_config(subject)
 		self.create_test_keys()
 		self.create_server_mods_allow()
-		# Add hello_world,test_key_A to server_mods.allow
 		self.ask_to_create_key()
 		sys.exit(0)
 

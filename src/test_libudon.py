@@ -22,17 +22,10 @@ import sys
 import os
 import getpass
 
-try:
-	from libudon import udon_DB
-	from libudon import udon_client
-	from libudon import udon_server
-	from libudon import udon_utils
-except Exception as e:
-	path_str = str(Path(__file__))
-	if "/udon/src/test_libudon.py" in path_str:
-		print(f"Error: Incorrect file path:{path_str}")
-		print("Run from '/usr/bin/udon.d/test_libudon.py'")
-		sys.exit(1)
+from libudon import udon_DB
+from libudon import udon_client
+from libudon import udon_server
+from libudon import udon_utils
 
 
 def handler(signal_received, frame):
@@ -757,6 +750,44 @@ class Test:
 		#evaluate(expected, resp.error.decode("utf-8"), "check() Error")
 
 
+	def fetchkey_test(self, cfg):
+		print("\n----------------------")
+		print(" gRPC Test")
+		print(" fetchkey()")
+		print("----------------------")
+
+		cfg = config.Config(cfg)
+		client = udon_client()
+		rtn = client.c_load_config(cfg)
+		self.evaluate(True, rtn, "fetchkey() - c_load_config()")
+
+		""" Test 1 - Fetch the same key which requests it request"""
+		key_path = client.key_paths[client.key_name]
+		key_md5 = udon_utils.utl_file_md5(key_path)
+		print(f"key_md5: {key_md5}")
+		print(f"key_path: {key_path}")
+		key_id = key_md5.encode()
+		bkey_md5 = key_md5.encode()
+		self.evaluate(True, bool(key_id), "client.c_encrypt_bstring_with_key()")
+
+		req_uuid = udon_utils.generate_uuid()
+		req_uuid = req_uuid.encode()
+		uuid_sig = client.c_gen_signature(req_uuid)
+
+		resp = client.c_fetchkey(bkey_md5, key_id, uuid_sig, req_uuid)
+		rtnd_key = resp.key.decode("utf-8")
+
+		local_key = client.c_load_pub_key(key_path)
+		with open(key_path, "r") as fd:
+			local_key = fd.read()
+		self.evaluate(local_key, rtnd_key, f"fetchkey() Key match", quiet=True)
+
+		""" Test 2 - write key to file """
+		udon_utils.write_key_to_file(f"/tmp/{key_md5}", rtnd_key)
+		status = os.path.exists(f"/tmp/{key_md5}")
+		self.evaluate(True, status, f"fetchkey() write key Key to dile", quiet=True)
+
+
 	def fetch_tests(self, cfg):
 		print("\n----------------------")
 		print(" gRPC Tests")
@@ -1402,6 +1433,8 @@ class Test:
 
 
 	def run_tests(self, cfg: str, srv_cfg: str):
+		self.clean_up(cfg)
+
 		self.check_types()
 
 		self.running_tests_on_server(cfg)
@@ -1453,17 +1486,21 @@ class Test:
 		""" fetch() Tests """
 		self.fetch_tests(cfg)
 		self.fetch_error_tests(cfg)
+		self.fetchkey_test(cfg)
 
 		""" clean() test"""
 		self.db_clean_test()
 		self.clean_on_server_test(cfg)
+
+		""" --add member test """
+
+		""" --drop member test """
 
 		self.rpc_module_test(cfg)
 
 		""" cleanup test related data """
 		self.drop_test_table(cfg, srv_cfg)
 		self.clean_up(cfg)
-
 
 if __name__ == '__main__':
 	t = Test()

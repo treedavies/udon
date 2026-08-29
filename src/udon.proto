@@ -9,6 +9,12 @@ service Unary{
  rpc clean(CleanRequest) returns (CleanResponse) {}
  rpc ping(PingRequest) returns (PingResponse) {}
  rpc module(ModuleRequest) returns (ModuleResponse) {}
+ rpc fetchkey(Request) returns (FetchKeyResponse) {}
+}
+
+message FetchKeyResponse{
+	bytes key = 1;
+	bytes error = 2;
 }
 
 message ModuleRequest{

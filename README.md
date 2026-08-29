@@ -239,7 +239,7 @@ From Bob's perspective:
     Free Software, is Free as in Speech, but beer would be nice also.
     LOL :)
 
-    $ udon --clean-channel bob_and_sally
+    $ udon --clean-messages bob_and_sally
     This operation is DESTRUCTIVE!
     Messages on the server will be sync'ed to the client,
     and then Deleted from the server
@@ -250,7 +250,17 @@ From Bob's perspective:
     $ udon --iterated-poll
     Waiting for messages...
 
-# 9. User define modules
+# 9. Add/Drop members from channel
+
+Invite another user to a channel.
+
+  $ udon --add <key.pub> --channel <channel>
+
+Members who wish to leave a channel, can drop themselves from it.
+
+  $ udon --drop <key.pub> --channel <channel>
+
+# 10. User define modules
 
 Udon can be extended using user defined python modules in the
 `/usr/bin/udon.d/modules/` directory.

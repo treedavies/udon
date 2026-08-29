@@ -16,6 +16,7 @@ import config
 import sqlite3
 import platform
 import hashlib
+from udon_init import Initialization
 from concurrent import futures
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -32,11 +33,52 @@ FAILURE  = 1
 DEBUG    = False
 UDON_DIR = '.udon'
 UDON_CHAN_DIR = '.udon/channel_cfgs'
+UDON_SERVER_CONF = '.udon/server.conf'
 UDON_CLIENT_SIDE_KEYS = '.udon/keys/client_side_keys'
 UDON_SERVER_SIDE_KEYS = '.udon/keys/server_side_keys'
 UDON_TLS_DIR = '.udon/TLS'
 UDON_LOGS_DIR = '.udon/logs'
 
+def safe_path(BASE: str, fname: str) -> bool:
+	path = os.path.join(BASE, fname)
+	abs_path = os.path.abspath(path)
+	if abs_path != path:
+		error("(): invalid absolute path")
+		return False
+	return True
+
+def channel_dir():
+	home_dir = udon_utils.home_dir()
+	return f"{home_dir}/{UDON_CHAN_DIR}/"
+
+def channel_cfg_path(chan: str) -> str:
+	BASE = channel_dir()
+	path = os.path.join(BASE, chan)
+	if not safe_path(BASE, chan):
+		return ""
+	return os.path.join(BASE, chan)
+
+def server_side_keys_dir() -> str:
+	home_dir = udon_utils.home_dir()
+	return f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/"
+
+def server_side_key_path(key: str) -> str:
+	BASE = server_side_keys_dir()
+	path = os.path.join(BASE, key)
+	if not safe_path(BASE, key):
+		return ""
+	return os.path.join(BASE, key)
+
+def client_side_keys_dir() -> str:
+	home_dir = udon_utils.home_dir()
+	return f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/"
+
+def client_side_key_path(key: str) -> str:
+	BASE = client_side_keys_dir()
+	path = os.path.join(BASE, key)
+	if not safe_path(BASE, key):
+		return ""
+	return os.path.join(BASE, key)
 
 def debug(msg: str, enable=False):
 	"""
@@ -63,7 +105,6 @@ def output(msg: str, to_file=False):
 	types_lst = [(msg, str), (to_file, bool)]
 	if not udon_utils.type_check(types_lst):
 		error("output(): type_check")
-		return False
 
 	print(f"{msg}")
 	if to_file:
@@ -116,7 +157,7 @@ class udon_client:
 		types_lst = [(type(cfg), type(config.Config))]
 		if not udon_utils.type_check(types_lst):
 			return False
-		
+
 		try:
 			self.key_paths       = {}
 			self.keyname_to_hash = {}
@@ -143,16 +184,21 @@ class udon_client:
 			error("udon_server().__init__() -  home_dir() returned None")
 			sys.exit(1)
 
-		pk = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{self.key_name}"
+		pk = client_side_key_path(self.key_name)
 		if not os.path.exists(pk):
 			error("udon_client:c_load_config() - public key not found")
+			return False
 
 		""" create maps of public key name, path, and  md5 """
-		klist = os.listdir(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}")
+		klist = os.listdir(client_side_keys_dir())
 		for k in klist:
 			if ".pub" in k:
-				md5 = udon_utils.utl_file_md5(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}")
-				self.key_paths[k] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}"
+				cskp = client_side_key_path(k)
+
+				md5 = udon_utils.utl_file_md5(cskp)
+
+				self.key_paths[k] = cskp
+
 				self.keyname_to_hash[k] = md5
 				self.hash_to_keyname[md5] = k
 
@@ -178,128 +224,166 @@ class udon_client:
 		return True
 
 
+	def gen_channel_struct(self, channel: str, recipents: list, add_member="", drop_member="") -> str:
+		home_dir = udon_utils.home_dir()
+		d = {}
+		d["channel"] = channel
+
+		lst = []
+		for e in recipents:
+			if e:
+				h = self.keyname_to_hash[e]
+				lst.append(h)
+		d["recipients"] = lst
+
+		handles = {}
+		for hash in lst:
+			handles[hash] = self.hash_to_keyname[hash]
+		d["handles"] = handles
+
+		if add_member != "":
+			d["add_member"] = add_member
+			d["handles"][add_member] = self.keyname_to_hash[add_member]
+
+			p = f"{home_dir}/.udon/keys/client_side_keys/{add_member}.pub"
+			self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(p)
+		else:
+			d["add_member"] = ""
+
+		if drop_member != "":
+			d["drop_member"] = drop_member
+			d["handles"][drop_member] = self.keyname_to_hash[drop_member]
+
+			p = f"{home_dir}/.udon/keys/client_side_keys/{drop_member}.pub"
+			self.keyname_to_hash[drop_member] = udon_utils.utl_file_md5(p)
+		else:
+			d["drop_member"] = ""
+
+		rtn = json.dumps(d)
+		return rtn
+
 	def c_send(self, recip_key: str, msg: str, signature: bytes,
 					channel: str) -> bool:
-				"""
-					Validate and prepare to send message to server
-					returns: boolean
-				"""
-				if not udon_utils.type_check([
-					(recip_key, str),
-					(msg, str),
-					(signature, bytes),
-					(channel, str)]):
-					return False
+		"""
+		Validate and prepare to send message to server
+		returns: boolean
+		"""
+		if not udon_utils.type_check([
+			(recip_key, str),
+			(msg, str),
+			(signature, bytes),
+			(channel, str)]):
+			return False
 
-				if not self.c_ping():
-					error(f"Connection to server:{self.server_fqdn} Failed.")
-					return False
+		if not self.c_ping():
+			error(f"Connection to server:{self.server_fqdn} Failed.")
+			return False
 
-				if not recip_key:
-					error('c_send() - recip_key destination = Null')
-					return False
+		if not recip_key:
+			error('c_send() - recip_key destination = Null')
+			return False
 
-				if not msg:
-					error('c_send() - msg = Null')
-					return False
-				payload = msg.rstrip()
-				PADDING = "%" + udon_utils.generate_uuid()
-				payload = payload + PADDING
-				payload = payload.encode()
+		if not msg:
+			error('c_send() - msg = Null')
+			return False
+		payload = msg.rstrip()
+		PADDING = "%" + udon_utils.generate_uuid()
+		payload = payload + PADDING
+		payload = payload.encode()
 
-				if not signature:
-					error('c_send() - signature = Null')
-					return False
+		if not signature:
+			error('c_send() - signature = Null')
+			return False
 
-				if not self.key_name:
-					error('c_send() - msg_sender = Null')
-					return False
-				msg_sender = self.key_name
+		if not self.key_name:
+			error('c_send() - msg_sender = Null')
+			return False
+		msg_sender = self.key_name
 
-				if not channel:
-					error('c_send() - channel = Null')
-					return False
-				PADDING = "%" + udon_utils.generate_uuid()
-				channel = channel + PADDING
-				channel = channel.encode()
+		if not channel:
+			error('c_send() - channel = Null')
+			return False
+		PADDING = "%" + udon_utils.generate_uuid()
+		channel = channel + PADDING
+		channel = channel.encode()
 
-				""" create sym key and encrypt it with recipient pub key"""
-				sym_key = Fernet.generate_key()
-				enc_sym_key = self.c_encrypt_bstring_with_public_key(sym_key, recip_key)
+		""" create sym key and encrypt it with recipient pub key"""
+		sym_key = Fernet.generate_key()
+		enc_sym_key = self.c_encrypt_bstring_with_public_key(sym_key, recip_key)
 
-				""" Start encrypting message fields..."""
-				csignature = self.c_encrypt_bstring_with_sym_key(
-															signature,
-															sym_key
-															)
+		""" Start encrypting message fields..."""
+		csignature = self.c_encrypt_bstring_with_sym_key(
+													signature,
+													sym_key
+													)
 
-				cpayload = self.c_encrypt_bstring_with_sym_key(
-															payload,
-															sym_key
-															)
+		cpayload = self.c_encrypt_bstring_with_sym_key(
+													payload,
+													sym_key
+													)
 
-				if not cpayload:
-					error('c_send() - payload == None')
-					return False
+		if not cpayload:
+			error('c_send() - payload == None')
+			return False
 
-				kpath = self.key_paths[msg_sender]
-				msg_sender_key_hash = udon_utils.utl_file_md5(kpath)
-				PADDING = "%" + udon_utils.generate_uuid()
-				msg_sender_key_hash = msg_sender_key_hash + PADDING
-				csrc = self.c_encrypt_bstring_with_sym_key(
-														msg_sender_key_hash.encode(),
-														sym_key
-														)
-				if not csrc:
-					error('c_send() - csrc == None')
-					return False
+		kpath = self.key_paths[msg_sender]
+		msg_sender_key_hash = udon_utils.utl_file_md5(kpath)
+		PADDING = "%" + udon_utils.generate_uuid()
+		msg_sender_key_hash = msg_sender_key_hash + PADDING
+		csrc = self.c_encrypt_bstring_with_sym_key(
+												msg_sender_key_hash.encode(),
+												sym_key
+												)
+		if not csrc:
+			error('c_send() - csrc == None')
+			return False
 
-				tfmt = '%Y-%m-%d %H:%M:%S:%f'
-				PADDING = "%" + udon_utils.generate_uuid()
-				time_stamp = datetime.datetime.now().strftime(tfmt) + PADDING
-				time_stamp = time_stamp.encode()
-				ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
-				if not ctime:
-					error('c_send() - ctime == None')
-					return False
+		tfmt = '%Y-%m-%d %H:%M:%S:%f'
+		PADDING = "%" + udon_utils.generate_uuid()
+		time_stamp = datetime.datetime.now().strftime(tfmt) + PADDING
+		time_stamp = time_stamp.encode()
+		ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
+		if not ctime:
+			error('c_send() - ctime == None')
+			return False
 
-				uuid = udon_utils.generate_uuid().encode()
-				bsig = self.c_gen_signature(uuid)
-				if not bsig:
-					error('c_send() - bsig == None')
-					return False
+		uuid = udon_utils.generate_uuid().encode()
+		bsig = self.c_gen_signature(uuid)
+		if not bsig:
+			error('c_send() - bsig == None')
+			return False
 
-				cchan = self.c_encrypt_bstring_with_sym_key(channel, sym_key)
-				if not cchan:
-					error('c_send() - chan == None')
-					return False
+		cchan = self.c_encrypt_bstring_with_sym_key(channel, sym_key)
+		if not cchan:
+			error('c_send() - chan == None')
+			return False
 
-				""" Generate md5 digest of recipient key """
-				hash = None
-				rkey_path = self.key_paths[recip_key]
-				with open(rkey_path, "r") as fd:
-					key_data = fd.read()
-				hash = hashlib.md5(key_data.encode()).hexdigest()
-				recip_key = hash.encode()
+		""" Generate md5 digest of recipient key """
+		hash = None
+		rkey_path = self.key_paths[recip_key]
+		with open(rkey_path, "r") as fd:
+			key_data = fd.read()
+		hash = hashlib.md5(key_data.encode()).hexdigest()
+		recip_key = hash.encode()
 
-				msg_sender = msg_sender_key_hash.encode()
+		msg_sender = msg_sender_key_hash.encode()
 
-				resp = self.c_send_commit(breq_src=msg_sender,
-										breq_uuid_sig=bsig,
-										breq_uuid=uuid,
-										btime=ctime,
-										bdest=recip_key,
-										bpayload=cpayload,
-										bsource=csrc,
-										bsignature=csignature,
-										bchannel=cchan,
-										bsymetric_key=enc_sym_key)
+		resp = self.c_send_commit(breq_src=msg_sender,
+								breq_uuid_sig=bsig,
+								breq_uuid=uuid,
+								btime=ctime,
+								bdest=recip_key,
+								bpayload=cpayload,
+								bsource=csrc,
+								bsignature=csignature,
+								bchannel=cchan,
+								bsymetric_key=enc_sym_key)
 
-				if resp == None:
-					error('udon:send():c_send_commit() resp=None')
-					return False
+		if resp == None:
+			error('udon:send():c_send_commit() resp=None')
+			return False
 
-				return True
+		return True
 
 
 	def c_send_commit(self, 
@@ -484,6 +568,35 @@ class udon_client:
 			error(f'c_clean() - Failure connect/Clean()')
 			return None
 		return  resp
+
+
+	def c_fetchkey(self, bval: bytes, breq_src: bytes,
+				breq_uuid_sig: bytes, breq_uuid: bytes):
+		"""
+			client side prepare and send proto message to fetchkey() on remote machine
+			returns MessageResponse on success or None on error
+		"""
+		debug('c_fetchkey()')
+		types_lst = [
+			(bval, bytes),
+			(breq_src, bytes),
+			(breq_uuid_sig, bytes),
+			(breq_uuid, bytes)
+			]
+		if not udon_utils.type_check(types_lst):
+			error('c_msg_fetch() - invalid types')
+			return None
+
+		resp = None
+		try:
+			message = pb2.Request(value=bval, key_id=breq_src,
+									signature=breq_uuid_sig,
+									uuid=breq_uuid)
+			resp = self.stub.fetchkey(message)
+		except Exception as e:
+			error(f"c_fetchkey() {e}")
+			return None
+		return resp
 
 
 	def c_msg_fetch(self, bval: bytes, breq_src: bytes,
@@ -688,8 +801,6 @@ class udon_client:
 
 
 	def c_mark_msg_as_read(self, channel: str, num: int) -> int:
-		"""
-		"""
 		if not udon_utils.type_check([
 				(channel, str),
 				(num, int)]):
@@ -718,12 +829,14 @@ class udon_client:
 				(local_count, int),
 				(table, str),
 				(read_unread, bool)]):
-			error('Invalid type:message - c_mark_msg_as_read()')
+			error('Invalid type:message - c_read_range()')
 			return None
 
 		msg_list = []
 		NOT_VALID = "\033[0;31;48m[!]\033[0m"
 		VALID = "\033[0;32;48m[V]\033[0m"
+		validity = NOT_VALID
+		home_dir = udon_utils.home_dir()
 
 		if read_unread == True:
 			start = 1
@@ -735,65 +848,69 @@ class udon_client:
 				error('No messages.')
 				return []
 
+			msg_num          = rtn[0][0]
+			msg_timestamp    = rtn[0][1] 
+			msg_source_hash  = rtn[0][2]
+			msg              = rtn[0][3]
+			msg_signature    = rtn[0][4]
+			msg_channel_info = rtn[0][5]
+			msg_unread_value = rtn[0][6]
+			msg_symkey       = rtn[0][7]
+
 			if read_unread == True:
-				unread_value = rtn[0][6]
-				if unread_value != 'TRUE':
+				if msg_unread_value != 'TRUE':
 					continue
 
-			sk = rtn[0][7]
-			sym_key = self.c_decrypt_bstring_with_key(sk)
+			msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
 
-			msg_num = rtn[0][0]
-			time_stamp = self.c_decrypt_bstring_with_sym_key(rtn[0][1], sym_key)
-			time_stamp = time_stamp.decode("utf-8")
-			if time_stamp == None:
+			msg_timestamp = self.c_decrypt_bstring_with_sym_key(msg_timestamp, msg_symkey)
+			msg_timestamp = msg_timestamp.decode("utf-8")
+			if msg_timestamp == None:
 				error("message timestamp == None")
 				return None
-
 			""" Strip off the Garbage Padding """
-			time_stamp = time_stamp[:-37]
+			msg_timestamp = msg_timestamp[:-37]
 
-			source_hash = self.c_decrypt_bstring_with_sym_key(rtn[0][2], sym_key)
-			source_hash = source_hash.decode("utf-8")
-			if source_hash == None:
+			msg_source_hash = self.c_decrypt_bstring_with_sym_key(msg_source_hash, msg_symkey)
+			msg_source_hash = msg_source_hash.decode("utf-8")
+			if msg_source_hash == None:
 				error("message source == None")
 				return None
-
 			""" Strip off the Garbage Padding """
-			source_hash = source_hash[:-37]
+			msg_source_hash = msg_source_hash[:-37]
 
-			msg = self.c_decrypt_bstring_with_sym_key(rtn[0][3], sym_key)
+			msg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
 			msg = msg.decode("utf-8")
 			if msg == None:
 				error("message msg == None")
 				return None
-
 			""" Strip off the Garbage Padding """
 			msg = msg[:-37]
 
+			msg_channel_info = self.c_decrypt_bstring_with_sym_key(msg_channel_info, msg_symkey)
+			msg_channel_info = msg_channel_info.decode("utf-8")
+			if msg_channel_info == None:
+				error("message channel == None")
+				return None
+			""" Strip Garbage padding """
+			msg_channel_info = msg_channel_info[:-37]
+			msg_channel_info = json.loads(msg_channel_info)
+
+			""" Validate SRC/message Repudiation """
 			try:
-				source = self.hash_to_keyname[source_hash]
-				signature = rtn[0][4]
-				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
-				validation = self.c_verify_signature(signature,
+				source = self.hash_to_keyname[msg_source_hash]
+				msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, msg_symkey)
+				validation = self.c_verify_signature(msg_signature,
 									msg.encode(), source)
 			except Exception as e:
 				source = source_hash
 				validation = False
 
-			channel = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
-			channel = channel.decode("utf-8")
-			""" Strip Garbage padding """
-			channel = channel[:-37]
-			if channel == None:
-				error("message channel == None")
-				return None
-
-			validity = NOT_VALID
 			if validation == True:
 				validity = VALID
 
-			msg_as_lst = [i, time_stamp, validity, source, channel, msg]
+			channel = msg_channel_info["channel"]
+			msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg]
 			msg_list.append(msg_as_lst)
 
 			chan = f"chan_{channel}"
@@ -802,6 +919,59 @@ class udon_client:
 				error('read_range() - mark_msg_as_read() failure')
 				return None
 		return msg_list
+
+
+	def c_fetch_and_load_absent_keys(self, channel_info: dict) -> list:
+		"""
+			Load newly fetched keys for client use.
+		"""
+		home_dir = udon_utils.home_dir()
+		fetched_lst = self._fetch_absent_keys(channel_info)
+		for tpl in fetched_lst:
+			handle = tpl[0]
+
+			khash = tpl[1]
+			self.recipients.append(handle)
+			self.keyname_to_hash[handle] = khash
+			self.hash_to_keyname[khash] = handle
+			self.key_paths[handle] = client_side_key_path(handle)
+			output(f"Fetched Key: {handle}")
+		return fetched_lst
+
+
+	def _fetch_absent_keys(self, channel_info: dict) -> list:
+		"""
+			Fetch keys discovered in channel_info which are not found
+			in .udon/keys/client_side_keys/
+		"""
+		tpl_lst = []
+		for r in channel_info["recipients"]:
+			handle = channel_info["handles"][r]
+
+			# This comes from the local config.
+			if not r in self.hash_to_keyname.keys():
+				tpl = tuple((handle, r))
+				tpl_lst.append(tpl)
+
+				# Prep for fetch
+				bkey_md5 = r.encode()
+				key_id = self.keyname_to_hash[self.key_name]
+				key_id = key_id.encode()
+				req_uuid = udon_utils.generate_uuid()
+				req_uuid = req_uuid.encode()
+				uuid_sig = self.c_gen_signature(req_uuid)
+
+				# Fetch the key	
+				resp = self.c_fetchkey(bkey_md5, key_id, uuid_sig, req_uuid)
+				rtnd_key = resp.key.decode("utf-8")
+
+				# write the key
+				home_dir = udon_utils.home_dir()
+				path = client_side_key_path(handle)
+				success = udon_utils.write_key_to_file(path, rtnd_key)
+				if not success:
+					error("_fetch_absent_keys(): write_key_to_file() failed")
+		return tpl_lst
 
 
 	def c_read(self, table: str, num: int, read_unread=False) -> list:
@@ -851,7 +1021,7 @@ class udon_client:
 				(first, int),
 				(last, int),
 				(diff, int)]):
-			error("Invalid type:message - c_poll_sync()")
+			error("Invalid type:message - c_check_sync()")
 			return -1
 
 		nr_synced = 0
@@ -880,15 +1050,28 @@ class udon_client:
 
 			""" Decrypt sym_key with private key"""
 			sym_key = self.c_decrypt_bstring_with_key(response.symetric_key)
+			if not sym_key:
+				error(f"c_check_sync():c_decrypt_bstring_with_key(syn_key) Failed")
+				return -1
 
 			""" Decrypt channel with sym_key """
-			channel = self.c_decrypt_bstring_with_sym_key(response.channel, sym_key)
-			if channel == None:
+			channel_info = self.c_decrypt_bstring_with_sym_key(response.channel, sym_key)
+			if channel_info == None:
 				error("c_poll_sync(): resp channel:")
 				return -1
-			channel = channel.decode('utf-8')
-			channel = channel.split("%")[0]
-	
+			channel_info = channel_info.decode('utf-8')
+			channel_info = channel_info[:-37]
+			channel_info = json.loads(channel_info)
+
+			""" Decode message sender """
+			source_hash = self.c_decrypt_bstring_with_sym_key(response.source, sym_key)
+			source_hash = source_hash.decode("utf-8")
+			source_hash = source_hash[:-37]
+			if source_hash == None:
+				error("message source == None")
+				return None
+
+
 			""" Write message to local primary table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
 											table=self.key_name,
@@ -904,7 +1087,7 @@ class udon_client:
 			if rtn == 1:
 				error(f"c_poll_synce() - [1] write_msg_table_entry failure")
 
-			chan_table_name = f"chan_{channel}"
+			chan_table_name = f"chan_{channel_info["channel"]}"
 			if not udon_DB.table_exist(self.client_db_path, chan_table_name):
 				rtn = udon_DB.init_client_chan_table(self.client_db_path,
 										 				chan_table_name)
@@ -929,9 +1112,48 @@ class udon_client:
 				return -1
 			nr_synced = nr_synced + 1
 
+			""" verify channel keys exist locally. Fetch them if not. """
+			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
+
+			""" 
+			Create channel config if not already exist 
+			Use-case: When a client is added to a channel.
+			"""
+			success = self.create_chan_cfg_from_msg(channel_info)
+			if not success:
+				error("c_check_sync():create_chan_cfg_from_msg() Failed", True)
+				return None
+
+			""" Update config's recipeients list. """
+			success = self.update_chan_cfg_recipients(channel_info=channel_info,
+														recip=self.recipients,
+														source_hash=source_hash)
+			if not success:
+				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
+				return None
+
 		if not quiet:
 			output(f"Sync'd: {nr_synced}")
 		return diff
+
+
+	def create_chan_cfg_from_msg(self, channel_info) -> bool:
+		home_dir = udon_utils.home_dir()
+		channel = channel_info["channel"]
+		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel}"
+		recipients = channel_info["recipients"]
+
+		recips = []
+		for r in recipients:
+			recips.append(self.hash_to_keyname[r])
+
+		if not os.path.exists(cfg_path):
+			udon_utils.create_config("create", channel, 
+										self.key_name,
+										self.priv_key_path,
+										self.server_fqdn,
+										recips)
+		return True
 
 
 	def local_remote_count(self):
@@ -1009,6 +1231,109 @@ class udon_client:
 				first = int(local_msg_count) + 1
 			self.c_check_sync(first, last, diff, quiet)
 		return diff
+
+
+	def add_member_to_list(self, channel_info: dict, cfg) -> bool:
+		dest_lst = []
+		member = ""
+
+		if "add_member" in channel_info.keys():
+			member = channel_info["add_member"]
+		else:
+			error("add_member_to_list(): member key not found")
+			return False
+
+		""" This self.key_name is invited to a channel """
+		if member == self.key_name:
+			lst = []
+			for v in channel_info["recipients"]:
+				if v:
+					lst.append(channel_info["handles"][v])
+			dest_lst = lst
+		else:
+			dest_lst = cfg["dest_key_name_list"]
+
+		dest_lst.append(member)
+		dest_lst = list(set(dest_lst))
+		dest_lst.sort()
+
+		udon_utils.create_config(mode='update',
+					channel=cfg["channel"],
+					pkn=cfg["client_key_name"],
+					privkn=cfg["client_private_key"],
+					fqdn=cfg["server_fqdn"],
+					dest_lst=dest_lst)
+
+		self.c_fetch_and_load_absent_keys(channel_info)
+		return True
+
+
+	def drop_member_from_list(self, channel_info: dict, cfg: dict, source_hash: str) -> bool:
+		dest_lst = []
+		member = None
+		source_handle = None
+
+		if source_hash in self.hash_to_keyname.keys():
+			src_handle = self.hash_to_keyname[source_hash]
+		else:
+			error("srouce_hash not in hash_to_keyname dict")
+			return False
+
+		if "drop_member" in channel_info.keys():
+			member = channel_info["drop_member"]
+		else:
+			error("drop_member_from_list(): drop_member key not found")
+			return False
+
+		""" Only members can drop themselfs. """
+		""" TODO: Rethink if member should rm self from own config """
+		if member == src_handle and member != self.key_name:
+			dest_lst = cfg["dest_key_name_list"]
+			if member in dest_lst:
+				dest_lst.remove(member)
+			dest_lst = list(set(dest_lst))
+			dest_lst.sort()
+
+			udon_utils.create_config(mode='update',
+					channel=cfg["channel"],
+					pkn=cfg["client_key_name"],
+					privkn=cfg["client_private_key"],
+					fqdn=cfg["server_fqdn"],
+					dest_lst=dest_lst)
+
+		""" TODO: If dropping a key, there is no need to fetch it"""
+		self.c_fetch_and_load_absent_keys(channel_info)
+		return True
+
+
+	def update_chan_cfg_recipients(self, channel_info: dict, recip: list, source_hash: str) -> bool:
+		home_dir = udon_utils.home_dir()
+		chan_cfg = None
+		dest_lst = []
+
+		if "channel" in channel_info.keys():
+			channel_name = channel_info["channel"]
+			if not channel_name:
+				return False
+
+		""" load channel config """
+		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
+		if os.path.exists(cfg_path):
+			try:
+				cfg = config.Config(cfg_path)
+				cfg = cfg.as_dict()
+				dest_lst = cfg["dest_key_name_list"]
+			except Exception as e:
+				error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
+				return False
+
+		if "add_member" in channel_info.keys() and channel_info["add_member"]:
+			return self.add_member_to_list(channel_info, cfg)
+		if "drop_member" in channel_info.keys() and channel_info["drop_member"]:
+			return self.drop_member_from_list(channel_info, cfg, source_hash)
+			pass
+
+		return True
 
 
 class udon_server(pb2_grpc.UnaryServicer):
@@ -1103,14 +1428,14 @@ class udon_server(pb2_grpc.UnaryServicer):
 			rename public key files to be the md5sum of the file itself.
 		"""
 		home_dir = udon_utils.home_dir()
-		ssk_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
+		ssk_dir = server_side_keys_dir()
 
 		key_lst = os.listdir(ssk_dir)
 		if len(key_lst) < 1:
 			return True
 
 		for key in key_lst:
-			path = f"{ssk_dir}/{key}"
+			path = server_side_key_path(key)
 			key_data = None
 			with open(path, "r") as fd:
 				key_data = fd.read()
@@ -1130,13 +1455,14 @@ class udon_server(pb2_grpc.UnaryServicer):
 		"""
 		home_dir = udon_utils.home_dir()
 
-		srv_side_key_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
+		srv_side_key_dir = server_side_keys_dir()
 		if not os.path.exists(srv_side_key_dir):
 			return False
 
 		klst = os.listdir(srv_side_key_dir)
 		for k in klst:
-			with open(f"{srv_side_key_dir}/{k}") as fd:
+			path = server_side_key_path(k)
+			with open(path) as fd:
 				key_data = fd.read()
 				self.keys_dict[k] = key_data
 		return True
@@ -1174,13 +1500,18 @@ class udon_server(pb2_grpc.UnaryServicer):
 	"""
 	def s_verify_signature(self, sig: bytes, message: bytes,
 							key_id: str) -> bool:
-		# verify types
+		if not udon_utils.type_check([(sig, bytes), 
+									(message, bytes),
+									(key_id, str)]):
+			error("Invalid inputs - s_verify_signature()", True)
+			return False
+
 		debug("s_verify_signature()")
 		key_path = None
 		home_dir = udon_utils.home_dir()
 
 		if key_id in self.keys_dict.keys():
-			key_path = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/{key_id}"
+			key_path = server_side_key_path(key_id)
 		else:
 			return False
 
@@ -1346,6 +1677,54 @@ class udon_server(pb2_grpc.UnaryServicer):
 			"error":b""
 			}
 		return pb2.MessageResponse(**MessageResponse)
+
+
+	def fetchkey(self, request, context):
+		"""
+			Server side RPC to fetch a public key from ssrver
+			keyword arguments:
+			request: proto request
+		"""
+		debug("fetchkey()")
+		row_entry = ''
+
+		success, err_msg, key_id = self._verify_request(request, op="keyfetch")
+		if success == False:
+			error(f"keyfetch(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
+			return pb2.MessageResponse(**err_msg)
+
+		value = request.value
+		key_id_req = value.decode('utf-8')
+		if len(key_id_req) == 0:
+			err_resp = "Error: keyfetch() - missing arg: value".encode()
+			response = {"error":err_resp}
+			return pb2.FetchKeyResponse(**response)
+
+		if not key_id_req in self.keys_dict.keys():
+			FKResponse = {
+				"key":b"",
+				"error":b"Error:Key Not Found."
+				}
+			return pb2.FetchKeyResponse(**FKResponse)
+
+		key = self.keys_dict[key_id_req]
+
+		""" Verify the key being retruned is public """
+		B = "-----BEGIN PUBLIC KEY-----"
+		E = "-----END PUBLIC KEY-----"
+		if not (B in key) and (E in key):
+			FKResponse = {
+				"key":b"",
+				"error":b"Error:Non Public Key Found."
+				}
+			return pb2.FetchKeyResponse(**FKResponse)
+
+		key = key.encode()
+		FKResponse = {
+			"key":key,
+			"error":b""
+			}
+		return pb2.FetchKeyResponse(**FKResponse)
 
 
 	def ping(self, request, context):
@@ -1805,7 +2184,7 @@ class udon_utils:
 
 		if not os.path.exists(key_path):
 			return False
-		
+
 		public_key = udon_utils.utl_load_pub_key(key_path)
 		if public_key == None:
 			error(f"utl_verify_signature() - utl_load_pub_key() returned: None", True)
@@ -1835,6 +2214,58 @@ class udon_utils:
 		real_path = os.path.join(os.path.dirname(__file__), filepath)
 		with open(real_path, "rb") as f:
 			return f.read()
+
+
+	def write_key_to_file(path: str, key: str) -> bool:
+		"""
+			Write key to file
+		"""
+		if os.path.exists(path):
+			return False
+
+		B = "-----BEGIN PUBLIC KEY-----"
+		E = "-----END PUBLIC KEY-----"
+		if not (B in key) and (E in key):
+			error("write_key_to_file() - Non Public Key detected.")
+			return False
+
+		try:
+			fd = open(path,"w")
+			fd.write(key)
+			fd.close()
+		except Exception as e:
+			error(str(e))
+			return Fasle
+		return True
+
+	# TODO remove same func from udon_init
+	def create_config(mode: str, channel: str, pkn: str, privkn: str, fqdn: str, dest_lst: list):
+		""" Check test config """
+		home_dir = udon_utils.home_dir()
+		chan_cfg_path = f"{home_dir}/.udon/channel_cfgs/{channel}"
+		dest_lst = str(dest_lst)
+
+		if mode == 'create':
+			file_mode = "x"
+		if mode == 'update':
+			file_mode = "w"
+
+		cfg = f"""
+channel = "{channel}"
+client_key_name = '{pkn}'
+client_private_key = '{privkn}'
+client_db_path = '{home_dir}/.udon/db/{pkn}-udon-local.db'
+dest_key_name_list = {dest_lst}
+clean_on_sync = 'disable'
+server_fqdn = '{fqdn}'
+server_port = '50051'
+ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
+"""
+		with open(chan_cfg_path, file_mode) as fd:
+			fd.write(cfg)
+		os.chmod(chan_cfg_path, 0o600)
+		return
+
 
 
 class udon_DB:
@@ -2270,6 +2701,7 @@ class udon_DB:
 		"""
 			Retrun list of file names in channel_cfgs directory
 			Return None on error
+			TODO: should return empty list not None?
 		"""
 		home_dir = udon_utils.home_dir()
 		if home_dir == None:
@@ -2323,7 +2755,7 @@ class udon_DB:
 		return rtn
 
 
-	def dehyphenate_uuid(uid: str):
+	def dehyphenate_uuid(uid: str) -> str:
 		if not udon_utils.type_check([(uid, str)]):
 			error('input type error - dehyphenate_uuid()', True)
 			return None
@@ -2381,7 +2813,8 @@ class udon_DB:
 
 	def replayed_uuid(db_path: str, table: str, uid: str) -> int:
 		"""
-			Test if arg uid is present in UUID table
+			Test if arg uid exists in UUID table, indicating it
+			has has been used before.
 
 			Requires init_db called before use.
 			returns:
