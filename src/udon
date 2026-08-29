@@ -503,8 +503,12 @@ if __name__ == '__main__':
 	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="", help="udon --daemon")
 	parser.add_option("--test", dest="test", action='store_true', metavar="", help="udon --test")
 	parser.add_option("--init", dest="init", action='store_true', metavar="", help="udon --init")
+	parser.add_option("-v", "--version", dest="version", action='store_true', metavar="", help="udon --version")
 
 	(options, args) = parser.parse_args()
+
+	if options.version:
+		print("Udon: Version 0.01")
 
 	if options.msg_channel:
 		t = Test().check_all_configs()
