@@ -789,6 +789,11 @@ class Test:
 			local_key = fd.read()
 		self.evaluate(local_key, rtnd_key, f"fetchkey() Key match", quiet=True)
 
+		""" Test 2 - write key to file """
+		udon_utils.write_key_to_file(f"/tmp/{key_md5}", rtnd_key)
+		status = os.path.exists(f"/tmp/{key_md5}")
+		self.evaluate(True, status, f"fetchkey() write key Key to dile", quiet=True)
+
 
 	def fetch_tests(self, cfg):
 		print("\n----------------------")

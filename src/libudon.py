@@ -1925,6 +1925,23 @@ class udon_utils:
 			return f.read()
 
 
+	def write_key_to_file(path: str, key: str) -> bool:
+		"""
+			Write key to file
+		"""
+		if os.path.exists(path):
+			return False
+
+		try:
+			fd = open(path,"w")
+			fd.write(key)
+			fd.close()
+		except Exception as e:
+			error(str(e))
+			return Fasle
+		return True
+
+
 class udon_DB:
 
 	def open_db_connection(db_path: str):
