@@ -177,6 +177,18 @@ class udon_client:
 			return False
 		return True
 
+	def channel_struct(self, channel: str, recipents: list) -> str:
+		d = {}
+		d["channel"] = channel
+
+		lst = []
+		for e in recipents:
+			h = self.keyname_to_hash[e]
+			lst.append(h)
+		d["recipients"] = lst
+
+		rtn = json.dumps(d)
+		return rtn
 
 	def c_send(self, recip_key: str, msg: str, signature: bytes,
 					channel: str) -> bool:
@@ -747,7 +759,7 @@ class udon_client:
 				(local_count, int),
 				(table, str),
 				(read_unread, bool)]):
-			error('Invalid type:message - c_mark_msg_as_read()')
+			error('Invalid type:message - c_read_range()')
 			return None
 
 		msg_list = []
@@ -802,6 +814,10 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			source_hash = source_hash[:-37]
 
+			# TODO: Check if source key exist on client
+			# if not
+			#	 pull the missing key
+
 			msg = self.c_decrypt_bstring_with_sym_key(rtn[0][3], sym_key)
 			msg = msg.decode("utf-8")
 			if msg == None:
@@ -821,18 +837,20 @@ class udon_client:
 				source = source_hash
 				validation = False
 
-			channel = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
-			channel = channel.decode("utf-8")
+			channel_info = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
+			channel_info = channel_info.decode("utf-8")
 			""" Strip Garbage padding """
-			channel = channel[:-37]
-			if channel == None:
+			channel_info = channel_info[:-37]
+			if channel_info == None:
 				error("message channel == None")
 				return None
+			channel_info = json.loads(channel_info)
 
 			validity = NOT_VALID
 			if validation == True:
 				validity = VALID
 
+			channel = channel_info["channel"]
 			msg_as_lst = [i, time_stamp, validity, source, channel, msg]
 			msg_list.append(msg_as_lst)
 
@@ -922,13 +940,14 @@ class udon_client:
 			sym_key = self.c_decrypt_bstring_with_key(response.symetric_key)
 
 			""" Decrypt channel with sym_key """
-			channel = self.c_decrypt_bstring_with_sym_key(response.channel, sym_key)
-			if channel == None:
+			channel_info = self.c_decrypt_bstring_with_sym_key(response.channel, sym_key)
+			if channel_info == None:
 				error("c_poll_sync(): resp channel:")
 				return -1
-			channel = channel.decode('utf-8')
-			channel = channel.split("%")[0]
-	
+			channel_info = channel_info.decode('utf-8')
+			channel_info = channel_info[:-37]
+			channel_info = json.loads(channel_info)
+
 			""" Write message to local primary table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
 											table=self.key_name,
@@ -944,7 +963,7 @@ class udon_client:
 			if rtn == 1:
 				error(f"c_poll_synce() - [1] write_msg_table_entry failure")
 
-			chan_table_name = f"chan_{channel}"
+			chan_table_name = f"chan_{channel_info["channel"]}"
 			if not udon_DB.table_exist(self.client_db_path, chan_table_name):
 				rtn = udon_DB.init_client_chan_table(self.client_db_path,
 										 				chan_table_name)

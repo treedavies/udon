@@ -252,9 +252,13 @@ def do_commit_message():
 
 	sent = 0
 	total = len(client.recipients)
+	
+	channel_name = client.channel_struct(client.channel_name,
+							 client.recipients)
+
 	print("Sending...")
 	for recipient in client.recipients:
-		rtn = client.c_send(recipient, msg, sig, client.channel_name)
+		rtn = client.c_send(recipient, msg, sig, channel_name)
 		if rtn == True:
 			sent = sent + 1
 	print(f"Sent:{sent}/{total}")
