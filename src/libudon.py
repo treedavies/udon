@@ -1932,6 +1932,12 @@ class udon_utils:
 		if os.path.exists(path):
 			return False
 
+		B = "-----BEGIN PUBLIC KEY-----"
+		E = "-----END PUBLIC KEY-----"
+		if not (B in key) and (E in key):
+			error("write_key_to_file() - Non Public Key detected.")
+			return False
+
 		try:
 			fd = open(path,"w")
 			fd.write(key)
