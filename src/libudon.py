@@ -847,52 +847,14 @@ class udon_client:
 				return None
 			channel_info = json.loads(channel_info)
 
-
-
-
-
-
-			# Fetch_absent_keys()
-			print(channel_info)
-			for r in channel_info["recipients"]:
-				handle = channel_info["handles"][r]
-				
-				print(f"r:handle: {handle}:{r}")
-				if r in self.hash_to_keyname.keys():
-					print(f"if:handle: {handle} found in current config.\n")
-				else:
-					print(f"else:handle Not Found: {handle}:{r}")
-					# Fetch Key and save 
-
-					# Prep for fetch
-					bkey_md5 = r.encode()
-					key_id = self.keyname_to_hash[self.key_name]
-					key_id = key_id.encode()
-					req_uuid = udon_utils.generate_uuid()
-					req_uuid = req_uuid.encode()
-					uuid_sig = self.c_gen_signature(req_uuid)
-
-					# Fetch the key	
-					resp = self.c_fetchkey(bkey_md5, key_id, uuid_sig, req_uuid)
-					rtnd_key = resp.key.decode("utf-8")
-					print(rtnd_key)
-
-					# write the key
-					home_dir = udon_utils.home_dir()
-					path = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
-					success = udon_utils.write_key_to_file(path, rtnd_key)
-					if not success:
-						print("Error: Writing handle key blah...")
+			""" verify channel keys exist locally. Fetch them if not. """
+			fetched_lst = self._fetch_absent_keys(channel_info)
 
 			# TODO: update_config()
 			# check new keys
 			# check updated handles
 			# check for recipiant removal
 			# maybe check for key removal
-
-
-
-
 
 			validity = NOT_VALID
 			if validation == True:
@@ -908,6 +870,36 @@ class udon_client:
 				error('read_range() - mark_msg_as_read() failure')
 				return None
 		return msg_list
+
+
+	def _fetch_absent_keys(self, channel_info: dict):
+		tpl_lst = []
+		for r in channel_info["recipients"]:
+			handle = channel_info["handles"][r]
+
+			if not r in self.hash_to_keyname.keys():
+				tpl = tuple((handle, r))
+				tpl_lst.append(tpl)
+
+				# Prep for fetch
+				bkey_md5 = r.encode()
+				key_id = self.keyname_to_hash[self.key_name]
+				key_id = key_id.encode()
+				req_uuid = udon_utils.generate_uuid()
+				req_uuid = req_uuid.encode()
+				uuid_sig = self.c_gen_signature(req_uuid)
+
+				# Fetch the key	
+				resp = self.c_fetchkey(bkey_md5, key_id, uuid_sig, req_uuid)
+				rtnd_key = resp.key.decode("utf-8")
+
+				# write the key
+				home_dir = udon_utils.home_dir()
+				path = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
+				success = udon_utils.write_key_to_file(path, rtnd_key)
+				if not success:
+					print("Error: Writing handle key blah...")
+			return tpl_lst
 
 
 	def c_read(self, table: str, num: int, read_unread=False) -> list:
