@@ -253,7 +253,7 @@ def do_commit_message():
 	sent = 0
 	total = len(client.recipients)
 	
-	channel_name = client.channel_struct(client.channel_name,
+	channel_name = client.gen_channel_struct(client.channel_name,
 							 client.recipients)
 
 	print("Sending...")

@@ -177,7 +177,7 @@ class udon_client:
 			return False
 		return True
 
-	def channel_struct(self, channel: str, recipents: list) -> str:
+	def gen_channel_struct(self, channel: str, recipents: list) -> str:
 		d = {}
 		d["channel"] = channel
 
@@ -186,6 +186,11 @@ class udon_client:
 			h = self.keyname_to_hash[e]
 			lst.append(h)
 		d["recipients"] = lst
+
+		handles = {}
+		for hash in lst:
+			handles[hash] = self.hash_to_keyname[hash]
+		d["handles"] = handles
 
 		rtn = json.dumps(d)
 		return rtn
@@ -814,10 +819,6 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			source_hash = source_hash[:-37]
 
-			# TODO: Check if source key exist on client
-			# if not
-			#	 pull the missing key
-
 			msg = self.c_decrypt_bstring_with_sym_key(rtn[0][3], sym_key)
 			msg = msg.decode("utf-8")
 			if msg == None:
@@ -845,6 +846,9 @@ class udon_client:
 				error("message channel == None")
 				return None
 			channel_info = json.loads(channel_info)
+
+			# TODO: fetch_absent_keys()
+			# TODO: update_config()
 
 			validity = NOT_VALID
 			if validation == True:
