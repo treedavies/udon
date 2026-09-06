@@ -824,19 +824,8 @@ class udon_client:
 			if msg == None:
 				error("message msg == None")
 				return None
-
 			""" Strip off the Garbage Padding """
 			msg = msg[:-37]
-
-			try:
-				source = self.hash_to_keyname[source_hash]
-				signature = rtn[0][4]
-				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
-				validation = self.c_verify_signature(signature,
-									msg.encode(), source)
-			except Exception as e:
-				source = source_hash
-				validation = False
 
 			channel_info = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
 			channel_info = channel_info.decode("utf-8")
@@ -849,16 +838,39 @@ class udon_client:
 
 			""" verify channel keys exist locally. Fetch them if not. """
 			fetched_lst = self._fetch_absent_keys(channel_info)
+			for tpl in fetched_lst:
+				# print(f"New Key: {tpl}")
+				handle = tpl[0]
+				khash = tpl[1]
+				self.keyname_to_hash[handle] = khash
+				self.hash_to_keyname[khash] = handle
 
-			# TODO: update_config()
-			# check new keys
-			# check updated handles
-			# check for recipiant removal
-			# maybe check for key removal
+			""" Validate SRC/message Repudiation """
+			try:
+				source = self.hash_to_keyname[source_hash]
+				signature = rtn[0][4]
+				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
+				validation = self.c_verify_signature(signature,
+									msg.encode(), source)
+			except Exception as e:
+				source = source_hash
+				validation = False
 
 			validity = NOT_VALID
 			if validation == True:
 				validity = VALID
+
+			""" TODO: update_config() """
+				# check new keys:  Add fetched_lst to file config
+
+			""" TODO: handle update """
+				#	Diff handles with current config
+				#	If SRC changed handle, then update
+
+			""" Channel member removal """
+				# check for recipiant removal
+				#	if id.beginswith("-") and from SRC
+				#	remove it.
 
 			channel = channel_info["channel"]
 			msg_as_lst = [i, time_stamp, validity, source, channel, msg]
@@ -872,7 +884,7 @@ class udon_client:
 		return msg_list
 
 
-	def _fetch_absent_keys(self, channel_info: dict):
+	def _fetch_absent_keys(self, channel_info: dict) -> list:
 		tpl_lst = []
 		for r in channel_info["recipients"]:
 			handle = channel_info["handles"][r]
@@ -1952,7 +1964,7 @@ class udon_utils:
 
 		if not os.path.exists(key_path):
 			return False
-		
+
 		public_key = udon_utils.utl_load_pub_key(key_path)
 		if public_key == None:
 			error(f"utl_verify_signature() - utl_load_pub_key() returned: None", True)
