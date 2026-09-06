@@ -2019,6 +2019,19 @@ class udon_utils:
 		return True
 
 
+	def update_chan_cfg_recipients(chan_name: str, recip: list) -> bool:
+		home_dir = udon_utils.home_dir()
+		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+		try:
+			cfg = config.Config(cfg_path)
+		except Exception as e:
+			error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
+			return False
+		cfg = cfg.as_dict()
+		# TODO: Update the file
+		return True
+
+
 class udon_DB:
 
 	def open_db_connection(db_path: str):
