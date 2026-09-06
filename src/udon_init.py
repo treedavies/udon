@@ -157,7 +157,9 @@ class initialization:
 				with open(skp_path, 'wb') as f:
 					print(f" Writing Public key: {skp_path}")
 					f.write(pub)
-				self.create_config(name, name+'.pub', name, hostname)
+
+				dest_lst = [f"{name}.pub"]
+				self.create_config(name, name+'.pub', name, hostname, dest_lst)
 
 
 	def create_test_keys(self):
@@ -204,7 +206,8 @@ class initialization:
 			print(f" Creating public key: {sk_B_pub}")
 			f.write(pub)
 
-		self.create_config('test', 'test_key_A.pub', 'test_key_A', hostname)
+		dest_lst = ["test_key_A.pub", "test_key_B.pub"]
+		self.create_config('test', 'test_key_A.pub', 'test_key_A', hostname, dest_lst)
 
 
 	def create_keys(self, key_size: int):
@@ -342,16 +345,17 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		return subject.replace('/CN=','')
 
 
-	def create_config(self, name: str, pkn:str, privkn:str, fqdn: str):
+	def create_config(self, name: str, pkn:str, privkn:str, fqdn: str, dest_lst: list):
 		""" Check test config """
 		chan_cfg_path = f"{self.home_dir}/{UDON_CHAN_DIR}/{name}"
+		dest_lst = str(dest_lst)
 
 		test = f"""
 channel = "{name}"
 client_key_name = '{pkn}'
 client_private_key = '{self.home_dir}/{UDON_KEYS_DIR}/client_side_keys/{privkn}'
 client_db_path = '{self.home_dir}/{UDON_DB_DIR}/{pkn}-udon-local.db'
-dest_key_name_list = ['{pkn}']
+dest_key_name_list = {dest_lst}
 clean_on_sync = 'disable'
 server_fqdn = '{fqdn}'
 server_port = '50051'

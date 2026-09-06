@@ -1440,6 +1440,8 @@ class Test:
 
 
 	def run_tests(self, cfg: str, srv_cfg: str):
+		self.clean_up(cfg)
+
 		self.check_types()
 
 		self.running_tests_on_server(cfg)
