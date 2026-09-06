@@ -157,7 +157,7 @@ class initialization:
 				with open(skp_path, 'wb') as f:
 					print(f" Writing Public key: {skp_path}")
 					f.write(pub)
-				self.create_self_config(name, name+'.pub', name, hostname)
+				self.create_config(name, name+'.pub', name, hostname)
 
 
 	def create_test_keys(self):
@@ -204,7 +204,7 @@ class initialization:
 			print(f" Creating public key: {sk_B_pub}")
 			f.write(pub)
 
-		self.create_self_config('test', 'test_key_A.pub', 'test_key_A', hostname)
+		self.create_config('test', 'test_key_A.pub', 'test_key_A', hostname)
 
 
 	def create_keys(self, key_size: int):
@@ -342,7 +342,7 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		return subject.replace('/CN=','')
 
 
-	def create_self_config(self, name: str, pkn:str, privkn:str, fqdn: str):
+	def create_config(self, name: str, pkn:str, privkn:str, fqdn: str):
 		""" Check test config """
 		chan_cfg_path = f"{self.home_dir}/{UDON_CHAN_DIR}/{name}"
 
