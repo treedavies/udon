@@ -872,10 +872,6 @@ class udon_client:
 				""" TODO: update config """
 				udon_utils.update_chan_cfg_recipients(chan_name=chan, recip=self.recipients)
 
-			if not (os.path.exists(chan_cfg) and fetched_lst):
-				print(f"Not Exists: Will create: {chan_cfg}.")
-				""" TODO> Create config """
-
 			""" TODO: handle update """
 				#	Diff handles with current config
 				#	If SRC changed handle, then update
@@ -1052,6 +1048,19 @@ class udon_client:
 				error(f"c_check_sync() - [2] write_msg_table_entry failure")
 				return -1
 			nr_synced = nr_synced + 1
+
+			""" Create channel config if not already exist """
+			home_dir = udon_utils.home_dir()
+			channel = channel_info["channel"]
+			recipients = channel_info["recipients"]
+			cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel}"
+			if not os.path.exists(cfg_path):
+				print(f"Not Exists: Will create: {cfg_path}.")
+				udon_utils.create_config("create", channel, 
+											self.key_name,
+											self.priv_key_path,
+											self.server_fqdn,
+											recipients)
 
 		if not quiet:
 			output(f"Sync'd: {nr_synced}")
