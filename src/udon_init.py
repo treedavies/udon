@@ -206,7 +206,7 @@ class initialization:
 			print(f" Creating public key: {sk_B_pub}")
 			f.write(pub)
 
-		dest_lst = ["test_key_A.pub", "test_key_B.pub"]
+		dest_lst = ["test_key_A.pub",]
 		self.create_config('test', 'test_key_A.pub', 'test_key_A', hostname, dest_lst)
 
 
