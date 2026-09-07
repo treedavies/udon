@@ -770,6 +770,8 @@ class udon_client:
 		msg_list = []
 		NOT_VALID = "\033[0;31;48m[!]\033[0m"
 		VALID = "\033[0;32;48m[V]\033[0m"
+		validity = NOT_VALID
+		home_dir = udon_utils.home_dir()
 
 		if read_unread == True:
 			start = 1
@@ -843,12 +845,11 @@ class udon_client:
 				khash = tpl[1]
 				self.keyname_to_hash[handle] = khash
 				self.hash_to_keyname[khash] = handle
-				home_dir = udon_utils.home_dir()
 				self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
+				output(f"Fetched Key: {handle}")
 
 			""" Validate SRC/message Repudiation """
 			try:
-				print(self.hash_to_keyname)
 				source = self.hash_to_keyname[source_hash]
 				signature = rtn[0][4]
 				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
@@ -858,14 +859,18 @@ class udon_client:
 				source = source_hash
 				validation = False
 
-			validity = NOT_VALID
 			if validation == True:
 				validity = VALID
 
-			""" TODO: Check if channel config exists """
-
-			""" TODO: update_config() """
-				# check new keys:  Add fetched_lst to file config
+			""" Check if channel config exists """
+			chan = channel_info["channel"]
+			chan_cfg = f"{home_dir}/{UDON_CHAN_DIR}/{chan}"
+			if os.path.exists(chan_cfg):
+				print(f"Exists: Will update: {chan_cfg}.")
+				""" TODO: update config """
+			else:
+				print(f"Not Exists: Will create: {chan_cfg}.")
+				""" TODO> Create config """
 
 			""" TODO: handle update """
 				#	Diff handles with current config
