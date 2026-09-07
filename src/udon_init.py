@@ -159,7 +159,7 @@ class initialization:
 					f.write(pub)
 
 				dest_lst = [f"{name}.pub"]
-				self.create_config(name, name+'.pub', name, hostname, dest_lst)
+				self.create_config('create', name, name+'.pub', name, hostname, dest_lst)
 
 
 	def create_test_keys(self):
@@ -207,7 +207,7 @@ class initialization:
 			f.write(pub)
 
 		dest_lst = ["test_key_A.pub",]
-		self.create_config('test', 'test_key_A.pub', 'test_key_A', hostname, dest_lst)
+		self.create_config('create', 'test', 'test_key_A.pub', 'test_key_A', hostname, dest_lst)
 
 
 	def create_keys(self, key_size: int):
@@ -345,13 +345,13 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		return subject.replace('/CN=','')
 
 
-	def create_config(self, name: str, pkn:str, privkn:str, fqdn: str, dest_lst: list):
+	def create_config(self, mode: str, channel: str, pkn: str, privkn: str, fqdn: str, dest_lst: list):
 		""" Check test config """
-		chan_cfg_path = f"{self.home_dir}/{UDON_CHAN_DIR}/{name}"
+		chan_cfg_path = f"{self.home_dir}/{UDON_CHAN_DIR}/{channel}"
 		dest_lst = str(dest_lst)
 
 		test = f"""
-channel = "{name}"
+channel = "{channel}"
 client_key_name = '{pkn}'
 client_private_key = '{self.home_dir}/{UDON_KEYS_DIR}/client_side_keys/{privkn}'
 client_db_path = '{self.home_dir}/{UDON_DB_DIR}/{pkn}-udon-local.db'
@@ -361,15 +361,18 @@ server_fqdn = '{fqdn}'
 server_port = '50051'
 ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/{fqdn}-root.crt'
 """
-		if not os.path.exists(chan_cfg_path):
-			with open(chan_cfg_path, "x") as fd:
-				fd.write(test)
-				print(f" Created {chan_cfg_path}")
-			os.chmod(chan_cfg_path, 0o400)
+
+		if mode == 'create':
+			file_mode = "x"
+		if mode == 'update':
+			file_mode = "w"
+
+		with open(chan_cfg_path, file_mode) as fd:
+			fd.write(test)
 			print(f" Created {chan_cfg_path}")
-			return
-		else:
-			print(f"[Exists] {chan_cfg_path} - Doing nothing...")
+		os.chmod(chan_cfg_path, 0o400)
+		print(f" Created {chan_cfg_path}")
+		return
 
 
 	def init_env(self):

@@ -839,14 +839,16 @@ class udon_client:
 			""" verify channel keys exist locally. Fetch them if not. """
 			fetched_lst = self._fetch_absent_keys(channel_info)
 			for tpl in fetched_lst:
-				# print(f"New Key: {tpl}")
 				handle = tpl[0]
 				khash = tpl[1]
 				self.keyname_to_hash[handle] = khash
 				self.hash_to_keyname[khash] = handle
+				home_dir = udon_utils.home_dir()
+				self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
 
 			""" Validate SRC/message Repudiation """
 			try:
+				print(self.hash_to_keyname)
 				source = self.hash_to_keyname[source_hash]
 				signature = rtn[0][4]
 				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
@@ -859,6 +861,8 @@ class udon_client:
 			validity = NOT_VALID
 			if validation == True:
 				validity = VALID
+
+			""" TODO: Check if channel config exists """
 
 			""" TODO: update_config() """
 				# check new keys:  Add fetched_lst to file config
@@ -2028,7 +2032,12 @@ class udon_utils:
 			error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
 			return False
 		cfg = cfg.as_dict()
-		# TODO: Update the file
+		self.create_config(mode='update',
+							channel=cfg["channel"],
+							pkn=cfg["client_key_name"]+'.pub',
+							privkn=cfg["client_private_key"],
+							fqdn=cfg["server_fqdn"],
+							dest_lst=recip)
 		return True
 
 
