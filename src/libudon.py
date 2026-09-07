@@ -16,6 +16,7 @@ import config
 import sqlite3
 import platform
 import hashlib
+from udon_init import initialization
 from concurrent import futures
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -843,6 +844,7 @@ class udon_client:
 			for tpl in fetched_lst:
 				handle = tpl[0]
 				khash = tpl[1]
+				self.recipients.append(handle)
 				self.keyname_to_hash[handle] = khash
 				self.hash_to_keyname[khash] = handle
 				self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
@@ -865,10 +867,12 @@ class udon_client:
 			""" Check if channel config exists """
 			chan = channel_info["channel"]
 			chan_cfg = f"{home_dir}/{UDON_CHAN_DIR}/{chan}"
-			if os.path.exists(chan_cfg):
+			if os.path.exists(chan_cfg) and fetched_lst:
 				print(f"Exists: Will update: {chan_cfg}.")
 				""" TODO: update config """
-			else:
+				udon_utils.update_chan_cfg_recipients(chan_name=chan, recip=self.recipients)
+
+			if not (os.path.exists(chan_cfg) and fetched_lst):
 				print(f"Not Exists: Will create: {chan_cfg}.")
 				""" TODO> Create config """
 
@@ -2027,19 +2031,50 @@ class udon_utils:
 			return Fasle
 		return True
 
+	# TODO remove same func from udon_init
+	def create_config(mode: str, channel: str, pkn: str, privkn: str, fqdn: str, dest_lst: list):
+		""" Check test config """
+		home_dir = udon_utils.home_dir()
+		chan_cfg_path = f"{home_dir}/.udon/channel_cfgs/{channel}"
+		dest_lst = str(dest_lst)
+
+		if mode == 'create':
+			file_mode = "x"
+		if mode == 'update':
+			file_mode = "w"
+
+		cfg = f"""
+channel = "{channel}"
+client_key_name = '{pkn}'
+client_private_key = '{privkn}'
+client_db_path = '{home_dir}/.udon/db/{pkn}-udon-local.db'
+dest_key_name_list = {dest_lst}
+clean_on_sync = 'disable'
+server_fqdn = '{fqdn}'
+server_port = '50051'
+ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
+"""
+		with open(chan_cfg_path, file_mode) as fd:
+			fd.write(cfg)
+			print(f"{file_mode} {chan_cfg_path}")
+		os.chmod(chan_cfg_path, 0o600)
+		print(f" Created {chan_cfg_path}")
+		return
+
 
 	def update_chan_cfg_recipients(chan_name: str, recip: list) -> bool:
 		home_dir = udon_utils.home_dir()
-		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{chan_name}"
 		try:
 			cfg = config.Config(cfg_path)
 		except Exception as e:
 			error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
 			return False
 		cfg = cfg.as_dict()
-		self.create_config(mode='update',
+
+		udon_utils.create_config(mode='update',
 							channel=cfg["channel"],
-							pkn=cfg["client_key_name"]+'.pub',
+							pkn=cfg["client_key_name"],
 							privkn=cfg["client_private_key"],
 							fqdn=cfg["server_fqdn"],
 							dest_lst=recip)
