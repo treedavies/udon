@@ -856,14 +856,14 @@ class udon_client:
 			if validation == True:
 				validity = VALID
 
-			""" Check if channel config exists """
-			# TODO make it a function
-			chan = channel_info["channel"]
-			chan_cfg = f"{home_dir}/{UDON_CHAN_DIR}/{chan}"
-			if os.path.exists(chan_cfg) and fetched_lst:
-				print(f"Exists: Will update: {chan_cfg}.")
-				""" TODO: update config """
-				udon_utils.update_chan_cfg_recipients(chan_name=chan, recip=self.recipients)
+			"""
+			If channel cfg file exists, Update config's recipeients list.
+			It should exist, as configs are created during c_check_sync().
+			"""
+			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, fetched_lst=fetched_lst, recip=self.recipients)
+			if success == False:
+				error("c_read_range():update_chan_cfg_recipients() Failed", True)
+				return None
 
 			""" TODO: handle update """
 				#	Diff handles with current config
@@ -2085,22 +2085,30 @@ ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
 		return
 
 
-	def update_chan_cfg_recipients(chan_name: str, recip: list) -> bool:
+	def update_chan_cfg_recipients(channel_info: dict, fetched_lst: list, recip: list) -> bool:
 		home_dir = udon_utils.home_dir()
-		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{chan_name}"
-		try:
-			cfg = config.Config(cfg_path)
-		except Exception as e:
-			error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
-			return False
-		cfg = cfg.as_dict()
+		chan_cfg = None
 
-		udon_utils.create_config(mode='update',
-							channel=cfg["channel"],
-							pkn=cfg["client_key_name"],
-							privkn=cfg["client_private_key"],
-							fqdn=cfg["server_fqdn"],
-							dest_lst=recip)
+		if "channel" in channel_info.keys():
+			channel_name = channel_info["channel"]
+			if not channel_name:
+				return False
+
+		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
+		if os.path.exists(cfg_path) and fetched_lst:
+			try:
+				cfg = config.Config(cfg_path)
+			except Exception as e:
+				error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
+				return False
+			cfg = cfg.as_dict()
+
+			udon_utils.create_config(mode='update',
+						channel=cfg["channel"],
+						pkn=cfg["client_key_name"],
+						privkn=cfg["client_private_key"],
+						fqdn=cfg["server_fqdn"],
+						dest_lst=recip)
 		return True
 
 
