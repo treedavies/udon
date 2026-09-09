@@ -2079,9 +2079,7 @@ ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
 """
 		with open(chan_cfg_path, file_mode) as fd:
 			fd.write(cfg)
-			print(f"{file_mode} {chan_cfg_path}")
 		os.chmod(chan_cfg_path, 0o600)
-		print(f" Created {chan_cfg_path}")
 		return
 
 
