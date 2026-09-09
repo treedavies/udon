@@ -840,15 +840,7 @@ class udon_client:
 			channel_info = json.loads(channel_info)
 
 			""" verify channel keys exist locally. Fetch them if not. """
-			fetched_lst = self._fetch_absent_keys(channel_info)
-			for tpl in fetched_lst:
-				handle = tpl[0]
-				khash = tpl[1]
-				self.recipients.append(handle)
-				self.keyname_to_hash[handle] = khash
-				self.hash_to_keyname[khash] = handle
-				self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
-				output(f"Fetched Key: {handle}")
+			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
 
 			""" Validate SRC/message Repudiation """
 			try:
@@ -865,6 +857,7 @@ class udon_client:
 				validity = VALID
 
 			""" Check if channel config exists """
+			# TODO make it a function
 			chan = channel_info["channel"]
 			chan_cfg = f"{home_dir}/{UDON_CHAN_DIR}/{chan}"
 			if os.path.exists(chan_cfg) and fetched_lst:
@@ -893,7 +886,28 @@ class udon_client:
 		return msg_list
 
 
+	def c_fetch_and_load_absent_keys(self, channel_info: dict) -> list:
+		"""
+			Load newly fetched keys for client use.
+		"""
+		home_dir = udon_utils.home_dir()
+		fetched_lst = self._fetch_absent_keys(channel_info)
+		for tpl in fetched_lst:
+			handle = tpl[0]
+			khash = tpl[1]
+			self.recipients.append(handle)
+			self.keyname_to_hash[handle] = khash
+			self.hash_to_keyname[khash] = handle
+			self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
+			output(f"Fetched Key: {handle}")
+		return fetched_lst
+
+
 	def _fetch_absent_keys(self, channel_info: dict) -> list:
+		"""
+			Fetch keys discovered in channel_info which are not found
+			in .udon/keys/client_side_keys/
+		"""
 		tpl_lst = []
 		for r in channel_info["recipients"]:
 			handle = channel_info["handles"][r]
