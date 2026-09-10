@@ -787,6 +787,7 @@ class udon_client:
 			rtn[0][5] CHANNEL blob,
 			rtn[0][6] NEW_MSG blob,
 			rtn[0][7] KEY blob,
+			TODO: Rename them and remove comment
 		"""
 		for i in range(start, local_count+1):
 			rtn = udon_DB.read_msg_table_entry(self.client_db_path,
@@ -794,6 +795,16 @@ class udon_client:
 			if rtn == []:
 				error('No messages.')
 				return []
+
+			# TODO: rtn index rename here
+			# msg_num      = rtn[0][0] ID integer PRIMARY KEY AUTOINCREMENT
+			# timestamp    = rtn[0][1] TIME blob NOT NUL
+			# source_hash  = rtn[0][2] SRC blob,
+			# msg          = rtn[0][3] MSG blob,
+			# signature    = rtn[0][4] MSGSIG blob,
+			# channel_info = rtn[0][5] CHANNEL blob,
+			# unread_value = rtn[0][6] NEW_MSG blob,
+			# sk           = rtn[0][7] KEY blob,
 
 			if read_unread == True:
 				unread_value = rtn[0][6]
@@ -857,8 +868,8 @@ class udon_client:
 				validity = VALID
 
 			"""
-			If channel cfg file exists, Update config's recipeients list.
-			It should exist, as configs are created during c_check_sync().
+			Channel Configs are created during c_check_sync().
+			Update config's recipeients list.
 			"""
 			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, fetched_lst=fetched_lst, recip=self.recipients)
 			if success == False:
