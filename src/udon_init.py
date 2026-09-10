@@ -21,17 +21,8 @@ import uuid
 import sys
 import os
 
-try:
-	from libudon import udon_DB
-	from libudon import udon_client
-	from libudon import udon_server
-	from libudon import udon_utils
-except Exception as e:
-	path_str = str(Path(__file__))
-	if "/udon/src/udon_init.py" in path_str:
-		print(f"Error: Incorrect file path:{path_str}")
-		print("Run from '/usr/bin/udon.d/udon_init.py'")
-		sys.exit(1)
+import libudon as udon
+
 
 """ Global Variables """
 UDON_DIR = ".udon"
@@ -48,10 +39,10 @@ def handler(signal_received, frame):
     sys.exit(' exiting...')
 signal(SIGINT, handler)
 
-class initialization:
+class Initialization:
 
 	def __init__(self):
-		self.home_dir = udon_utils.home_dir()
+		self.home_dir = udon.udon_utils.home_dir()
 
 		# Directories
 		self.udon_dir    = f"{self.home_dir}/{UDON_DIR}"
@@ -294,7 +285,7 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 		key_size = str(5120)
 
 		rand_uuid = str(uuid.uuid4())
-		passwd = udon_DB.dehyphenate_uuid(rand_uuid)
+		passwd = udon.udon_DB.dehyphenate_uuid(rand_uuid)
 
 		if not os.path.exists(openssl):
 			sys.exit("Error: openssl path not found")

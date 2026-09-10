@@ -16,7 +16,7 @@ import config
 import sqlite3
 import platform
 import hashlib
-from udon_init import initialization
+from udon_init import Initialization
 from concurrent import futures
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization

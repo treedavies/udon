@@ -22,17 +22,10 @@ import sys
 import os
 import getpass
 
-try:
-	from libudon import udon_DB
-	from libudon import udon_client
-	from libudon import udon_server
-	from libudon import udon_utils
-except Exception as e:
-	path_str = str(Path(__file__))
-	if "/udon/src/test_libudon.py" in path_str:
-		print(f"Error: Incorrect file path:{path_str}")
-		print("Run from '/usr/bin/udon.d/test_libudon.py'")
-		sys.exit(1)
+from libudon import udon_DB
+from libudon import udon_client
+from libudon import udon_server
+from libudon import udon_utils
 
 
 def handler(signal_received, frame):
