@@ -853,6 +853,9 @@ class udon_client:
 			""" verify channel keys exist locally. Fetch them if not. """
 			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
 
+			""" Check for key IDs to remove from channel """
+			rm_lst = self.detect_key_removal(channel_info, source_hash)
+
 			""" Validate SRC/message Repudiation """
 			try:
 				source = self.hash_to_keyname[source_hash]
@@ -875,10 +878,6 @@ class udon_client:
 			if success == False:
 				error("c_read_range():update_chan_cfg_recipients() Failed", True)
 				return None
-
-			""" TODO: handle update """
-				#	Diff handles with current config
-				#	If SRC changed handle, then update
 
 			""" Channel member removal """
 				# check for recipiant removal
@@ -905,6 +904,8 @@ class udon_client:
 		fetched_lst = self._fetch_absent_keys(channel_info)
 		for tpl in fetched_lst:
 			handle = tpl[0]
+
+			# TODO: remove possible '-' from khashes
 			khash = tpl[1]
 			self.recipients.append(handle)
 			self.keyname_to_hash[handle] = khash
@@ -912,6 +913,17 @@ class udon_client:
 			self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
 			output(f"Fetched Key: {handle}")
 		return fetched_lst
+
+
+	def detect_key_removal(self, channel_info: dict, sender_id: str) -> list:
+		removal = []
+		for r in channel_info["recipients"]:
+			if r in self.hash_to_keyname.keys() and r.beginswith("-"):
+				rm_key_id = r.replace("-","")
+				if rm_key_id == sender_id:
+					removal.ammend(rm_key_id)
+					self.recipients.pop(rm_key_id, None)
+		return removal
 
 
 	def _fetch_absent_keys(self, channel_info: dict) -> list:
