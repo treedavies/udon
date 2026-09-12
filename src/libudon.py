@@ -883,7 +883,6 @@ class udon_client:
 			Load newly fetched keys for client use.
 		"""
 		home_dir = udon_utils.home_dir()
-		print("Calling _fetch_absent_keys")
 		fetched_lst = self._fetch_absent_keys(channel_info)
 		for tpl in fetched_lst:
 			handle = tpl[0]
@@ -1066,12 +1065,8 @@ class udon_client:
 				return -1
 			nr_synced = nr_synced + 1
 
-			print(f"Sender: {channel_info["channel"]}: {source_hash}")
-
 			""" verify channel keys exist locally. Fetch them if not. """
-			print(f"Calling c_fetch_and_load_absent_keys(): {channel_info}")
 			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
-			print(fetched_lst)
 
 			""" Create channel config if not already exist """
 			# TODO make into a function
