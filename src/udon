@@ -483,8 +483,7 @@ if __name__ == '__main__':
 						help="./udon --list",
 						action='store_true', metavar="")
 
-	# TODO: change --clean-channel to --clean-messages
-	parser.add_option("--clean-channel", dest="clean_channel",
+	parser.add_option("--clean-messages", dest="clean_messages",
 						help="./udon --clean-channel <channel>", metavar="")
 
 	# TODO: change to --call
@@ -528,15 +527,15 @@ if __name__ == '__main__':
 		t = Test().check_all_configs()
 		do_iter_poll()
 
-	if options.clean_channel:
+	if options.clean_messages:
 		t = Test().check_all_configs()
 		warning = "This operation is DESTRUCTIVE!\nMessages on the server will be sync'ed to the client,\nand then Deleted from the server."
 		confirm = "Do you really want to continue? (y/n):"
 		print(warning)
 		rsp = input(confirm)
 		if rsp.lower() == "y":
-			do_check_sync(options.clean_channel)
-			do_clean_channel(options.clean_channel)
+			do_check_sync(options.clean_messages)
+			do_clean_channel(options.clean_messages)
 
 	if options.mod_call and options.file and options.mod_channel:
 		t = Test().check_all_configs()

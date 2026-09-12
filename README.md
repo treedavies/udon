@@ -239,7 +239,7 @@ From Bob's perspective:
     Free Software, is Free as in Speech, but beer would be nice also.
     LOL :)
 
-    $ udon --clean-channel bob_and_sally
+    $ udon --clean-messages bob_and_sally
     This operation is DESTRUCTIVE!
     Messages on the server will be sync'ed to the client,
     and then Deleted from the server
