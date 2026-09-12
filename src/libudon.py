@@ -797,7 +797,9 @@ class udon_client:
 				return []
 
 			# TODO: rtn index rename here
-			# msg_num      = rtn[0][0] ID integer PRIMARY KEY AUTOINCREMENT
+			#ID integer PRIMARY KEY AUTOINCREMENT
+			# msg_num      = rtn[0][0]
+
 			# timestamp    = rtn[0][1] TIME blob NOT NUL
 			# source_hash  = rtn[0][2] SRC blob,
 			# msg          = rtn[0][3] MSG blob,
@@ -886,7 +888,6 @@ class udon_client:
 		for tpl in fetched_lst:
 			handle = tpl[0]
 
-			# TODO: remove possible '-' from khashes
 			khash = tpl[1]
 			self.recipients.append(handle)
 			self.keyname_to_hash[handle] = khash
@@ -894,17 +895,6 @@ class udon_client:
 			self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
 			output(f"Fetched Key: {handle}")
 		return fetched_lst
-
-
-	def detect_key_removal(self, channel_info: dict, sender_id: str) -> list:
-		removal = []
-		for r in channel_info["recipients"]:
-			if r in self.hash_to_keyname.keys() and r.startswith("-"):
-				rm_key_id = r.replace("-","")
-				if rm_key_id == sender_id:
-					removal.ammend(rm_key_id)
-					self.recipients.pop(rm_key_id, None)
-		return removal
 
 
 	def _fetch_absent_keys(self, channel_info: dict) -> list:
