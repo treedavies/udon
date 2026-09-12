@@ -798,9 +798,10 @@ class udon_client:
 
 			# TODO: rtn index rename here
 			#ID integer PRIMARY KEY AUTOINCREMENT
-			# msg_num      = rtn[0][0]
+			msg_num      = rtn[0][0]
 
-			# timestamp    = rtn[0][1] TIME blob NOT NUL
+			# TIME blob NOT NULL
+			msg_timestamp    = rtn[0][1] 
 			# source_hash  = rtn[0][2] SRC blob,
 			# msg          = rtn[0][3] MSG blob,
 			# signature    = rtn[0][4] MSGSIG blob,
@@ -816,15 +817,14 @@ class udon_client:
 			sk = rtn[0][7]
 			sym_key = self.c_decrypt_bstring_with_key(sk)
 
-			msg_num = rtn[0][0]
-			time_stamp = self.c_decrypt_bstring_with_sym_key(rtn[0][1], sym_key)
-			time_stamp = time_stamp.decode("utf-8")
-			if time_stamp == None:
+			msg_timestamp = self.c_decrypt_bstring_with_sym_key(msg_timestamp, sym_key)
+			msg_timestamp = msg_timestamp.decode("utf-8")
+			if msg_timestamp == None:
 				error("message timestamp == None")
 				return None
 
 			""" Strip off the Garbage Padding """
-			time_stamp = time_stamp[:-37]
+			msg_timestamp = msg_timestamp[:-37]
 
 			source_hash = self.c_decrypt_bstring_with_sym_key(rtn[0][2], sym_key)
 			source_hash = source_hash.decode("utf-8")
@@ -867,7 +867,7 @@ class udon_client:
 				validity = VALID
 
 			channel = channel_info["channel"]
-			msg_as_lst = [i, time_stamp, validity, source, channel, msg]
+			msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg]
 			msg_list.append(msg_as_lst)
 
 			chan = f"chan_{channel}"
