@@ -735,8 +735,6 @@ class udon_client:
 
 
 	def c_mark_msg_as_read(self, channel: str, num: int) -> int:
-		"""
-		"""
 		if not udon_utils.type_check([
 				(channel, str),
 				(num, int)]):
