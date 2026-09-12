@@ -805,7 +805,8 @@ class udon_client:
 
 			# SRC blob
 			msg_source_hash = rtn[0][2]
-			# msg          = rtn[0][3] MSG blob,
+
+			msg = rtn[0][3]
 			# signature    = rtn[0][4] MSGSIG blob,
 			# channel_info = rtn[0][5] CHANNEL blob,
 			# unread_value = rtn[0][6] NEW_MSG blob,
@@ -837,7 +838,7 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			msg_source_hash = msg_source_hash[:-37]
 
-			msg = self.c_decrypt_bstring_with_sym_key(rtn[0][3], sym_key)
+			msg = self.c_decrypt_bstring_with_sym_key(msg, sym_key)
 			msg = msg.decode("utf-8")
 			if msg == None:
 				error("message msg == None")
