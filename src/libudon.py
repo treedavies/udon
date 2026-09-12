@@ -850,12 +850,6 @@ class udon_client:
 				return None
 			channel_info = json.loads(channel_info)
 
-			""" verify channel keys exist locally. Fetch them if not. """
-			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
-
-			""" Check for key IDs to remove from channel """
-			rm_lst = self.detect_key_removal(channel_info, source_hash)
-
 			""" Validate SRC/message Repudiation """
 			try:
 				source = self.hash_to_keyname[source_hash]
@@ -869,20 +863,6 @@ class udon_client:
 
 			if validation == True:
 				validity = VALID
-
-			"""
-			Channel Configs are created during c_check_sync().
-			Update config's recipeients list.
-			"""
-			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, fetched_lst=fetched_lst, recip=self.recipients)
-			if success == False:
-				error("c_read_range():update_chan_cfg_recipients() Failed", True)
-				return None
-
-			""" Channel member removal """
-				# check for recipiant removal
-				#	if id.beginswith("-") and from SRC
-				#	remove it.
 
 			channel = channel_info["channel"]
 			msg_as_lst = [i, time_stamp, validity, source, channel, msg]
@@ -901,6 +881,7 @@ class udon_client:
 			Load newly fetched keys for client use.
 		"""
 		home_dir = udon_utils.home_dir()
+		print("Calling _fetch_absent_keys")
 		fetched_lst = self._fetch_absent_keys(channel_info)
 		for tpl in fetched_lst:
 			handle = tpl[0]
@@ -932,10 +913,21 @@ class udon_client:
 			in .udon/keys/client_side_keys/
 		"""
 		tpl_lst = []
+
+		print(f"\n_fak() Channel_info[recipients] {channel_info["recipients"]}")
+
 		for r in channel_info["recipients"]:
 			handle = channel_info["handles"][r]
+			print(f"\n i - {handle} : {r}")
 
+			#print(f"\n Checking for {r} {handle}")
+			#print(f"\n config[dest_key_name_list] {self.config["dest_key_name_list"]}")
+			#print(f"\n keyname_to_hash {self.keyname_to_hash}")
+
+			# This comes from the local config.
+			print(f"\n hash_to_keyname {self.hash_to_keyname}")
 			if not r in self.hash_to_keyname.keys():
+				print(f"Local config missing {r}, I should fetch it!")
 				tpl = tuple((handle, r))
 				tpl_lst.append(tpl)
 
@@ -957,7 +949,7 @@ class udon_client:
 				success = udon_utils.write_key_to_file(path, rtnd_key)
 				if not success:
 					print("Error: Writing handle key blah...")
-			return tpl_lst
+		return tpl_lst
 
 
 	def c_read(self, table: str, num: int, read_unread=False) -> list:
@@ -1046,6 +1038,14 @@ class udon_client:
 			channel_info = channel_info[:-37]
 			channel_info = json.loads(channel_info)
 
+			""" Decode message sender """
+			source_hash = self.c_decrypt_bstring_with_sym_key(response.source, sym_key)
+			source_hash = source_hash.decode("utf-8")
+			source_hash = source_hash[:37]
+			if source_hash == None:
+				error("message source == None")
+				return None
+
 			""" Write message to local primary table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
 											table=self.key_name,
@@ -1086,7 +1086,15 @@ class udon_client:
 				return -1
 			nr_synced = nr_synced + 1
 
+			print(f"Sender: {channel_info["channel"]}: {source_hash}")
+
+			""" verify channel keys exist locally. Fetch them if not. """
+			print(f"Calling c_fetch_and_load_absent_keys(): {channel_info}")
+			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
+			print(fetched_lst)
+
 			""" Create channel config if not already exist """
+			# TODO make into a function
 			home_dir = udon_utils.home_dir()
 			channel = channel_info["channel"]
 			recipients = channel_info["recipients"]
@@ -1098,6 +1106,12 @@ class udon_client:
 											self.priv_key_path,
 											self.server_fqdn,
 											recipients)
+
+			""" Update config's recipeients list. """
+			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, fetched_lst=fetched_lst, recip=self.recipients)
+			if success == False:
+				error("c_read_range():update_chan_cfg_recipients() Failed", True)
+				return None
 
 		if not quiet:
 			output(f"Sync'd: {nr_synced}")
