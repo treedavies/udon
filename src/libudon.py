@@ -913,21 +913,11 @@ class udon_client:
 			in .udon/keys/client_side_keys/
 		"""
 		tpl_lst = []
-
-		print(f"\n_fak() Channel_info[recipients] {channel_info["recipients"]}")
-
 		for r in channel_info["recipients"]:
 			handle = channel_info["handles"][r]
-			print(f"\n i - {handle} : {r}")
-
-			#print(f"\n Checking for {r} {handle}")
-			#print(f"\n config[dest_key_name_list] {self.config["dest_key_name_list"]}")
-			#print(f"\n keyname_to_hash {self.keyname_to_hash}")
 
 			# This comes from the local config.
-			print(f"\n hash_to_keyname {self.hash_to_keyname}")
 			if not r in self.hash_to_keyname.keys():
-				print(f"Local config missing {r}, I should fetch it!")
 				tpl = tuple((handle, r))
 				tpl_lst.append(tpl)
 
