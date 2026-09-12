@@ -777,18 +777,6 @@ class udon_client:
 		if read_unread == True:
 			start = 1
 
-		"""
-		Channel Message indexing
-			rtn[0][0] ID integer PRIMARY KEY AUTOINCREMENT
-			rtn[0][1] TIME blob NOT NUL
-			rtn[0][2] SRC blob,
-			rtn[0][3] MSG blob,
-			rtn[0][4] MSGSIG blob,
-			rtn[0][5] CHANNEL blob,
-			rtn[0][6] NEW_MSG blob,
-			rtn[0][7] KEY blob,
-			TODO: Rename them and remove comment
-		"""
 		for i in range(start, local_count+1):
 			rtn = udon_DB.read_msg_table_entry(self.client_db_path,
 													table, i)
@@ -796,32 +784,17 @@ class udon_client:
 				error('No messages.')
 				return []
 
-			# TODO: rtn index rename here
-			#ID integer PRIMARY KEY AUTOINCREMENT
-			msg_num = rtn[0][0]
-
-			# TIME blob NOT NULL
-			msg_timestamp = rtn[0][1] 
-
-			# SRC blob
-			msg_source_hash = rtn[0][2]
-
-			msg = rtn[0][3]
-
-			# MSGSIG blob
+			msg_num          = rtn[0][0]
+			msg_timestamp    = rtn[0][1] 
+			msg_source_hash  = rtn[0][2]
+			msg              = rtn[0][3]
 			msg_signature    = rtn[0][4]
-
-			# CHANNEL information
 			msg_channel_info = rtn[0][5]
-
-			# unread state
-			unread_value = rtn[0][6]
-
-			# Message's symetric key
-			msg_symkey = rtn[0][7]
+			msg_unread_value = rtn[0][6]
+			msg_symkey       = rtn[0][7]
 
 			if read_unread == True:
-				if unread_value != 'TRUE':
+				if msg_unread_value != 'TRUE':
 					continue
 
 			msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
@@ -831,7 +804,6 @@ class udon_client:
 			if msg_timestamp == None:
 				error("message timestamp == None")
 				return None
-
 			""" Strip off the Garbage Padding """
 			msg_timestamp = msg_timestamp[:-37]
 
@@ -840,7 +812,6 @@ class udon_client:
 			if msg_source_hash == None:
 				error("message source == None")
 				return None
-
 			""" Strip off the Garbage Padding """
 			msg_source_hash = msg_source_hash[:-37]
 
@@ -854,11 +825,11 @@ class udon_client:
 
 			msg_channel_info = self.c_decrypt_bstring_with_sym_key(msg_channel_info, msg_symkey)
 			msg_channel_info = msg_channel_info.decode("utf-8")
-			""" Strip Garbage padding """
-			msg_channel_info = msg_channel_info[:-37]
 			if msg_channel_info == None:
 				error("message channel == None")
 				return None
+			""" Strip Garbage padding """
+			msg_channel_info = msg_channel_info[:-37]
 			msg_channel_info = json.loads(msg_channel_info)
 
 			""" Validate SRC/message Repudiation """
