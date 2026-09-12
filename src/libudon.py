@@ -798,11 +798,13 @@ class udon_client:
 
 			# TODO: rtn index rename here
 			#ID integer PRIMARY KEY AUTOINCREMENT
-			msg_num      = rtn[0][0]
+			msg_num = rtn[0][0]
 
 			# TIME blob NOT NULL
-			msg_timestamp    = rtn[0][1] 
-			# source_hash  = rtn[0][2] SRC blob,
+			msg_timestamp = rtn[0][1] 
+
+			# SRC blob
+			msg_source_hash = rtn[0][2]
 			# msg          = rtn[0][3] MSG blob,
 			# signature    = rtn[0][4] MSGSIG blob,
 			# channel_info = rtn[0][5] CHANNEL blob,
@@ -826,14 +828,14 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			msg_timestamp = msg_timestamp[:-37]
 
-			source_hash = self.c_decrypt_bstring_with_sym_key(rtn[0][2], sym_key)
-			source_hash = source_hash.decode("utf-8")
-			if source_hash == None:
+			msg_source_hash = self.c_decrypt_bstring_with_sym_key(msg_source_hash, sym_key)
+			msg_source_hash = msg_source_hash.decode("utf-8")
+			if msg_source_hash == None:
 				error("message source == None")
 				return None
 
 			""" Strip off the Garbage Padding """
-			source_hash = source_hash[:-37]
+			msg_source_hash = msg_source_hash[:-37]
 
 			msg = self.c_decrypt_bstring_with_sym_key(rtn[0][3], sym_key)
 			msg = msg.decode("utf-8")
@@ -854,7 +856,7 @@ class udon_client:
 
 			""" Validate SRC/message Repudiation """
 			try:
-				source = self.hash_to_keyname[source_hash]
+				source = self.hash_to_keyname[msg_source_hash]
 				signature = rtn[0][4]
 				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
 				validation = self.c_verify_signature(signature,
