@@ -807,7 +807,9 @@ class udon_client:
 			msg_source_hash = rtn[0][2]
 
 			msg = rtn[0][3]
-			# signature    = rtn[0][4] MSGSIG blob,
+
+			# MSGSIG blob
+			msg_signature    = rtn[0][4]
 			# channel_info = rtn[0][5] CHANNEL blob,
 			# unread_value = rtn[0][6] NEW_MSG blob,
 			# sk           = rtn[0][7] KEY blob,
@@ -858,9 +860,8 @@ class udon_client:
 			""" Validate SRC/message Repudiation """
 			try:
 				source = self.hash_to_keyname[msg_source_hash]
-				signature = rtn[0][4]
-				signature = self.c_decrypt_bstring_with_sym_key(rtn[0][4], sym_key)
-				validation = self.c_verify_signature(signature,
+				msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, sym_key)
+				validation = self.c_verify_signature(msg_signature,
 									msg.encode(), source)
 			except Exception as e:
 				source = source_hash
