@@ -918,7 +918,7 @@ class udon_client:
 	def detect_key_removal(self, channel_info: dict, sender_id: str) -> list:
 		removal = []
 		for r in channel_info["recipients"]:
-			if r in self.hash_to_keyname.keys() and r.beginswith("-"):
+			if r in self.hash_to_keyname.keys() and r.startswith("-"):
 				rm_key_id = r.replace("-","")
 				if rm_key_id == sender_id:
 					removal.ammend(rm_key_id)
