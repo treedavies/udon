@@ -816,16 +816,17 @@ class udon_client:
 
 			# unread state
 			unread_value = rtn[0][6]
-			# sk           = rtn[0][7] KEY blob,
+
+			# Message's symetric key
+			msg_symkey = rtn[0][7]
 
 			if read_unread == True:
 				if unread_value != 'TRUE':
 					continue
 
-			sk = rtn[0][7]
-			sym_key = self.c_decrypt_bstring_with_key(sk)
+			msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
 
-			msg_timestamp = self.c_decrypt_bstring_with_sym_key(msg_timestamp, sym_key)
+			msg_timestamp = self.c_decrypt_bstring_with_sym_key(msg_timestamp, msg_symkey)
 			msg_timestamp = msg_timestamp.decode("utf-8")
 			if msg_timestamp == None:
 				error("message timestamp == None")
@@ -834,7 +835,7 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			msg_timestamp = msg_timestamp[:-37]
 
-			msg_source_hash = self.c_decrypt_bstring_with_sym_key(msg_source_hash, sym_key)
+			msg_source_hash = self.c_decrypt_bstring_with_sym_key(msg_source_hash, msg_symkey)
 			msg_source_hash = msg_source_hash.decode("utf-8")
 			if msg_source_hash == None:
 				error("message source == None")
@@ -843,7 +844,7 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			msg_source_hash = msg_source_hash[:-37]
 
-			msg = self.c_decrypt_bstring_with_sym_key(msg, sym_key)
+			msg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
 			msg = msg.decode("utf-8")
 			if msg == None:
 				error("message msg == None")
@@ -851,7 +852,7 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			msg = msg[:-37]
 
-			msg_channel_info = self.c_decrypt_bstring_with_sym_key(msg_channel_info, sym_key)
+			msg_channel_info = self.c_decrypt_bstring_with_sym_key(msg_channel_info, msg_symkey)
 			msg_channel_info = msg_channel_info.decode("utf-8")
 			""" Strip Garbage padding """
 			msg_channel_info = msg_channel_info[:-37]
@@ -863,7 +864,7 @@ class udon_client:
 			""" Validate SRC/message Repudiation """
 			try:
 				source = self.hash_to_keyname[msg_source_hash]
-				msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, sym_key)
+				msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, msg_symkey)
 				validation = self.c_verify_signature(msg_signature,
 									msg.encode(), source)
 			except Exception as e:
