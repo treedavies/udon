@@ -810,12 +810,15 @@ class udon_client:
 
 			# MSGSIG blob
 			msg_signature    = rtn[0][4]
-			# channel_info = rtn[0][5] CHANNEL blob,
-			# unread_value = rtn[0][6] NEW_MSG blob,
+
+			# CHANNEL information
+			msg_channel_info = rtn[0][5]
+
+			# unread state
+			unread_value = rtn[0][6]
 			# sk           = rtn[0][7] KEY blob,
 
 			if read_unread == True:
-				unread_value = rtn[0][6]
 				if unread_value != 'TRUE':
 					continue
 
@@ -848,14 +851,14 @@ class udon_client:
 			""" Strip off the Garbage Padding """
 			msg = msg[:-37]
 
-			channel_info = self.c_decrypt_bstring_with_sym_key(rtn[0][5], sym_key)
-			channel_info = channel_info.decode("utf-8")
+			msg_channel_info = self.c_decrypt_bstring_with_sym_key(msg_channel_info, sym_key)
+			msg_channel_info = msg_channel_info.decode("utf-8")
 			""" Strip Garbage padding """
-			channel_info = channel_info[:-37]
-			if channel_info == None:
+			msg_channel_info = msg_channel_info[:-37]
+			if msg_channel_info == None:
 				error("message channel == None")
 				return None
-			channel_info = json.loads(channel_info)
+			msg_channel_info = json.loads(msg_channel_info)
 
 			""" Validate SRC/message Repudiation """
 			try:
@@ -870,7 +873,7 @@ class udon_client:
 			if validation == True:
 				validity = VALID
 
-			channel = channel_info["channel"]
+			channel = msg_channel_info["channel"]
 			msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg]
 			msg_list.append(msg_as_lst)
 
