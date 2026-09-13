@@ -955,7 +955,7 @@ class udon_client:
 				(first, int),
 				(last, int),
 				(diff, int)]):
-			error("Invalid type:message - c_poll_sync()")
+			error("Invalid type:message - c_check_sync()")
 			return -1
 
 		nr_synced = 0
@@ -984,6 +984,9 @@ class udon_client:
 
 			""" Decrypt sym_key with private key"""
 			sym_key = self.c_decrypt_bstring_with_key(response.symetric_key)
+			if not sym_key:
+				error(f"c_check_sync():c_decrypt_bstring_with_key(syn_key) Failed")
+				return -1
 
 			""" Decrypt channel with sym_key """
 			channel_info = self.c_decrypt_bstring_with_sym_key(response.channel, sym_key)
@@ -1046,28 +1049,39 @@ class udon_client:
 			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
 
 			""" Create channel config if not already exist """
-			# TODO make into a function
-			home_dir = udon_utils.home_dir()
-			channel = channel_info["channel"]
-			recipients = channel_info["recipients"]
-			cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel}"
-			if not os.path.exists(cfg_path):
-				print(f"Not Exists: Will create: {cfg_path}.")
-				udon_utils.create_config("create", channel, 
-											self.key_name,
-											self.priv_key_path,
-											self.server_fqdn,
-											recipients)
+			success = self.create_chan_cfg_from_msg(channel_info)
+			if not success:
+				error("c_check_sync():create_chan_cfg_from_msg() Failed", True)
+				return None
 
 			""" Update config's recipeients list. """
 			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, fetched_lst=fetched_lst, recip=self.recipients)
-			if success == False:
-				error("c_read_range():update_chan_cfg_recipients() Failed", True)
+			if not success:
+				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
 				return None
 
 		if not quiet:
 			output(f"Sync'd: {nr_synced}")
 		return diff
+
+
+	def create_chan_cfg_from_msg(self, channel_info) -> bool:
+		home_dir = udon_utils.home_dir()
+		channel = channel_info["channel"]
+		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel}"
+		recipients = channel_info["recipients"]
+
+		recips = []
+		for r in recipients:
+			recips.append(self.hash_to_keyname[r])
+
+		if not os.path.exists(cfg_path):
+			udon_utils.create_config("create", channel, 
+										self.key_name,
+										self.priv_key_path,
+										self.server_fqdn,
+										recips)
+		return True
 
 
 	def local_remote_count(self):
