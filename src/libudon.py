@@ -2104,6 +2104,11 @@ ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
 				return False
 			cfg = cfg.as_dict()
 
+			# TODO
+			# 1. Generate recipient list from channel_info and sort
+			# 2. Sort self.recipients
+			# 3. cmpr lists, if not equal, combine and update. return if equal
+
 			udon_utils.create_config(mode='update',
 						channel=cfg["channel"],
 						pkn=cfg["client_key_name"],
