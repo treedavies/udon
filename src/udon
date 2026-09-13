@@ -163,6 +163,7 @@ def do_read():
 	message_lst = client.c_read(channel_name, num)
 	if message_lst == None:
 		error_and_exit("do_read() returned Error")
+
 	for msg in message_lst:
 		msg_num = msg[0]
 		time    = msg[1]
@@ -173,6 +174,7 @@ def do_read():
 
 		if key in client.hash_to_keyname.keys():
 			key = client.hash_to_keyname[key]
+			key = key.replace(".pub", "")
 
 		fmtd_out = "".join([f"#{msg_num}: ",
 					f"{time}\n",
@@ -180,7 +182,6 @@ def do_read():
 					f"{key} ",
 					f"[{channel}]\n{message}\n"])
 		print(fmtd_out)
-
 
 
 def get_input():
@@ -340,11 +341,19 @@ def output_new_messages(client, chan_lst: list):
 			if message_lst == None:
 				error_and_exit("do_iter_poll():output_new_messages() return error")
 			for msg in message_lst:
-				fmtd_out = "".join([f"#{msg[0]}: ",
-					f"{msg[1]}\n",
-					f"{msg[2]} ",
-					f"{msg[3]} ",
-					f"[{msg[4]}]\n{msg[5]}\n"])
+				msg_num     = msg[0]
+				msg_ts      = msg[1]
+				msg_verify  = msg[2]
+				msg_key     = msg[3]
+				msg_channel = msg[4]
+				msg_content = msg[5]
+				msg_key = msg_key.replace(".pub", "")
+
+				fmtd_out = "".join([f"#{msg_num}: ",
+					f"{msg_ts}\n",
+					f"{msg_verify} ",
+					f"{msg_key} ",
+					f"[{msg_channel}]\n{msg_content}\n"])
 				print(fmtd_out)
 
 
