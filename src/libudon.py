@@ -1055,7 +1055,7 @@ class udon_client:
 				return None
 
 			""" Update config's recipeients list. """
-			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, fetched_lst=fetched_lst, recip=self.recipients)
+			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, recip=self.recipients)
 			if not success:
 				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
 				return None
@@ -2086,7 +2086,7 @@ ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
 		return
 
 
-	def update_chan_cfg_recipients(channel_info: dict, fetched_lst: list, recip: list) -> bool:
+	def update_chan_cfg_recipients(channel_info: dict, recip: list) -> bool:
 		home_dir = udon_utils.home_dir()
 		chan_cfg = None
 
@@ -2096,7 +2096,7 @@ ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
 				return False
 
 		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
-		if os.path.exists(cfg_path) and fetched_lst:
+		if os.path.exists(cfg_path):
 			try:
 				cfg = config.Config(cfg_path)
 			except Exception as e:
@@ -2104,17 +2104,16 @@ ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
 				return False
 			cfg = cfg.as_dict()
 
-			# TODO
-			# 1. Generate recipient list from channel_info and sort
-			# 2. Sort self.recipients
-			# 3. cmpr lists, if not equal, combine and update. return if equal
+			# TODO Test this.
+			combine = cfg["dest_key_name_list"] + recip
+			dest_lst = list(set(conbine))
 
 			udon_utils.create_config(mode='update',
 						channel=cfg["channel"],
 						pkn=cfg["client_key_name"],
 						privkn=cfg["client_private_key"],
 						fqdn=cfg["server_fqdn"],
-						dest_lst=recip)
+						dest_lst=dest_lst)
 		return True
 
 
