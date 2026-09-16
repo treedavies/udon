@@ -515,6 +515,7 @@ if __name__ == '__main__':
 	if options.msg_channel:
 		t = Test().check_all_configs()
 		do_commit_message()
+		# TODO sync
 
 	if options.poll_channel:
 		t = Test().check_all_configs()
