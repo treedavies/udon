@@ -1048,13 +1048,17 @@ class udon_client:
 			""" verify channel keys exist locally. Fetch them if not. """
 			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
 
-			""" Create channel config if not already exist """
+			""" 
+			Create channel config if not already exist 
+			Use-case: When a client is added to a channel.
+			"""
 			success = self.create_chan_cfg_from_msg(channel_info)
 			if not success:
 				error("c_check_sync():create_chan_cfg_from_msg() Failed", True)
 				return None
 
 			""" Update config's recipeients list. """
+			# TODO: Move update-chan-cfg-recipeints() to udon_client
 			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, recip=self.recipients)
 			if not success:
 				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
