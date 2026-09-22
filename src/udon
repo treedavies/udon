@@ -216,15 +216,12 @@ def do_commit_message(add_member=""):
 	home_dir = udon.udon_utils.home_dir()
 	cfg = None
 
-	print(f"options.ms_channel: {options.msg_channel}")
-
 	path = f"{home_dir}/{UDON_CHAN_DIR}/" + options.msg_channel
 	if not os.path.exists(path):
 		error_and_exit(f"Error: udon.commit_message() - Path not found: {path}")
 
 	try:
 		cfg = config.Config(path)
-		# cfg = cfg.as_dict()
 	except Exception as e:
 		error_and_exit(f"Error: udon.commit_message() - config.Config() {e}")
 
@@ -234,7 +231,6 @@ def do_commit_message(add_member=""):
 
 	if add_member != "":
 		msg = f"Invited {add_member} to channel"
-		print("msg:" + msg)
 	elif options.cli_input:
 		msg = options.cli_input
 	else:
@@ -245,18 +241,17 @@ def do_commit_message(add_member=""):
 	sig = client.c_gen_signature(msg.encode())
 	if sig == None:
 		error_and_exit(f"Error: udon.commit_message() - c_gen_signatire() failure")
-
-	sent = 0
-	total = len(client.recipients)
 	
 	channel_info = client.gen_channel_struct(client.channel_name,
 							 client.recipients, add_member=add_member)
 
 	print(channel_info)
-
 	if add_member != "":
 		client.recipients.append(add_member)
 		print(f"Adding member to recipients: {client.recipients}")
+
+	sent = 0
+	total = len(client.recipients)
 
 	print("Sending...")
 	for recipient in client.recipients:
