@@ -178,7 +178,7 @@ class udon_client:
 			return False
 		return True
 
-	def gen_channel_struct(self, channel: str, recipents: list) -> str:
+	def gen_channel_struct(self, channel: str, recipents: list, add_member="") -> str:
 		d = {}
 		d["channel"] = channel
 
@@ -192,6 +192,13 @@ class udon_client:
 		for hash in lst:
 			handles[hash] = self.hash_to_keyname[hash]
 		d["handles"] = handles
+
+		if add_member != "":
+			print("Adding memeber")
+			d["add_member"] = add_member
+			d["handles"][add_member] = self.keyname_to_hash[add_member]
+
+		d["drop_member"] = ""
 
 		rtn = json.dumps(d)
 		return rtn
@@ -881,6 +888,7 @@ class udon_client:
 		tpl_lst = []
 		for r in channel_info["recipients"]:
 			handle = channel_info["handles"][r]
+			# print(f"{r}: {handle}")
 
 			# This comes from the local config.
 			if not r in self.hash_to_keyname.keys():
@@ -1059,7 +1067,7 @@ class udon_client:
 
 			""" Update config's recipeients list. """
 			# TODO: Move update-chan-cfg-recipeints() to udon_client
-			success = udon_utils.update_chan_cfg_recipients(channel_info=channel_info, recip=self.recipients)
+			success = self.update_chan_cfg_recipients(channel_info=channel_info, recip=self.recipients)
 			if not success:
 				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
 				return None
@@ -1163,6 +1171,51 @@ class udon_client:
 				first = int(local_msg_count) + 1
 			self.c_check_sync(first, last, diff, quiet)
 		return diff
+
+
+	def update_chan_cfg_recipients(self, channel_info: dict, recip: list) -> bool:
+		home_dir = udon_utils.home_dir()
+		chan_cfg = None
+		dest_lst = []
+
+		if "channel" in channel_info.keys():
+			channel_name = channel_info["channel"]
+			if not channel_name:
+				return False
+
+		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
+		if os.path.exists(cfg_path):
+			try:
+				cfg = config.Config(cfg_path)
+			except Exception as e:
+				error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
+				return False
+			cfg = cfg.as_dict()
+
+			if "add_member" in channel_info.keys():
+				member = channel_info["add_member"]
+				if member == self.key_name:
+					lst = []
+					for v in channel_info["recipients"]:
+						lst.append(channel_info["handles"][v])
+					dest_lst = lst
+				else:
+					dest_lst = cfg["dest_key_name_list"]
+
+			dest_lst.append(member)
+			dest_lst = list(set(dest_lst))
+			dest_lst.sort()
+
+			udon_utils.create_config(mode='update',
+						channel=cfg["channel"],
+						pkn=cfg["client_key_name"],
+						privkn=cfg["client_private_key"],
+						fqdn=cfg["server_fqdn"],
+						dest_lst=dest_lst)
+
+			self.c_fetch_and_load_absent_keys(channel_info)
+
+		return True
 
 
 class udon_server(pb2_grpc.UnaryServicer):
@@ -2089,36 +2142,6 @@ ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
 		os.chmod(chan_cfg_path, 0o600)
 		return
 
-
-	def update_chan_cfg_recipients(channel_info: dict, recip: list) -> bool:
-		home_dir = udon_utils.home_dir()
-		chan_cfg = None
-
-		if "channel" in channel_info.keys():
-			channel_name = channel_info["channel"]
-			if not channel_name:
-				return False
-
-		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
-		if os.path.exists(cfg_path):
-			try:
-				cfg = config.Config(cfg_path)
-			except Exception as e:
-				error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
-				return False
-			cfg = cfg.as_dict()
-
-			# TODO Test this.
-			combine = cfg["dest_key_name_list"] + recip
-			dest_lst = list(set(conbine))
-
-			udon_utils.create_config(mode='update',
-						channel=cfg["channel"],
-						pkn=cfg["client_key_name"],
-						privkn=cfg["client_private_key"],
-						fqdn=cfg["server_fqdn"],
-						dest_lst=dest_lst)
-		return True
 
 
 class udon_DB:

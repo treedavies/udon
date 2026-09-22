@@ -209,12 +209,14 @@ def get_input():
 	return Z.strip()
 
 
-def do_commit_message():
+def do_commit_message(add_member=""):
 	"""
 		Run message (send) commit() workflow
 	"""
 	home_dir = udon.udon_utils.home_dir()
 	cfg = None
+
+	print(f"options.ms_channel: {options.msg_channel}")
 
 	path = f"{home_dir}/{UDON_CHAN_DIR}/" + options.msg_channel
 	if not os.path.exists(path):
@@ -230,7 +232,10 @@ def do_commit_message():
 	if not client.c_load_config(cfg):
 		error_and_exit(f"Error: udon.commit_message() - c_load_config failure")
 
-	if options.cli_input:
+	if add_member != "":
+		msg = f"Invited {add_member} to channel"
+		print("msg:" + msg)
+	elif options.cli_input:
 		msg = options.cli_input
 	else:
 		msg = get_input()
@@ -244,12 +249,14 @@ def do_commit_message():
 	sent = 0
 	total = len(client.recipients)
 	
-	channel_name = client.gen_channel_struct(client.channel_name,
-							 client.recipients)
+	channel_info = client.gen_channel_struct(client.channel_name,
+							 client.recipients, add_member=add_member)
+
+	print(channel_info)
 
 	print("Sending...")
 	for recipient in client.recipients:
-		rtn = client.c_send(recipient, msg, sig, channel_name)
+		rtn = client.c_send(recipient, msg, sig, channel_info)
 		if rtn == True:
 			sent = sent + 1
 	print(f"Sent:{sent}/{total}")
@@ -506,6 +513,7 @@ if __name__ == '__main__':
 	parser.add_option("--test", dest="test", action='store_true', metavar="", help="udon --test")
 	parser.add_option("--init", dest="init", action='store_true', metavar="", help="udon --init")
 	parser.add_option("-v", "--version", dest="version", action='store_true', metavar="", help="udon --version")
+	parser.add_option("-a", "--add", dest="add_key", metavar="", help="udon --add <key> -- channel <channel>")
 
 	(options, args) = parser.parse_args()
 
@@ -516,6 +524,10 @@ if __name__ == '__main__':
 		t = Test().check_all_configs()
 		do_commit_message()
 		# TODO sync
+
+	if options.add_key:
+		options.msg_channel = options.mod_channel
+		do_commit_message(options.add_key)
 
 	if options.poll_channel:
 		t = Test().check_all_configs()
