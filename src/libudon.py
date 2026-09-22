@@ -117,7 +117,7 @@ class udon_client:
 		types_lst = [(type(cfg), type(config.Config))]
 		if not udon_utils.type_check(types_lst):
 			return False
-		
+
 		try:
 			self.key_paths       = {}
 			self.keyname_to_hash = {}
@@ -178,7 +178,9 @@ class udon_client:
 			return False
 		return True
 
+
 	def gen_channel_struct(self, channel: str, recipents: list, add_member="") -> str:
+		home_dir = udon_utils.home_dir()
 		d = {}
 		d["channel"] = channel
 
@@ -197,6 +199,9 @@ class udon_client:
 			print("Adding memeber")
 			d["add_member"] = add_member
 			d["handles"][add_member] = self.keyname_to_hash[add_member]
+
+			p = f"{home_dir}/.udon/keys/client_side_keys/{add_member}.pub"
+			self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(p)
 
 		d["drop_member"] = ""
 
@@ -1183,26 +1188,26 @@ class udon_client:
 			if not channel_name:
 				return False
 
+		""" load channel config """
 		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
 		if os.path.exists(cfg_path):
 			try:
 				cfg = config.Config(cfg_path)
+				cfg = cfg.as_dict()
+				dest_lst = cfg["dest_key_name_list"]
 			except Exception as e:
 				error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
 				return False
-			cfg = cfg.as_dict()
 
-			if "add_member" in channel_info.keys():
-				member = channel_info["add_member"]
-				if member == self.key_name:
-					lst = []
-					for v in channel_info["recipients"]:
-						lst.append(channel_info["handles"][v])
-					dest_lst = lst
-				else:
-					dest_lst = cfg["dest_key_name_list"]
-
+		if "add_member" in channel_info.keys():
+			member = channel_info["add_member"]
+			if member == self.key_name:
+				lst = []
+				for v in channel_info["recipients"]:
+					lst.append(channel_info["handles"][v])
+				dest_lst = lst
 			dest_lst.append(member)
+
 			dest_lst = list(set(dest_lst))
 			dest_lst.sort()
 

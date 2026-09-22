@@ -254,6 +254,10 @@ def do_commit_message(add_member=""):
 
 	print(channel_info)
 
+	if add_member != "":
+		client.recipients.append(add_member)
+		print(f"Adding member to recipients: {client.recipients}")
+
 	print("Sending...")
 	for recipient in client.recipients:
 		rtn = client.c_send(recipient, msg, sig, channel_info)
