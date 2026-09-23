@@ -1386,7 +1386,12 @@ class udon_server(pb2_grpc.UnaryServicer):
 	"""
 	def s_verify_signature(self, sig: bytes, message: bytes,
 							key_id: str) -> bool:
-		# verify types
+		if not udon_utils.type_check([(sig, bytes), 
+									(message, bytes),
+									(key_id, str)]):
+			error("Invalid inputs - s_verify_signature()", True)
+			return False
+
 		debug("s_verify_signature()")
 		key_path = None
 		home_dir = udon_utils.home_dir()
