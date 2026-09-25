@@ -1178,6 +1178,40 @@ class udon_client:
 		return diff
 
 
+	def add_member_to_list(self, channel_info: dict, cfg) -> bool:
+		dest_lst = []
+		member = ""
+
+		if "add_member" in channel_info.keys():
+			member = channel_info["add_member"]
+		else:
+			error("add_member_to_list(): member key not found")
+			return False
+
+		""" This self.key_name is invited to a channel """
+		if member == self.key_name:
+			lst = []
+			for v in channel_info["recipients"]:
+				lst.append(channel_info["handles"][v])
+			dest_lst = lst
+		else:
+			dest_lst = cfg["dest_key_name_list"]
+
+		dest_lst.append(member)
+		dest_lst = list(set(dest_lst))
+		dest_lst.sort()
+
+		udon_utils.create_config(mode='update',
+					channel=cfg["channel"],
+					pkn=cfg["client_key_name"],
+					privkn=cfg["client_private_key"],
+					fqdn=cfg["server_fqdn"],
+					dest_lst=dest_lst)
+
+		self.c_fetch_and_load_absent_keys(channel_info)
+		return True
+
+
 	def update_chan_cfg_recipients(self, channel_info: dict, recip: list) -> bool:
 		home_dir = udon_utils.home_dir()
 		chan_cfg = None
@@ -1200,26 +1234,7 @@ class udon_client:
 				return False
 
 		if "add_member" in channel_info.keys():
-			member = channel_info["add_member"]
-			if member == self.key_name:
-				lst = []
-				for v in channel_info["recipients"]:
-					lst.append(channel_info["handles"][v])
-				dest_lst = lst
-			dest_lst.append(member)
-
-			dest_lst = list(set(dest_lst))
-			dest_lst.sort()
-
-			udon_utils.create_config(mode='update',
-						channel=cfg["channel"],
-						pkn=cfg["client_key_name"],
-						privkn=cfg["client_private_key"],
-						fqdn=cfg["server_fqdn"],
-						dest_lst=dest_lst)
-
-			self.c_fetch_and_load_absent_keys(channel_info)
-
+			return self.add_member_to_list(channel_info, cfg)
 		return True
 
 
