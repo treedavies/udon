@@ -1235,6 +1235,10 @@ class udon_client:
 
 		if "add_member" in channel_info.keys():
 			return self.add_member_to_list(channel_info, cfg)
+		if "drop_member" in channel_info.keys():
+			# return self.drop_member_from_list(channel_info, cfg)
+			pass
+
 		return True
 
 
