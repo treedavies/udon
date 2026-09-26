@@ -179,15 +179,16 @@ class udon_client:
 		return True
 
 
-	def gen_channel_struct(self, channel: str, recipents: list, add_member="") -> str:
+	def gen_channel_struct(self, channel: str, recipents: list, add_member="", drop_member="") -> str:
 		home_dir = udon_utils.home_dir()
 		d = {}
 		d["channel"] = channel
 
 		lst = []
 		for e in recipents:
-			h = self.keyname_to_hash[e]
-			lst.append(h)
+			if e:
+				h = self.keyname_to_hash[e]
+				lst.append(h)
 		d["recipients"] = lst
 
 		handles = {}
@@ -202,8 +203,18 @@ class udon_client:
 
 			p = f"{home_dir}/.udon/keys/client_side_keys/{add_member}.pub"
 			self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(p)
+		else:
+			d["add_member"] = ""
 
-		d["drop_member"] = ""
+		if drop_member != "":
+			print("dropping memeber")
+			d["drop_member"] = drop_member
+			d["handles"][drop_member] = self.keyname_to_hash[drop_member]
+
+			p = f"{home_dir}/.udon/keys/client_side_keys/{drop_member}.pub"
+			self.keyname_to_hash[drop_member] = udon_utils.utl_file_md5(p)
+		else:
+			d["drop_member"] = ""
 
 		rtn = json.dumps(d)
 		return rtn
@@ -1013,10 +1024,12 @@ class udon_client:
 			""" Decode message sender """
 			source_hash = self.c_decrypt_bstring_with_sym_key(response.source, sym_key)
 			source_hash = source_hash.decode("utf-8")
-			source_hash = source_hash[:37]
+			source_hash = source_hash[:-37]
+			print(f"Post Decrypted source_hash: {source_hash}")
 			if source_hash == None:
 				error("message source == None")
 				return None
+
 
 			""" Write message to local primary table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
@@ -1072,7 +1085,9 @@ class udon_client:
 
 			""" Update config's recipeients list. """
 			# TODO: Move update-chan-cfg-recipeints() to udon_client
-			success = self.update_chan_cfg_recipients(channel_info=channel_info, recip=self.recipients)
+			success = self.update_chan_cfg_recipients(channel_info=channel_info,
+														recip=self.recipients,
+														source_hash=source_hash)
 			if not success:
 				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
 				return None
@@ -1192,7 +1207,8 @@ class udon_client:
 		if member == self.key_name:
 			lst = []
 			for v in channel_info["recipients"]:
-				lst.append(channel_info["handles"][v])
+				if v:
+					lst.append(channel_info["handles"][v])
 			dest_lst = lst
 		else:
 			dest_lst = cfg["dest_key_name_list"]
@@ -1212,7 +1228,51 @@ class udon_client:
 		return True
 
 
-	def update_chan_cfg_recipients(self, channel_info: dict, recip: list) -> bool:
+	def drop_member_from_list(self, channel_info: dict, cfg: dict, source_hash: str) -> bool:
+		dest_lst = []
+		member = ""
+		source_handle = None
+
+		print("in drop_member_from_list\n")
+		print(f"From source {source_hash} {type(source_hash)}\n")
+
+		if source_hash in self.hash_to_keyname.keys():
+			src_handle = self.hash_to_keyname[source_hash]
+		else:
+			error("srouce_hash not in hash_to_keyname dict")
+			print(str(self.hash_to_keyname))
+			return False
+
+		if "drop_member" in channel_info.keys():
+			member = channel_info["drop_member"]
+		else:
+			error("drop_member_to_list(): member key not found")
+			return False
+
+		""" This self.key_name is invited to a channel """
+		if member == src_handle and member != self.key_name:
+			dest_lst = cfg["dest_key_name_list"]
+			print(f"1. {dest_lst}")
+			if member in dest_lst:
+				dest_lst.remove(member)
+			print(f"2. {dest_lst}")
+			dest_lst = list(set(dest_lst))
+			print(f"3. {dest_lst}")
+			dest_lst.sort()
+			print(f"4. {dest_lst}")
+
+			udon_utils.create_config(mode='update',
+					channel=cfg["channel"],
+					pkn=cfg["client_key_name"],
+					privkn=cfg["client_private_key"],
+					fqdn=cfg["server_fqdn"],
+					dest_lst=dest_lst)
+
+		self.c_fetch_and_load_absent_keys(channel_info)
+		return True
+
+
+	def update_chan_cfg_recipients(self, channel_info: dict, recip: list, source_hash: str) -> bool:
 		home_dir = udon_utils.home_dir()
 		chan_cfg = None
 		dest_lst = []
@@ -1233,10 +1293,12 @@ class udon_client:
 				error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
 				return False
 
-		if "add_member" in channel_info.keys():
+		if "add_member" in channel_info.keys() and channel_info["add_member"]:
+			print("calling add_member")
 			return self.add_member_to_list(channel_info, cfg)
-		if "drop_member" in channel_info.keys():
-			# return self.drop_member_from_list(channel_info, cfg)
+		if "drop_member" in channel_info.keys() and channel_info["drop_member"]:
+			print("calling drop member")
+			return self.drop_member_from_list(channel_info, cfg, source_hash)
 			pass
 
 		return True

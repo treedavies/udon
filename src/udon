@@ -209,7 +209,7 @@ def get_input():
 	return Z.strip()
 
 
-def do_commit_message(add_member=""):
+def do_commit_message(add_member="", drop_member=""):
 	"""
 		Run message (send) commit() workflow
 	"""
@@ -231,6 +231,8 @@ def do_commit_message(add_member=""):
 
 	if add_member != "":
 		msg = f"Invited {add_member} to channel"
+	elif drop_member != "":
+		msg = f"{drop_member} has left the channel"
 	elif options.cli_input:
 		msg = options.cli_input
 	else:
@@ -243,7 +245,7 @@ def do_commit_message(add_member=""):
 		error_and_exit(f"Error: udon.commit_message() - c_gen_signatire() failure")
 	
 	channel_info = client.gen_channel_struct(client.channel_name,
-							 client.recipients, add_member=add_member)
+							 client.recipients, add_member=add_member, drop_member=drop_member)
 
 	print(channel_info)
 	if add_member != "":
@@ -513,6 +515,7 @@ if __name__ == '__main__':
 	parser.add_option("--init", dest="init", action='store_true', metavar="", help="udon --init")
 	parser.add_option("-v", "--version", dest="version", action='store_true', metavar="", help="udon --version")
 	parser.add_option("-a", "--add", dest="add_key", metavar="", help="udon --add <key> -- channel <channel>")
+	parser.add_option("-d", "--drop", dest="drop_key", metavar="", help="udon --drop <key> -- channel <channel>")
 
 	(options, args) = parser.parse_args()
 
@@ -526,7 +529,11 @@ if __name__ == '__main__':
 
 	if options.add_key:
 		options.msg_channel = options.mod_channel
-		do_commit_message(options.add_key)
+		do_commit_message(add_member=options.add_key)
+
+	if options.drop_key:
+		options.msg_channel = options.mod_channel
+		do_commit_message(drop_member=options.drop_key)
 
 	if options.poll_channel:
 		t = Test().check_all_configs()
