@@ -250,7 +250,17 @@ From Bob's perspective:
     $ udon --iterated-poll
     Waiting for messages...
 
-# 9. User define modules
+# 9. Add/Drop members from channel
+
+Invite another user to a channel.
+
+  $ udon --add <key.pub> --channel <channel>
+
+Members who wish to leave a channel, can drop themself from it.
+
+  $ udon --drop <key.pub> --channel <channel>
+
+# 10. User define modules
 
 Udon can be extended using user defined python modules in the
 `/usr/bin/udon.d/modules/` directory.
