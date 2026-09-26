@@ -1230,11 +1230,8 @@ class udon_client:
 
 	def drop_member_from_list(self, channel_info: dict, cfg: dict, source_hash: str) -> bool:
 		dest_lst = []
-		member = ""
+		member = None
 		source_handle = None
-
-		print("in drop_member_from_list\n")
-		print(f"From source {source_hash} {type(source_hash)}\n")
 
 		if source_hash in self.hash_to_keyname.keys():
 			src_handle = self.hash_to_keyname[source_hash]
@@ -1246,20 +1243,17 @@ class udon_client:
 		if "drop_member" in channel_info.keys():
 			member = channel_info["drop_member"]
 		else:
-			error("drop_member_to_list(): member key not found")
+			error("drop_member_from_list(): drop_member key not found")
 			return False
 
-		""" This self.key_name is invited to a channel """
+		""" Only members can drop themselfs. """
+		""" TODO: Rethink if member should rm self from own config """
 		if member == src_handle and member != self.key_name:
 			dest_lst = cfg["dest_key_name_list"]
-			print(f"1. {dest_lst}")
 			if member in dest_lst:
 				dest_lst.remove(member)
-			print(f"2. {dest_lst}")
 			dest_lst = list(set(dest_lst))
-			print(f"3. {dest_lst}")
 			dest_lst.sort()
-			print(f"4. {dest_lst}")
 
 			udon_utils.create_config(mode='update',
 					channel=cfg["channel"],
@@ -1268,6 +1262,7 @@ class udon_client:
 					fqdn=cfg["server_fqdn"],
 					dest_lst=dest_lst)
 
+		""" TODO: If dropping a key, there is no need to fetch it"""
 		self.c_fetch_and_load_absent_keys(channel_info)
 		return True
 
@@ -1284,6 +1279,7 @@ class udon_client:
 
 		""" load channel config """
 		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
+		# TODO: This can be opened with config.Copnfig() as in get_client_db_paths()
 		if os.path.exists(cfg_path):
 			try:
 				cfg = config.Config(cfg_path)
