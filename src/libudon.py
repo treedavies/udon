@@ -38,6 +38,43 @@ UDON_SERVER_SIDE_KEYS = '.udon/keys/server_side_keys'
 UDON_TLS_DIR = '.udon/TLS'
 UDON_LOGS_DIR = '.udon/logs'
 
+def server_side_keys_dir():
+	home_dir = udon_utils.home_dir()
+	return f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/"
+
+def server_side_key_path(key: str):
+	BASE = server_side_keys_dir()
+	path = os.path.join(BASE, key)
+	abs_path = os.path.abspath(path)
+
+	tmp = abs_path.split(key)[0]
+	if tmp != BASE:
+		error("server_side_key_path(): invalid base path")
+		return ""
+
+	if abs_path != path:
+		error("server_side_key(): invalid absolute path")
+		return ""
+	return abs_path
+
+def client_side_keys_dir():
+	home_dir = udon_utils.home_dir()
+	return f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/"
+
+def client_side_key_path(key: str):
+	BASE = client_side_keys_dir()
+	path = os.path.join(BASE, key)
+	abs_path = os.path.abspath(path)
+
+	tmp = abs_path.split(key)[0]
+	if tmp != BASE:
+		error("path_client_side_keys(): invalid base path")
+		return ""
+
+	if abs_path != path:
+		error("path_client_side_keys(): invalid absolute path")
+		return ""
+	return abs_path
 
 def debug(msg: str, enable=False):
 	"""
@@ -144,16 +181,25 @@ class udon_client:
 			error("udon_server().__init__() -  home_dir() returned None")
 			sys.exit(1)
 
-		pk = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{self.key_name}"
+		# pk = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{self.key_name}"
+		pk = client_side_key_path(self.key_name)
 		if not os.path.exists(pk):
 			error("udon_client:c_load_config() - public key not found")
+			return False
 
 		""" create maps of public key name, path, and  md5 """
-		klist = os.listdir(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}")
+		# klist = os.listdir(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}")
+		klist = os.listdir(client_side_keys_dir())
 		for k in klist:
 			if ".pub" in k:
-				md5 = udon_utils.utl_file_md5(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}")
-				self.key_paths[k] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}"
+				cskp = client_side_key_path(k)
+
+				# md5 = udon_utils.utl_file_md5(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}")
+				md5 = udon_utils.utl_file_md5(cskp)
+
+				# self.key_paths[k] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}"
+				self.key_paths[k] = cskp
+
 				self.keyname_to_hash[k] = md5
 				self.hash_to_keyname[md5] = k
 
@@ -891,7 +937,8 @@ class udon_client:
 			self.recipients.append(handle)
 			self.keyname_to_hash[handle] = khash
 			self.hash_to_keyname[khash] = handle
-			self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
+			# self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
+			self.key_paths[handle] = client_side_key_path(handle)
 			output(f"Fetched Key: {handle}")
 		return fetched_lst
 
@@ -925,7 +972,8 @@ class udon_client:
 
 				# write the key
 				home_dir = udon_utils.home_dir()
-				path = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
+				# path = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
+				path = client_side_key_path(handle)
 				success = udon_utils.write_key_to_file(path, rtnd_key)
 				if not success:
 					print("Error: Writing handle key blah...")
@@ -1279,7 +1327,6 @@ class udon_client:
 
 		""" load channel config """
 		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
-		# TODO: This can be opened with config.Copnfig() as in get_client_db_paths()
 		if os.path.exists(cfg_path):
 			try:
 				cfg = config.Config(cfg_path)
@@ -1392,14 +1439,17 @@ class udon_server(pb2_grpc.UnaryServicer):
 			rename public key files to be the md5sum of the file itself.
 		"""
 		home_dir = udon_utils.home_dir()
-		ssk_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
+		# ssk_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
+		ssk_dir = server_side_keys_dir()
 
 		key_lst = os.listdir(ssk_dir)
 		if len(key_lst) < 1:
 			return True
 
 		for key in key_lst:
-			path = f"{ssk_dir}/{key}"
+			# path = f"{ssk_dir}/{key}"
+			# path = os.path.join(ssk_dir, key)
+			path = server_side_key_path(key)
 			key_data = None
 			with open(path, "r") as fd:
 				key_data = fd.read()
@@ -1419,13 +1469,16 @@ class udon_server(pb2_grpc.UnaryServicer):
 		"""
 		home_dir = udon_utils.home_dir()
 
-		srv_side_key_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
+		# srv_side_key_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
+		srv_side_key_dir = server_side_keys_dir()
 		if not os.path.exists(srv_side_key_dir):
 			return False
 
 		klst = os.listdir(srv_side_key_dir)
 		for k in klst:
-			with open(f"{srv_side_key_dir}/{k}") as fd:
+			# path = os.path.join(srv_side_key_dir, k)
+			path = server_side_key_path(k)
+			with open(path) as fd:
 				key_data = fd.read()
 				self.keys_dict[k] = key_data
 		return True
@@ -1474,7 +1527,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 		home_dir = udon_utils.home_dir()
 
 		if key_id in self.keys_dict.keys():
-			key_path = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/{key_id}"
+			# key_path = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/{key_id}"
+			key_path = server_side_key_path(key_id)
 		else:
 			return False
 
