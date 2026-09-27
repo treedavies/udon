@@ -54,7 +54,7 @@ def do_start_server(start_daemon=False):
 		srv.s_start_server()
 
 
-def do_check_sync(channel: str):
+def do_check_sync(channel: str) -> int:
 	"""
 		Poll server for message count and sync the client's 
 		message table with server's Tables if there is a difference.
@@ -534,6 +534,7 @@ if __name__ == '__main__':
 		# TODO sync
 
 	if options.add_key:
+		s = do_check_sync(options.mod_channel)
 		options.msg_channel = options.mod_channel
 		do_commit_message(add_member=options.add_key)
 
