@@ -38,7 +38,7 @@ UDON_SERVER_SIDE_KEYS = '.udon/keys/server_side_keys'
 UDON_TLS_DIR = '.udon/TLS'
 UDON_LOGS_DIR = '.udon/logs'
 
-def channel_dir(chan: str):
+def channel_dir():
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_CHAN_DIR}/"
 
