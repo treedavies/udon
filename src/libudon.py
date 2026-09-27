@@ -1135,7 +1135,6 @@ class udon_client:
 				return None
 
 			""" Update config's recipeients list. """
-			# TODO: Move update-chan-cfg-recipeints() to udon_client
 			success = self.update_chan_cfg_recipients(channel_info=channel_info,
 														recip=self.recipients,
 														source_hash=source_hash)
