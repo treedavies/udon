@@ -38,6 +38,14 @@ UDON_SERVER_SIDE_KEYS = '.udon/keys/server_side_keys'
 UDON_TLS_DIR = '.udon/TLS'
 UDON_LOGS_DIR = '.udon/logs'
 
+def safe_path(BASE: str, fname: str) -> bool:
+	path = os.path.join(BASE, fname)
+	abs_path = os.path.abspath(path)
+	if abs_path != path:
+		error("(): invalid absolute path")
+		return False
+	return True
+
 def channel_dir():
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_CHAN_DIR}/"
@@ -45,17 +53,9 @@ def channel_dir():
 def channel_cfg_path(chan: str):
 	BASE = channel_dir()
 	path = os.path.join(BASE, chan)
-	abs_path = os.path.abspath(path)
-
-	tmp = abs_path.split(chan)[0]
-	if tmp != BASE:
-		error("channel_cfg_path(): invalid base path")
+	if not safe_path(BASE, chan):
 		return ""
-
-	if abs_path != path:
-		error("channel_cfg_path(): invalid absolute path")
-		return ""
-	return abs_path
+	return os.path.join(BASE, chan)
 
 def server_side_keys_dir():
 	home_dir = udon_utils.home_dir()
@@ -64,17 +64,9 @@ def server_side_keys_dir():
 def server_side_key_path(key: str):
 	BASE = server_side_keys_dir()
 	path = os.path.join(BASE, key)
-	abs_path = os.path.abspath(path)
-
-	tmp = abs_path.split(key)[0]
-	if tmp != BASE:
-		error("server_side_key_path(): invalid base path")
+	if not safe_path(BASE, key):
 		return ""
-
-	if abs_path != path:
-		error("server_side_key(): invalid absolute path")
-		return ""
-	return abs_path
+	return os.path.join(BASE, key)
 
 def client_side_keys_dir():
 	home_dir = udon_utils.home_dir()
@@ -83,17 +75,9 @@ def client_side_keys_dir():
 def client_side_key_path(key: str):
 	BASE = client_side_keys_dir()
 	path = os.path.join(BASE, key)
-	abs_path = os.path.abspath(path)
-
-	tmp = abs_path.split(key)[0]
-	if tmp != BASE:
-		error("path_client_side_keys(): invalid base path")
+	if not safe_path(BASE, key):
 		return ""
-
-	if abs_path != path:
-		error("path_client_side_keys(): invalid absolute path")
-		return ""
-	return abs_path
+	return os.path.join(BASE, key)
 
 def debug(msg: str, enable=False):
 	"""
