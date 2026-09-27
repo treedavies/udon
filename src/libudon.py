@@ -38,6 +38,25 @@ UDON_SERVER_SIDE_KEYS = '.udon/keys/server_side_keys'
 UDON_TLS_DIR = '.udon/TLS'
 UDON_LOGS_DIR = '.udon/logs'
 
+def channel_dir(chan: str):
+	home_dir = udon_utils.home_dir()
+	return f"{home_dir}/{UDON_CHAN_DIR}/"
+
+def channel_cfg_path(chan: str):
+	BASE = channel_dir()
+	path = os.path.join(BASE, chan)
+	abs_path = os.path.abspath(path)
+
+	tmp = abs_path.split(chan)[0]
+	if tmp != BASE:
+		error("channel_cfg_path(): invalid base path")
+		return ""
+
+	if abs_path != path:
+		error("channel_cfg_path(): invalid absolute path")
+		return ""
+	return abs_path
+
 def server_side_keys_dir():
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/"
