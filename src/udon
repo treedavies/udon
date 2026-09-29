@@ -101,7 +101,6 @@ def do_poll_check():
 	if home_dir == None:
 		error_and_exit(f"Error: udon.poll_check() - home_dir() returned None")
 
-	# cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
 	cfg_path = udon.channel_cfg_path(cfg_name)
 	if not os.path.exists(cfg_path):
 		error_and_exit(f"Error: udon.poll_check() - cfg_path not found: {cfg_path}")
@@ -141,7 +140,6 @@ def do_read():
 	if home_dir == None:
 		error_and_exit(f"Error: udon.read() home_dir() return None")
 
-	# cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{options.read_channel}"
 	cfg_path = udon.channel_cfg_path(options.read_channel)
 	if not os.path.exists(cfg_path):
 		error_and_exit(f"Error: udon.read() channel path NOT found: {cfg_path}")
@@ -218,7 +216,6 @@ def do_commit_message(add_member="", drop_member=""):
 	home_dir = udon.udon_utils.home_dir()
 	cfg = None
 
-	# path = f"{home_dir}/{UDON_CHAN_DIR}/" + options.msg_channel
 	path = udon.channel_cfg_path(options.msg_channel)
 	if not os.path.exists(path):
 		error_and_exit(f"Error: udon.commit_message() - Path not found: {path}")
@@ -275,7 +272,6 @@ def do_clean_channel(chan: str):
 	home_dir = udon.udon_utils.home_dir()
 	cfg = None
 
-	# path = f"{home_dir}/{UDON_CHAN_DIR}/{chan}"
 	path = udon.channel_cfg_path(chan)
 	if not os.path.exists(path):
 		error_and_exit(f"Error: udon.clean() - Path not found: {path}")
@@ -383,7 +379,6 @@ def do_iter_poll():
 			error_and_exit("No channels found.\nExiting...")
 
 		for cfg_name in cfg_file_lst:
-			# cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
 			cfg_path = udon.channel_cfg_path(cfg_name)
 			if not os.path.exists(cfg_path):
 				error_and_exit(f"Error: udon.iter_poll() config not found: {cfg_path}")
@@ -420,7 +415,6 @@ def do_call_module(channel: str, mod_name: str, args: dict):
 	if not home_dir:
 		error_and_exit("Error: udon.do_call_module(): home_dir() return None")
 
-	# cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
 	cfg_path = udon.channel_cfg_path(cfg_name)
 	if not os.path.exists(cfg_path):
 		error_and_exit(f"Error: udon.do_call_module(): config path not found: {cfg_path}")
@@ -514,6 +508,7 @@ if __name__ == '__main__':
 						help="./udon --call-mod <mod> --channel  <chan> <channel> --file <file-path>", metavar="")
 	parser.add_option("-f", "--file", dest="file", metavar="")
 
+	# change mod_channel to channel
 	parser.add_option("--channel", dest="mod_channel", metavar="")
 	parser.add_option("--server", dest="start_server", action='store_true', metavar="", help="udon --server")
 	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="", help="udon --daemon")

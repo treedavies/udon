@@ -1486,12 +1486,15 @@ class Test:
 		""" fetch() Tests """
 		self.fetch_tests(cfg)
 		self.fetch_error_tests(cfg)
-
 		self.fetchkey_test(cfg)
 
 		""" clean() test"""
 		self.db_clean_test()
 		self.clean_on_server_test(cfg)
+
+		""" --add member test """
+
+		""" --drop member test """
 
 		self.rpc_module_test(cfg)
 

@@ -184,23 +184,19 @@ class udon_client:
 			error("udon_server().__init__() -  home_dir() returned None")
 			sys.exit(1)
 
-		# pk = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{self.key_name}"
 		pk = client_side_key_path(self.key_name)
 		if not os.path.exists(pk):
 			error("udon_client:c_load_config() - public key not found")
 			return False
 
 		""" create maps of public key name, path, and  md5 """
-		# klist = os.listdir(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}")
 		klist = os.listdir(client_side_keys_dir())
 		for k in klist:
 			if ".pub" in k:
 				cskp = client_side_key_path(k)
 
-				# md5 = udon_utils.utl_file_md5(f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}")
 				md5 = udon_utils.utl_file_md5(cskp)
 
-				# self.key_paths[k] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{k}"
 				self.key_paths[k] = cskp
 
 				self.keyname_to_hash[k] = md5
@@ -246,7 +242,6 @@ class udon_client:
 		d["handles"] = handles
 
 		if add_member != "":
-			print("Adding memeber")
 			d["add_member"] = add_member
 			d["handles"][add_member] = self.keyname_to_hash[add_member]
 
@@ -256,7 +251,6 @@ class udon_client:
 			d["add_member"] = ""
 
 		if drop_member != "":
-			print("dropping memeber")
 			d["drop_member"] = drop_member
 			d["handles"][drop_member] = self.keyname_to_hash[drop_member]
 
@@ -940,7 +934,6 @@ class udon_client:
 			self.recipients.append(handle)
 			self.keyname_to_hash[handle] = khash
 			self.hash_to_keyname[khash] = handle
-			# self.key_paths[handle] = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
 			self.key_paths[handle] = client_side_key_path(handle)
 			output(f"Fetched Key: {handle}")
 		return fetched_lst
@@ -954,7 +947,6 @@ class udon_client:
 		tpl_lst = []
 		for r in channel_info["recipients"]:
 			handle = channel_info["handles"][r]
-			# print(f"{r}: {handle}")
 
 			# This comes from the local config.
 			if not r in self.hash_to_keyname.keys():
@@ -975,11 +967,10 @@ class udon_client:
 
 				# write the key
 				home_dir = udon_utils.home_dir()
-				# path = f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/{handle}"
 				path = client_side_key_path(handle)
 				success = udon_utils.write_key_to_file(path, rtnd_key)
 				if not success:
-					print("Error: Writing handle key blah...")
+					error("_fetch_absent_keys(): write_key_to_file() failed")
 		return tpl_lst
 
 
@@ -1076,7 +1067,6 @@ class udon_client:
 			source_hash = self.c_decrypt_bstring_with_sym_key(response.source, sym_key)
 			source_hash = source_hash.decode("utf-8")
 			source_hash = source_hash[:-37]
-			print(f"Post Decrypted source_hash: {source_hash}")
 			if source_hash == None:
 				error("message source == None")
 				return None
@@ -1287,7 +1277,6 @@ class udon_client:
 			src_handle = self.hash_to_keyname[source_hash]
 		else:
 			error("srouce_hash not in hash_to_keyname dict")
-			print(str(self.hash_to_keyname))
 			return False
 
 		if "drop_member" in channel_info.keys():
@@ -1339,10 +1328,8 @@ class udon_client:
 				return False
 
 		if "add_member" in channel_info.keys() and channel_info["add_member"]:
-			print("calling add_member")
 			return self.add_member_to_list(channel_info, cfg)
 		if "drop_member" in channel_info.keys() and channel_info["drop_member"]:
-			print("calling drop member")
 			return self.drop_member_from_list(channel_info, cfg, source_hash)
 			pass
 
@@ -1441,7 +1428,6 @@ class udon_server(pb2_grpc.UnaryServicer):
 			rename public key files to be the md5sum of the file itself.
 		"""
 		home_dir = udon_utils.home_dir()
-		# ssk_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
 		ssk_dir = server_side_keys_dir()
 
 		key_lst = os.listdir(ssk_dir)
@@ -1449,8 +1435,6 @@ class udon_server(pb2_grpc.UnaryServicer):
 			return True
 
 		for key in key_lst:
-			# path = f"{ssk_dir}/{key}"
-			# path = os.path.join(ssk_dir, key)
 			path = server_side_key_path(key)
 			key_data = None
 			with open(path, "r") as fd:
@@ -1471,14 +1455,12 @@ class udon_server(pb2_grpc.UnaryServicer):
 		"""
 		home_dir = udon_utils.home_dir()
 
-		# srv_side_key_dir = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}"
 		srv_side_key_dir = server_side_keys_dir()
 		if not os.path.exists(srv_side_key_dir):
 			return False
 
 		klst = os.listdir(srv_side_key_dir)
 		for k in klst:
-			# path = os.path.join(srv_side_key_dir, k)
 			path = server_side_key_path(k)
 			with open(path) as fd:
 				key_data = fd.read()
@@ -1529,7 +1511,6 @@ class udon_server(pb2_grpc.UnaryServicer):
 		home_dir = udon_utils.home_dir()
 
 		if key_id in self.keys_dict.keys():
-			# key_path = f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/{key_id}"
 			key_path = server_side_key_path(key_id)
 		else:
 			return False

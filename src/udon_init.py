@@ -367,25 +367,17 @@ ssl_root = '{self.home_dir}/{UDON_TLS_DIR}/{fqdn}-root.crt'
 
 
 	def init_env(self):
-		#parser = OptionParser()
-		#parser.add_option("-u", "--user", dest="new_user_key", action='store_true',
-		#				help="Create new user public/private key pair", metavar="")
-		#(options, args) = parser.parse_args()
 
 		euid = os.geteuid()
 		if euid == 0:
 			self.error_and_exit("Can not run as root user.\nPlease run as a non-priviledged user.")
 
-		#if options.new_user_key:
-		#	i.ask_to_create_key()
-		#else:
 		print("Initializing...")
 		self.dir_setup()
 		subject = self.create_tls_certs()
 		self.create_server_config(subject)
 		self.create_test_keys()
 		self.create_server_mods_allow()
-		# Add hello_world,test_key_A to server_mods.allow
 		self.ask_to_create_key()
 		sys.exit(0)
 
