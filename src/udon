@@ -247,7 +247,6 @@ def do_commit_message(add_member="", drop_member=""):
 	channel_info = client.gen_channel_struct(client.channel_name,
 							 client.recipients, add_member=add_member, drop_member=drop_member)
 
-	print(channel_info)
 	if add_member != "":
 		client.recipients.append(add_member)
 		print(f"Adding member to recipients: {client.recipients}")
