@@ -502,8 +502,7 @@ if __name__ == '__main__':
 						help="./udon --call-mod <mod> --channel  <chan> <channel> --file <file-path>", metavar="")
 	parser.add_option("-f", "--file", dest="file", metavar="")
 
-	# change mod_channel to channel
-	parser.add_option("--channel", dest="mod_channel", metavar="")
+	parser.add_option("--channel", dest="channel", metavar="")
 	parser.add_option("--server", dest="start_server", action='store_true', metavar="", help="udon --server")
 	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="", help="udon --daemon")
 	parser.add_option("--test", dest="test", action='store_true', metavar="", help="udon --test")
@@ -523,12 +522,12 @@ if __name__ == '__main__':
 		# TODO sync
 
 	if options.add_key:
-		s = do_check_sync(options.mod_channel)
-		options.msg_channel = options.mod_channel
+		s = do_check_sync(options.channel)
+		options.msg_channel = options.channel
 		do_commit_message(add_member=options.add_key)
 
 	if options.drop_key:
-		options.msg_channel = options.mod_channel
+		options.msg_channel = options.channel
 		do_commit_message(drop_member=options.drop_key)
 
 	if options.poll_channel:
@@ -561,7 +560,7 @@ if __name__ == '__main__':
 			do_check_sync(options.clean_messages)
 			do_clean_channel(options.clean_messages)
 
-	if options.mod_call and options.file and options.mod_channel:
+	if options.mod_call and options.file and options.channel:
 		t = Test().check_all_configs()
 		args = load_arg_file(options.file)
 		if args == None:
@@ -572,7 +571,7 @@ if __name__ == '__main__':
 			args = json.dumps(args)
 			args = args.encode()
 
-		do_call_module(options.mod_channel, options.mod_call, args)
+		do_call_module(options.channel, options.mod_call, args)
 
 	if options.start_server:
 		t = Test().check_all_configs()
