@@ -19,9 +19,6 @@ import getpass
 
 from test_libudon import Test
 
-""" Global Variables """
-UDON_CHAN_DIR = '.udon/channel_cfgs'
-
 def handler(signal_received, frame):
     ''' Handle SIGIN/CTRL-C '''
     sys.exit(' exiting...')
@@ -63,7 +60,7 @@ def do_check_sync(channel: str) -> int:
 	if not home_dir:
 		error_and_exit("Error: udon.check_sync(): home_dir() return None")
 
-	cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
+	cfg_path = f"{home_dir}/{udon.UDON_CHAN_DIR}/{cfg_name}"
 	if not os.path.exists(cfg_path):
 		error_and_exit(f"Error: udon.check_sync(): config path not found: {cfg_path}")
 
