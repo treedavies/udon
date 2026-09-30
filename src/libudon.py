@@ -33,6 +33,7 @@ FAILURE  = 1
 DEBUG    = False
 UDON_DIR = '.udon'
 UDON_CHAN_DIR = '.udon/channel_cfgs'
+UDON_SERVER_CONF = '.udon/server.conf'
 UDON_CLIENT_SIDE_KEYS = '.udon/keys/client_side_keys'
 UDON_SERVER_SIDE_KEYS = '.udon/keys/server_side_keys'
 UDON_TLS_DIR = '.udon/TLS'
