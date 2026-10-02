@@ -69,11 +69,11 @@ def server_side_key_path(key: str) -> str:
 		return ""
 	return os.path.join(BASE, key)
 
-def client_side_keys_dir():
+def client_side_keys_dir() -> str:
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/"
 
-def client_side_key_path(key: str):
+def client_side_key_path(key: str) -> str:
 	BASE = client_side_keys_dir()
 	path = os.path.join(BASE, key)
 	if not safe_path(BASE, key):
