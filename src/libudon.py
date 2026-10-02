@@ -58,7 +58,7 @@ def channel_cfg_path(chan: str) -> str:
 		return ""
 	return os.path.join(BASE, chan)
 
-def server_side_keys_dir():
+def server_side_keys_dir() -> str:
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/"
 
