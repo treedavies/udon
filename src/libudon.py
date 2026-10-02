@@ -51,7 +51,7 @@ def channel_dir():
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_CHAN_DIR}/"
 
-def channel_cfg_path(chan: str):
+def channel_cfg_path(chan: str) -> str:
 	BASE = channel_dir()
 	path = os.path.join(BASE, chan)
 	if not safe_path(BASE, chan):
