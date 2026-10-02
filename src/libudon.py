@@ -105,7 +105,6 @@ def output(msg: str, to_file=False):
 	types_lst = [(msg, str), (to_file, bool)]
 	if not udon_utils.type_check(types_lst):
 		error("output(): type_check")
-		return False
 
 	print(f"{msg}")
 	if to_file:
