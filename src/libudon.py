@@ -264,126 +264,126 @@ class udon_client:
 
 	def c_send(self, recip_key: str, msg: str, signature: bytes,
 					channel: str) -> bool:
-				"""
-					Validate and prepare to send message to server
-					returns: boolean
-				"""
-				if not udon_utils.type_check([
-					(recip_key, str),
-					(msg, str),
-					(signature, bytes),
-					(channel, str)]):
-					return False
+		"""
+		Validate and prepare to send message to server
+		returns: boolean
+		"""
+		if not udon_utils.type_check([
+			(recip_key, str),
+			(msg, str),
+			(signature, bytes),
+			(channel, str)]):
+			return False
 
-				if not self.c_ping():
-					error(f"Connection to server:{self.server_fqdn} Failed.")
-					return False
+		if not self.c_ping():
+			error(f"Connection to server:{self.server_fqdn} Failed.")
+			return False
 
-				if not recip_key:
-					error('c_send() - recip_key destination = Null')
-					return False
+		if not recip_key:
+			error('c_send() - recip_key destination = Null')
+			return False
 
-				if not msg:
-					error('c_send() - msg = Null')
-					return False
-				payload = msg.rstrip()
-				PADDING = "%" + udon_utils.generate_uuid()
-				payload = payload + PADDING
-				payload = payload.encode()
+		if not msg:
+			error('c_send() - msg = Null')
+			return False
+		payload = msg.rstrip()
+		PADDING = "%" + udon_utils.generate_uuid()
+		payload = payload + PADDING
+		payload = payload.encode()
 
-				if not signature:
-					error('c_send() - signature = Null')
-					return False
+		if not signature:
+			error('c_send() - signature = Null')
+			return False
 
-				if not self.key_name:
-					error('c_send() - msg_sender = Null')
-					return False
-				msg_sender = self.key_name
+		if not self.key_name:
+			error('c_send() - msg_sender = Null')
+			return False
+		msg_sender = self.key_name
 
-				if not channel:
-					error('c_send() - channel = Null')
-					return False
-				PADDING = "%" + udon_utils.generate_uuid()
-				channel = channel + PADDING
-				channel = channel.encode()
+		if not channel:
+			error('c_send() - channel = Null')
+			return False
+		PADDING = "%" + udon_utils.generate_uuid()
+		channel = channel + PADDING
+		channel = channel.encode()
 
-				""" create sym key and encrypt it with recipient pub key"""
-				sym_key = Fernet.generate_key()
-				enc_sym_key = self.c_encrypt_bstring_with_public_key(sym_key, recip_key)
+		""" create sym key and encrypt it with recipient pub key"""
+		sym_key = Fernet.generate_key()
+		enc_sym_key = self.c_encrypt_bstring_with_public_key(sym_key, recip_key)
 
-				""" Start encrypting message fields..."""
-				csignature = self.c_encrypt_bstring_with_sym_key(
-															signature,
-															sym_key
-															)
+		""" Start encrypting message fields..."""
+		csignature = self.c_encrypt_bstring_with_sym_key(
+													signature,
+													sym_key
+													)
 
-				cpayload = self.c_encrypt_bstring_with_sym_key(
-															payload,
-															sym_key
-															)
+		cpayload = self.c_encrypt_bstring_with_sym_key(
+													payload,
+													sym_key
+													)
 
-				if not cpayload:
-					error('c_send() - payload == None')
-					return False
+		if not cpayload:
+			error('c_send() - payload == None')
+			return False
 
-				kpath = self.key_paths[msg_sender]
-				msg_sender_key_hash = udon_utils.utl_file_md5(kpath)
-				PADDING = "%" + udon_utils.generate_uuid()
-				msg_sender_key_hash = msg_sender_key_hash + PADDING
-				csrc = self.c_encrypt_bstring_with_sym_key(
-														msg_sender_key_hash.encode(),
-														sym_key
-														)
-				if not csrc:
-					error('c_send() - csrc == None')
-					return False
+		kpath = self.key_paths[msg_sender]
+		msg_sender_key_hash = udon_utils.utl_file_md5(kpath)
+		PADDING = "%" + udon_utils.generate_uuid()
+		msg_sender_key_hash = msg_sender_key_hash + PADDING
+		csrc = self.c_encrypt_bstring_with_sym_key(
+												msg_sender_key_hash.encode(),
+												sym_key
+												)
+		if not csrc:
+			error('c_send() - csrc == None')
+			return False
 
-				tfmt = '%Y-%m-%d %H:%M:%S:%f'
-				PADDING = "%" + udon_utils.generate_uuid()
-				time_stamp = datetime.datetime.now().strftime(tfmt) + PADDING
-				time_stamp = time_stamp.encode()
-				ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
-				if not ctime:
-					error('c_send() - ctime == None')
-					return False
+		tfmt = '%Y-%m-%d %H:%M:%S:%f'
+		PADDING = "%" + udon_utils.generate_uuid()
+		time_stamp = datetime.datetime.now().strftime(tfmt) + PADDING
+		time_stamp = time_stamp.encode()
+		ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
+		if not ctime:
+			error('c_send() - ctime == None')
+			return False
 
-				uuid = udon_utils.generate_uuid().encode()
-				bsig = self.c_gen_signature(uuid)
-				if not bsig:
-					error('c_send() - bsig == None')
-					return False
+		uuid = udon_utils.generate_uuid().encode()
+		bsig = self.c_gen_signature(uuid)
+		if not bsig:
+			error('c_send() - bsig == None')
+			return False
 
-				cchan = self.c_encrypt_bstring_with_sym_key(channel, sym_key)
-				if not cchan:
-					error('c_send() - chan == None')
-					return False
+		cchan = self.c_encrypt_bstring_with_sym_key(channel, sym_key)
+		if not cchan:
+			error('c_send() - chan == None')
+			return False
 
-				""" Generate md5 digest of recipient key """
-				hash = None
-				rkey_path = self.key_paths[recip_key]
-				with open(rkey_path, "r") as fd:
-					key_data = fd.read()
-				hash = hashlib.md5(key_data.encode()).hexdigest()
-				recip_key = hash.encode()
+		""" Generate md5 digest of recipient key """
+		hash = None
+		rkey_path = self.key_paths[recip_key]
+		with open(rkey_path, "r") as fd:
+			key_data = fd.read()
+		hash = hashlib.md5(key_data.encode()).hexdigest()
+		recip_key = hash.encode()
 
-				msg_sender = msg_sender_key_hash.encode()
+		msg_sender = msg_sender_key_hash.encode()
 
-				resp = self.c_send_commit(breq_src=msg_sender,
-										breq_uuid_sig=bsig,
-										breq_uuid=uuid,
-										btime=ctime,
-										bdest=recip_key,
-										bpayload=cpayload,
-										bsource=csrc,
-										bsignature=csignature,
-										bchannel=cchan,
-										bsymetric_key=enc_sym_key)
+		resp = self.c_send_commit(breq_src=msg_sender,
+								breq_uuid_sig=bsig,
+								breq_uuid=uuid,
+								btime=ctime,
+								bdest=recip_key,
+								bpayload=cpayload,
+								bsource=csrc,
+								bsignature=csignature,
+								bchannel=cchan,
+								bsymetric_key=enc_sym_key)
 
-				if resp == None:
-					error('udon:send():c_send_commit() resp=None')
-					return False
+		if resp == None:
+			error('udon:send():c_send_commit() resp=None')
+			return False
 
-				return True
+		return True
 
 
 	def c_send_commit(self, 
