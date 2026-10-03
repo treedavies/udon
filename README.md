@@ -256,7 +256,7 @@ Invite another user to a channel.
 
   $ udon --add <key.pub> --channel <channel>
 
-Members who wish to leave a channel, can drop themself from it.
+Members who wish to leave a channel, can drop themselves from it.
 
   $ udon --drop <key.pub> --channel <channel>
 

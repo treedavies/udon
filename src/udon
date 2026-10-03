@@ -510,6 +510,7 @@ if __name__ == '__main__':
 	parser.add_option("-v", "--version", dest="version", action='store_true', metavar="", help="udon --version")
 	parser.add_option("-a", "--add", dest="add_key", metavar="", help="udon --add <key> -- channel <channel>")
 	parser.add_option("-d", "--drop", dest="drop_key", metavar="", help="udon --drop <key> -- channel <channel>")
+	parser.add_option("--create-channel", dest="create_channel", action="store_true", metavar="", help="udon --drop <key> -- channel <channel>")
 
 	(options, args) = parser.parse_args()
 
@@ -588,4 +589,25 @@ if __name__ == '__main__':
 	if options.init:
 		i = udon_init.Initialization()
 		i.init_env()
+
+	if options.create_channel:
+		chan_name = input("\nChannel name?: ")
+		server = input("Server FQDN: ")
+		port = input("server port? (defaults to 50051): ")
+		pub_key = input("public key name: ")
+
+		prv_key = ""
+		if os.path.exists(udon.client_side_key_path(pub_key)):
+			prv_key = pub_key.replace(".pub", "")
+		else:
+			sys.exit("Public key not found")
+
+		if not os.path.exists(udon.client_side_key_path(prv_key)):
+			sys.exit("Private key not found")
+
+		i = udon_init.Initialization()
+		lst = [pub_key]
+		i.create_config('create', chan_name, pub_key, prv_key, server, lst)
+
+
 

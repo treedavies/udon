@@ -2701,6 +2701,7 @@ class udon_DB:
 		"""
 			Retrun list of file names in channel_cfgs directory
 			Return None on error
+			TODO: should return empty list not None?
 		"""
 		home_dir = udon_utils.home_dir()
 		if home_dir == None:
@@ -2754,7 +2755,7 @@ class udon_DB:
 		return rtn
 
 
-	def dehyphenate_uuid(uid: str):
+	def dehyphenate_uuid(uid: str) -> str:
 		if not udon_utils.type_check([(uid, str)]):
 			error('input type error - dehyphenate_uuid()', True)
 			return None
@@ -2812,7 +2813,8 @@ class udon_DB:
 
 	def replayed_uuid(db_path: str, table: str, uid: str) -> int:
 		"""
-			Test if arg uid is present in UUID table
+			Test if arg uid exists in UUID table, indicating it
+			has has been used before.
 
 			Requires init_db called before use.
 			returns:
