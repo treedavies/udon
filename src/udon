@@ -235,23 +235,15 @@ def do_commit_message(add_member="", drop_member=""):
 		if not msg:
 			return
 
-	sig = client.c_gen_signature(msg.encode())
-	if sig == None:
-		error_and_exit(f"Error: udon.commit_message() - c_gen_signatire() failure")
-	
 	channel_info = client.gen_channel_struct(client.channel_name,
 							 client.recipients, add_member=add_member, drop_member=drop_member)
-
-	if add_member != "":
-		client.recipients.append(add_member)
-		print(f"Adding member to recipients: {client.recipients}")
 
 	sent = 0
 	total = len(client.recipients)
 
 	print("Sending...")
 	for recipient in client.recipients:
-		rtn = client.c_send(recipient, msg, sig, channel_info)
+		rtn = client.c_send(recipient, msg, channel_info)
 		if rtn == True:
 			sent = sent + 1
 	print(f"Sent:{sent}/{total}")

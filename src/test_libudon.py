@@ -142,23 +142,13 @@ class Test:
 
 		# Make 10 rows. 0-9
 		for i in range(10):
-			src  = f"src_{str(i)}"
-			dest = f"dest_{str(i)}"
 			msg  = f"msg_{str(i)}"
-			time_stamp = "00:00:00"
 			sym_key = "XYZ"
-			digest="XYZ"
-			parts="XYZ"
 			r = udon_DB.write_msg_table_entry(db_path=self.TEST_DB,
 												table="test_table",
-												time=time_stamp.encode(),
-												src=src.encode(),
 												msg=msg.encode(),
 												msgsig="".encode(),
-												channel="".encode(),
-												symetric_key="".encode(),
-												digest=digest.encode(),
-												parts=parts.encode())
+												symetric_key="".encode())
 			self.evaluate(0, r, f"write_msg_table_entry({i})")
 
 
@@ -487,12 +477,9 @@ class Test:
 								breq_uuid_sig=uuid_sig,
 								breq_uuid=uuid,
 
-								btime=cipher_time,
 								bdest=recip_md5.encode(),
 								bpayload=cipher_payload,
-								bsource=csrc,
 								bsignature=msg_sig,
-								bchannel=cipher_channel,
 								bsymetric_key=enc_sym_key)
 		self.evaluate(True, bool(resp), f"c_send_commit_test() resp")
 		self.evaluate(True, bool(resp.response), f"c_send_committest(): resp.response")
@@ -567,12 +554,9 @@ class Test:
 								breq_uuid_sig=uuid_sig,
 								breq_uuid=uuid,
 
-								btime=cipher_time,
 								bdest=recip_md5.encode(),
 								bpayload=cipher_payload,
-								bsource=csrc,
 								bsignature=msg_sig,
-								bchannel=cipher_channel,
 								bsymetric_key=enc_sym_key)
 		self.evaluate(True, bool(resp), f"c_send_commit_test() resp")
 		self.evaluate(True, bool(resp.response), f"c_send_committest(): resp.response")
@@ -647,12 +631,9 @@ class Test:
 								breq_uuid_sig=uuid_sig,
 								breq_uuid=uuid,
 
-								btime=cipher_time,
 								bdest=recip_md5.encode(),
 								bpayload=cipher_payload,
-								bsource=csrc,
 								bsignature=msg_sig,
-								bchannel=cipher_channel,
 								bsymetric_key=enc_sym_key)
 		self.evaluate(True, bool(resp.response), f"commit_error_replay_test() - sent {uuid}")
 
@@ -661,12 +642,9 @@ class Test:
 								breq_uuid_sig=uuid_sig,
 								breq_uuid=uuid,
 
-								btime=cipher_time,
 								bdest=recip_md5.encode(),
 								bpayload=cipher_payload,
-								bsource=csrc,
 								bsignature=msg_sig,
-								bchannel=cipher_channel,
 								bsymetric_key=enc_sym_key)
 
 		exp_uuid = uuid.decode("utf-8").replace("-","")
@@ -1294,24 +1272,14 @@ class Test:
 
 		# Make 10 rows. 0-9
 		for i in range(10):
-			time_stamp = "00:00:00"
-			src  = "src_" + str(i)
 			msg  = "msg_" + str(i)
 			msg_sig = "sig_" + str(i)
 			sym_key = ""
-			digest = "sha"
-			parts = "parts"
-			chan = "default"
 
 			r = udon_DB.write_msg_table_entry(self.TEST_DB, "test_table",
-										time_stamp.encode(),
-										src.encode(),
 										msg.encode(),
 										msg_sig.encode(),
-										sym_key.encode(),
-										digest.encode(),
-										parts.encode(),
-										chan.encode())
+										sym_key.encode())
 			self.evaluate(0, r, f"write_msg_table_entry({i})")
 
 		rtn = udon_DB.clean_msgs_in_primary_table(self.TEST_DB, "test_table")
@@ -1321,7 +1289,7 @@ class Test:
 		for i in range(1, 11):
 			rtn = udon_DB.read_msg_table_entry(self.TEST_DB, "test_table", i)
 			self.evaluate(1, len(rtn), f"db_clean_test() - read_msg_table_entry({i}) return size")
-			expected = (i, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+			expected = (i, NULL, NULL, NULL)
 			self.evaluate(expected, rtn[0], f"db_clean_test() - read_msg_table_entry({i})")
 
 

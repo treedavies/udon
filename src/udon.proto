@@ -76,12 +76,9 @@ message CommitMessage{
 	bytes uuid = 4;
 
 	// Dest Key encrypted 
-	bytes time = 5;
-	bytes payload = 6;
-	bytes source = 7;
-	bytes msg_signature = 8;
-	bytes channel = 9;
-	bytes symetric_key = 10;
+	bytes payload = 5;
+	bytes msg_signature = 6;
+	bytes symetric_key = 7;
 }
 
 message MessageResponse{
@@ -90,12 +87,9 @@ message MessageResponse{
 	bytes destination = 2;
 
 	// Recipeint Key encrypted
-	bytes time = 3;
-	bytes payload = 4;
-	bytes source = 5;
-	bytes signature = 6;
-	bytes channel = 7;
-	bytes symetric_key = 8;
+	bytes payload = 3;
+	bytes signature = 4;
+	bytes symetric_key = 5;
 
 	bytes error = 9;
 }
