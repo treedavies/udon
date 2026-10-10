@@ -287,8 +287,6 @@ class udon_client:
 			error('c_send() - msg = Null')
 			return False
 		payload = msg.rstrip()
-		PADDING = "%" + udon_utils.generate_uuid()
-		payload = payload + PADDING
 		payload = payload.encode()
 
 		if not signature:
@@ -303,8 +301,6 @@ class udon_client:
 		if not channel:
 			error('c_send() - channel = Null')
 			return False
-		PADDING = "%" + udon_utils.generate_uuid()
-		channel = channel + PADDING
 		channel = channel.encode()
 
 		""" create sym key and encrypt it with recipient pub key"""
@@ -328,8 +324,6 @@ class udon_client:
 
 		kpath = self.key_paths[msg_sender]
 		msg_sender_key_hash = udon_utils.utl_file_md5(kpath)
-		PADDING = "%" + udon_utils.generate_uuid()
-		msg_sender_key_hash = msg_sender_key_hash + PADDING
 		csrc = self.c_encrypt_bstring_with_sym_key(
 												msg_sender_key_hash.encode(),
 												sym_key
@@ -339,8 +333,7 @@ class udon_client:
 			return False
 
 		tfmt = '%Y-%m-%d %H:%M:%S:%f'
-		PADDING = "%" + udon_utils.generate_uuid()
-		time_stamp = datetime.datetime.now().strftime(tfmt) + PADDING
+		time_stamp = datetime.datetime.now().strftime(tfmt)
 		time_stamp = time_stamp.encode()
 		ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
 		if not ctime:
@@ -868,32 +861,24 @@ class udon_client:
 			if msg_timestamp == None:
 				error("message timestamp == None")
 				return None
-			""" Strip off the Garbage Padding """
-			msg_timestamp = msg_timestamp[:-37]
 
 			msg_source_hash = self.c_decrypt_bstring_with_sym_key(msg_source_hash, msg_symkey)
 			msg_source_hash = msg_source_hash.decode("utf-8")
 			if msg_source_hash == None:
 				error("message source == None")
 				return None
-			""" Strip off the Garbage Padding """
-			msg_source_hash = msg_source_hash[:-37]
 
 			msg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
 			msg = msg.decode("utf-8")
 			if msg == None:
 				error("message msg == None")
 				return None
-			""" Strip off the Garbage Padding """
-			msg = msg[:-37]
 
 			msg_channel_info = self.c_decrypt_bstring_with_sym_key(msg_channel_info, msg_symkey)
 			msg_channel_info = msg_channel_info.decode("utf-8")
 			if msg_channel_info == None:
 				error("message channel == None")
 				return None
-			""" Strip Garbage padding """
-			msg_channel_info = msg_channel_info[:-37]
 			msg_channel_info = json.loads(msg_channel_info)
 
 			""" Validate SRC/message Repudiation """
@@ -1060,13 +1045,11 @@ class udon_client:
 				error("c_poll_sync(): resp channel:")
 				return -1
 			channel_info = channel_info.decode('utf-8')
-			channel_info = channel_info[:-37]
 			channel_info = json.loads(channel_info)
 
 			""" Decode message sender """
 			source_hash = self.c_decrypt_bstring_with_sym_key(response.source, sym_key)
 			source_hash = source_hash.decode("utf-8")
-			source_hash = source_hash[:-37]
 			if source_hash == None:
 				error("message source == None")
 				return None
@@ -1561,10 +1544,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 			err_resp = {"error":err}
 			return (False, err_resp, None)
 
-		""" Strip garbage padding from key_id """
 		key_id = sender_key_id.decode('utf-8')
-		key_id = key_id.split("%")[0]
-
 		if not key_id in self.keys_dict.keys():
 			self.conform_server_side_keys()
 			self.s_load_pub_keys()
