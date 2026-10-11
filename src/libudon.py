@@ -334,12 +334,8 @@ class udon_client:
 		MESSAGE["src"] = msg_sender_key_hash
 		MESSAGE["channel_info"] = channel
 
-		print(f"MESSAGE: {MESSAGE}")
-
 		""" Signature of MESSAGE"""
 		MESSAGE = json.dumps(MESSAGE)
-
-		print(f"dumped MESSAGE: {MESSAGE}")
 
 		msg_signature = self.c_gen_signature(MESSAGE.encode())
 		if msg_signature == None:
@@ -659,7 +655,7 @@ class udon_client:
 		"""
 		if not udon_utils.type_check([(byte_str, bytes),
 										(sym_key, bytes)]):
-			error('Invalid type:key_path - c_encrypt_bstring_with_sym_key')
+			error('Invalid type: - c_decrypt_bstring_with_sym_key')
 			return None
 
 		clear_txt = None
@@ -820,8 +816,6 @@ class udon_client:
 				error('No messages.')
 				return []
 
-			print(f"size {len(rtn[0])}")
-
 			msg_num          = rtn[0][0]
 			msg              = rtn[0][1]
 			msg_signature    = rtn[0][2]
@@ -833,7 +827,6 @@ class udon_client:
 					continue
 
 			msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
-			print(f"decrypt sym: {msg_symkey}")
 
 			bmsg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
 			msg = bmsg.decode("utf-8")
@@ -845,24 +838,21 @@ class udon_client:
 			if not type(msg) == dict:
 				error("message type(msg)")
 				return None
-			print(f"\nmsg dict {msg}")
 
 			msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, msg_symkey)
-			print(f"\nmsg_signature: {msg_signature}")
-
-			bmsg_unread_value = self.c_decrypt_bstring_with_sym_key(msg_unread_value, msg_symkey)
-			print(f"\nmsg_unread_value: {bmsg_unread_value}")
+			if msg_signature == None:
+				error("c_read_range(): decrypt msg_signature")
+				return None
 
 			""" Validate SRC/message Repudiation """
 			try:
 				source = msg["src"]
-				key_id = self.hash_to_keyname[source]
+				source = self.hash_to_keyname[source]
 				validation = self.c_verify_signature(msg_signature,
-									bmsg, key_id)
-				print(f"Validation {validation}")
+									bmsg, source)
 			except Exception as e:
-				print(f"Validation exception {e}")
-				# source = source_hash
+				error("c_read_range(): msg validation")
+				source = msg["src"]
 				validation = False
 
 			if validation == True:
