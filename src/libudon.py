@@ -346,7 +346,7 @@ class udon_client:
 			error_and_exit(f"Error: udon.c_send() msg_signature")
 
 		""" Encrypte MESSAGE Signature """
-		cmsg_signature = self.c_encrypt_bstring_with_sym_key(MESSAGE.encode(), sym_key)
+		cmsg_signature = self.c_encrypt_bstring_with_sym_key(msg_signature, sym_key)
 		if cmsg_signature == None:
 			error_and_exit(f"Error: udon.c_send() cmsg_signature")
 
@@ -820,61 +820,59 @@ class udon_client:
 				error('No messages.')
 				return []
 
+			print(f"size {len(rtn[0])}")
+
 			msg_num          = rtn[0][0]
-			msg_timestamp    = rtn[0][1] 
-			msg_source_hash  = rtn[0][2]
-			msg              = rtn[0][3]
-			msg_signature    = rtn[0][4]
-			msg_channel_info = rtn[0][5]
-			msg_unread_value = rtn[0][6]
-			msg_symkey       = rtn[0][7]
+			msg              = rtn[0][1]
+			msg_signature    = rtn[0][2]
+			msg_unread_value = rtn[0][3]
+			msg_symkey       = rtn[0][4]
 
 			if read_unread == True:
 				if msg_unread_value != 'TRUE':
 					continue
 
 			msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
+			print(f"decrypt sym: {msg_symkey}")
 
-			msg_timestamp = self.c_decrypt_bstring_with_sym_key(msg_timestamp, msg_symkey)
-			msg_timestamp = msg_timestamp.decode("utf-8")
-			if msg_timestamp == None:
-				error("message timestamp == None")
-				return None
-
-			msg_source_hash = self.c_decrypt_bstring_with_sym_key(msg_source_hash, msg_symkey)
-			msg_source_hash = msg_source_hash.decode("utf-8")
-			if msg_source_hash == None:
-				error("message source == None")
-				return None
-
-			msg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
-			msg = msg.decode("utf-8")
+			bmsg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
+			msg = bmsg.decode("utf-8")
 			if msg == None:
-				error("message msg == None")
+				error("decoding message msg == None")
 				return None
 
-			msg_channel_info = self.c_decrypt_bstring_with_sym_key(msg_channel_info, msg_symkey)
-			msg_channel_info = msg_channel_info.decode("utf-8")
-			if msg_channel_info == None:
-				error("message channel == None")
+			msg = json.loads(bmsg)
+			if not type(msg) == dict:
+				error("message type(msg)")
 				return None
-			msg_channel_info = json.loads(msg_channel_info)
+			print(f"\nmsg dict {msg}")
+
+			msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, msg_symkey)
+			print(f"\nmsg_signature: {msg_signature}")
+
+			bmsg_unread_value = self.c_decrypt_bstring_with_sym_key(msg_unread_value, msg_symkey)
+			print(f"\nmsg_unread_value: {bmsg_unread_value}")
 
 			""" Validate SRC/message Repudiation """
 			try:
-				source = self.hash_to_keyname[msg_source_hash]
-				msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, msg_symkey)
+				source = msg["src"]
+				key_id = self.hash_to_keyname[source]
 				validation = self.c_verify_signature(msg_signature,
-									msg.encode(), source)
+									bmsg, key_id)
+				print(f"Validation {validation}")
 			except Exception as e:
-				source = source_hash
+				print(f"Validation exception {e}")
+				# source = source_hash
 				validation = False
 
 			if validation == True:
 				validity = VALID
 
-			channel = msg_channel_info["channel"]
-			msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg]
+			# channel = msg_channel_info["channel"]
+			channel = msg["channel_info"]["channel"]
+			msg_timestamp = msg["timestamp"]
+			msg_content = msg["message"]
+			msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg_content]
 			msg_list.append(msg_as_lst)
 
 			chan = f"chan_{channel}"
@@ -1018,37 +1016,26 @@ class udon_client:
 				error(f"c_check_sync():c_decrypt_bstring_with_key(syn_key) Failed")
 				return -1
 
-			""" Decrypt channel with sym_key """
-			channel_info = self.c_decrypt_bstring_with_sym_key(response.channel, sym_key)
-			if channel_info == None:
-				error("c_poll_sync(): resp channel:")
+			msg_blob = self.c_decrypt_bstring_with_sym_key(response.payload, sym_key)
+			if msg_blob == None:
+				error("c_poll_sync(): decrypt msg_blob:")
 				return -1
-			channel_info = channel_info.decode('utf-8')
-			channel_info = json.loads(channel_info)
-
-			""" Decode message sender """
-			source_hash = self.c_decrypt_bstring_with_sym_key(response.source, sym_key)
-			source_hash = source_hash.decode("utf-8")
-			if source_hash == None:
-				error("message source == None")
-				return None
-
+			#print(str(msg_blob))
+			msg = msg_blob.decode('utf-8')
+			msg = json.loads(msg)
+			#print(str(msg_blob))
 
 			""" Write message to local primary table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
 											table=self.key_name,
-											time=response.time,
-											src=response.source,
 											msg=response.payload,
 											msgsig=response.signature,
-											channel=response.channel,
 											symetric_key=response.symetric_key,
-											digest="".encode(),
-											parts="".encode(),
 											channel_table=False)
 			if rtn == 1:
 				error(f"c_poll_synce() - [1] write_msg_table_entry failure")
 
+			channel_info = msg['channel_info']
 			chan_table_name = f"chan_{channel_info["channel"]}"
 			if not udon_DB.table_exist(self.client_db_path, chan_table_name):
 				rtn = udon_DB.init_client_chan_table(self.client_db_path,
@@ -1060,14 +1047,9 @@ class udon_client:
 			""" Write message to local channel table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
 											table=chan_table_name,
-											time=response.time,
-											src=response.source,
 											msg=response.payload,
 											msgsig=response.signature,
-											channel=response.channel,
 											symetric_key=response.symetric_key,
-											digest="".encode(),
-											parts="".encode(),
 											channel_table=True)
 			if rtn == FAILURE:
 				error(f"c_check_sync() - [2] write_msg_table_entry failure")
@@ -1087,12 +1069,13 @@ class udon_client:
 				return None
 
 			""" Update config's recipeients list. """
-			success = self.update_chan_cfg_recipients(channel_info=channel_info,
-														recip=self.recipients,
-														source_hash=source_hash)
-			if not success:
-				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
-				return None
+			# TODO: come back to this. it needs adjustment. for now comment out
+			#success = self.update_chan_cfg_recipients(channel_info=channel_info,
+			#											recip=self.recipients,
+			#											source_hash=source_hash)
+			#if not success:
+			#	error("c_check_sync():update_chan_cfg_recipients() Failed", True)
+			#	return None
 
 		if not quiet:
 			output(f"Sync'd: {nr_synced}")
@@ -1298,7 +1281,7 @@ class udon_client:
 		return True
 
 
-class udon_server(pb2_grpc.UnaryServicer):
+class udon_server(pb2_grpc.UnaryServicer):#
 
 	def __init__(self):
 		debug("udon_server.__init__()")
@@ -1621,20 +1604,23 @@ class udon_server(pb2_grpc.UnaryServicer):
 			MessageResponse = {"error":err_resp}
 			return pb2.MessageResponse(**MessageResponse)
 
-		rtn_time       = row_entry[1]
-		rtn_src_sender = row_entry[2]
-		rtn_bpayload   = row_entry[3]
-		rtn_signature  = row_entry[4]
-		rtn_channel    = row_entry[5]
-		rtn_sym_key    = row_entry[6]
+		#rtn_time       = row_entry[1]
+		#rtn_src_sender = row_entry[2]
+		#rtn_bpayload   = row_entry[3]
+		#rtn_signature  = row_entry[4]
+		#rtn_channel    = row_entry[5]
+		#rtn_sym_key    = row_entry[6]
+
+		#print(str(row_entry))
+
+		rtn_bpayload   = row_entry[1]
+		rtn_signature  = row_entry[2]
+		rtn_sym_key    = row_entry[3]
 
 		MessageResponse = {
 			"response":b"",
-			"time":rtn_time,
 			"payload":rtn_bpayload,
-			"source":rtn_src_sender,
 			"signature":rtn_signature,
-			"channel":rtn_channel,
 			"symetric_key":rtn_sym_key,
 			"error":b""
 			}
@@ -1932,7 +1918,6 @@ class udon_server(pb2_grpc.UnaryServicer):
 		""" Send Response """ 
 		rtn_msg = {'response':b'Payload Written',
 			'payload':b'Payload Written',
-			'source':b'Source Written',
 			'error':'x'.encode()}
 
 		return pb2.MessageResponse(**rtn_msg)
@@ -2316,16 +2301,10 @@ class udon_DB:
 
 			User Table:
 			ID -- primary key
-			TIME -- timestamp
-			SRC -- source user
-			DEST -- destination user
 			MSG -- message
 			MSGSIG -- message signature
-			CHANNEL -- channel name
 			NEW_MSG -- New Message marker.
 			KEY -- symetric key
-			digest -- md5sum actually
-			PARTS -- number of parts of uploaded file
 			returns: 0/1 (success/failure)
 		"""
 		debug('init_client_chan_table()')
@@ -2335,15 +2314,10 @@ class udon_DB:
 
 		init_chan_table = f"""CREATE TABLE IF NOT EXISTS "{table}" (
 						ID integer PRIMARY KEY AUTOINCREMENT,
-						TIME blob NOT NULL,
-						SRC blob,
 						MSG blob,
 						MSGSIG blob,
-						CHANNEL blob,
 						NEW_MSG blob,
-						KEY blob,
-						DIGEST blob,
-						PARTS blob);"""
+						KEY blob);"""
 		return udon_DB.run_db_commit(init_chan_table, db_path=path)
 
 
@@ -2415,7 +2389,7 @@ class udon_DB:
 			values = (msg, msgsig, symetric_key)
 		else:
 			sql_write_row = f"""INSERT INTO "{table}" (MSG, MSGSIG, NEW_MSG, KEY)
-									VALUES(?,?,?);"""
+									VALUES(?,?,?,?);"""
 			values = (msg, msgsig, "TRUE", symetric_key)
 
 		return udon_DB.run_db_commit_values(sql_write_row, values=values, db_path=db_path)

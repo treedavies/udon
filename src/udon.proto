@@ -87,12 +87,9 @@ message MessageResponse{
 	bytes destination = 2;
 
 	// Recipeint Key encrypted
-	bytes time = 3;
-	bytes payload = 4;
-	bytes source = 5;
-	bytes signature = 6;
-	bytes channel = 7;
-	bytes symetric_key = 8;
+	bytes payload = 3;
+	bytes signature = 4;
+	bytes symetric_key = 5;
 
 	bytes error = 9;
 }
