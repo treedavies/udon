@@ -76,12 +76,9 @@ message CommitMessage{
 	bytes uuid = 4;
 
 	// Dest Key encrypted 
-	bytes time = 5;
-	bytes payload = 6;
-	bytes source = 7;
-	bytes msg_signature = 8;
-	bytes channel = 9;
-	bytes symetric_key = 10;
+	bytes payload = 5;
+	bytes msg_signature = 6;
+	bytes symetric_key = 7;
 }
 
 message MessageResponse{

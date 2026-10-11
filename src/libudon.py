@@ -224,7 +224,7 @@ class udon_client:
 		return True
 
 
-	def gen_channel_struct(self, channel: str, recipents: list, add_member="", drop_member="") -> str:
+	def gen_channel_struct(self, channel: str, recipents: list, add_member="", drop_member="") -> dict:
 		home_dir = udon_utils.home_dir()
 		d = {}
 		d["channel"] = channel
@@ -259,20 +259,22 @@ class udon_client:
 		else:
 			d["drop_member"] = ""
 
-		rtn = json.dumps(d)
-		return rtn
+		# rtn = json.dumps(d)
+		# return rtn
+		return d
 
-	def c_send(self, recip_key: str, msg: str, signature: bytes,
-					channel: str) -> bool:
+	def c_send(self, recip_key: str, msg: str, channel: dict) -> bool:
 		"""
 		Validate and prepare to send message to server
+		- recip_key - key name to send message to.
+		- msg - message str
+		- channel - channel struct as a str
 		returns: boolean
 		"""
 		if not udon_utils.type_check([
 			(recip_key, str),
 			(msg, str),
-			(signature, bytes),
-			(channel, str)]):
+			(channel, dict)]):
 			return False
 
 		if not self.c_ping():
@@ -287,11 +289,6 @@ class udon_client:
 			error('c_send() - msg = Null')
 			return False
 		payload = msg.rstrip()
-		payload = payload.encode()
-
-		if not signature:
-			error('c_send() - signature = Null')
-			return False
 
 		if not self.key_name:
 			error('c_send() - msg_sender = Null')
@@ -301,54 +298,25 @@ class udon_client:
 		if not channel:
 			error('c_send() - channel = Null')
 			return False
-		channel = channel.encode()
+		channel = channel
 
 		""" create sym key and encrypt it with recipient pub key"""
 		sym_key = Fernet.generate_key()
 		enc_sym_key = self.c_encrypt_bstring_with_public_key(sym_key, recip_key)
 
-		""" Start encrypting message fields..."""
-		csignature = self.c_encrypt_bstring_with_sym_key(
-													signature,
-													sym_key
-													)
-
-		cpayload = self.c_encrypt_bstring_with_sym_key(
-													payload,
-													sym_key
-													)
-
-		if not cpayload:
-			error('c_send() - payload == None')
-			return False
-
+		""" Get hash of recipient key """
 		kpath = self.key_paths[msg_sender]
 		msg_sender_key_hash = udon_utils.utl_file_md5(kpath)
-		csrc = self.c_encrypt_bstring_with_sym_key(
-												msg_sender_key_hash.encode(),
-												sym_key
-												)
-		if not csrc:
-			error('c_send() - csrc == None')
-			return False
 
+		""" Generate message time stamp""" 
 		tfmt = '%Y-%m-%d %H:%M:%S:%f'
 		time_stamp = datetime.datetime.now().strftime(tfmt)
-		time_stamp = time_stamp.encode()
-		ctime = self.c_encrypt_bstring_with_sym_key(time_stamp, sym_key)
-		if not ctime:
-			error('c_send() - ctime == None')
-			return False
 
+		""" Generate request UUID """
 		uuid = udon_utils.generate_uuid().encode()
 		bsig = self.c_gen_signature(uuid)
 		if not bsig:
 			error('c_send() - bsig == None')
-			return False
-
-		cchan = self.c_encrypt_bstring_with_sym_key(channel, sym_key)
-		if not cchan:
-			error('c_send() - chan == None')
 			return False
 
 		""" Generate md5 digest of recipient key """
@@ -359,17 +327,41 @@ class udon_client:
 		hash = hashlib.md5(key_data.encode()).hexdigest()
 		recip_key = hash.encode()
 
-		msg_sender = msg_sender_key_hash.encode()
+		""" Create message struct """
+		MESSAGE = {}
+		MESSAGE["timestamp"] = time_stamp
+		MESSAGE["message"] = msg
+		MESSAGE["src"] = msg_sender_key_hash
+		MESSAGE["channel_info"] = channel
 
-		resp = self.c_send_commit(breq_src=msg_sender,
+		print(f"MESSAGE: {MESSAGE}")
+
+		""" Signature of MESSAGE"""
+		MESSAGE = json.dumps(MESSAGE)
+
+		print(f"dumped MESSAGE: {MESSAGE}")
+
+		msg_signature = self.c_gen_signature(MESSAGE.encode())
+		if msg_signature == None:
+			error_and_exit(f"Error: udon.c_send() msg_signature")
+
+		""" Encrypte MESSAGE Signature """
+		cmsg_signature = self.c_encrypt_bstring_with_sym_key(MESSAGE.encode(), sym_key)
+		if cmsg_signature == None:
+			error_and_exit(f"Error: udon.c_send() cmsg_signature")
+
+		""" Encrypt MESSAGE """
+		cpayload = self.c_encrypt_bstring_with_sym_key(MESSAGE.encode(), sym_key)
+		if cpayload == None:
+			error_and_exit(f"Error: udon.c_send() cpayload")
+
+		src = self.keyname_to_hash[self.key_name]
+		resp = self.c_send_commit(breq_src=src.encode(),
 								breq_uuid_sig=bsig,
 								breq_uuid=uuid,
-								btime=ctime,
 								bdest=recip_key,
 								bpayload=cpayload,
-								bsource=csrc,
-								bsignature=csignature,
-								bchannel=cchan,
+								bsignature=cmsg_signature,
 								bsymetric_key=enc_sym_key)
 
 		if resp == None:
@@ -383,12 +375,9 @@ class udon_client:
 				   breq_src: bytes,
 				   breq_uuid_sig: bytes,
 				   breq_uuid: bytes,
-				   btime: bytes,
 				   bdest: bytes,
 				   bpayload: bytes,
-				   bsource: bytes,
 				   bsignature: bytes,
-				   bchannel: bytes,
 				   bsymetric_key: bytes):
 		"""
 		client side passthrough for proto message to commit() on remote
@@ -399,14 +388,10 @@ class udon_client:
 		buuid_sig  -- bstring: crypto signature of UUID - ciphered by server
 		              key
 		buuid      -- bstring: id - ciphered by server key
-		btime      -- bstring: timestamp - ciphered by recipeint key
 		bdest      -- bstring: recipient's key name
 		              key
 		bpayload   -- bstring: message (data) - ciphered by recipeint key
-		bsource    -- bstrring: message sender's key id - ciphered by recipeint
-		              key
 		bsignature -- bstring: crypto signature of message (bpayload)
-		bchannel   -- bstring: conversation channel id
 
 		returns MessageResponse on success, None on error
 		"""
@@ -416,12 +401,9 @@ class udon_client:
 			(breq_src, bytes),
 			(breq_uuid_sig, bytes),
 			(breq_uuid, bytes),
-			(btime, bytes),
 			(bdest, bytes),
 			(bpayload, bytes),
-			(bsource, bytes),
 			(bsignature, bytes),
-			(bchannel, bytes), 
 			(bsymetric_key, bytes)]
 		if not udon_utils.type_check(types_lst):
 			error('c_send_commit() - Type check')
@@ -431,12 +413,9 @@ class udon_client:
 		message = pb2.CommitMessage(key_id=breq_src,
 						signature=breq_uuid_sig,
 						uuid=breq_uuid,
-						time=btime,
 						destination=bdest,
 						payload=bpayload,
-						source=bsource,
 						msg_signature=bsignature,
-						channel=bchannel,
 						symetric_key=bsymetric_key)
 		try:
 			resp = self.stub.commit(message)
@@ -1445,6 +1424,7 @@ class udon_server(pb2_grpc.UnaryServicer):
 		klst = os.listdir(srv_side_key_dir)
 		for k in klst:
 			path = server_side_key_path(k)
+			print(f"s: Loading {path}")
 			with open(path) as fd:
 				key_data = fd.read()
 				self.keys_dict[k] = key_data
@@ -1544,6 +1524,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 			err_resp = {"error":err}
 			return (False, err_resp, None)
 
+
+		print(f"Looking for keys in {self.keys_dict.keys()}")
 		key_id = sender_key_id.decode('utf-8')
 		if not key_id in self.keys_dict.keys():
 			self.conform_server_side_keys()
@@ -1937,13 +1919,8 @@ class udon_server(pb2_grpc.UnaryServicer):
 		# Write entry to table
 		rtn = udon_DB.write_msg_table_entry(db_path=self.srv_db_path,
 										table=dest_key_id,
-										time=request.time,
-										src=request.source,
 										msg=request.payload,
 										msgsig=request.msg_signature,
-										channel=request.channel,
-										digest="".encode(),
-										parts="".encode(),
 										symetric_key=request.symetric_key)
 
 		if rtn != 0:
@@ -2381,11 +2358,8 @@ class udon_DB:
 
 		init_table = f"""CREATE TABLE IF NOT EXISTS "{table}" (
 						ID integer PRIMARY KEY AUTOINCREMENT,
-						TIME blob NOT NULL,
-						SRC blob,
 						MSG blob,
 						MSGSIG blob,
-						CHANNEL blob,
 						KEY blob,
 						DIGEST blob,
 						PARTS blob);"""
@@ -2403,12 +2377,9 @@ class udon_DB:
 		return udon_DB.run_db_commit(uuid_table, db_path=path)
 
 
-	def write_msg_table_entry(db_path: str, table: str, time: bytes, 
-								src: bytes, msg: bytes, msgsig: str, 
-								channel: bytes, 
+	def write_msg_table_entry(db_path: str, table: str, 
+								msg: bytes, msgsig: str, 
 								symetric_key: bytes,
-								digest: bytes,
-								parts: bytes,
 								channel_table=False) -> int:
 		"""
 			Write row into table
@@ -2416,11 +2387,8 @@ class udon_DB:
 			Keyword arguments:
 			db_path - string
 			table   - string
-			time    - bytes
-			src     - bytes
 			msg     - bytes
 			msgsig  - bytes
-			channe  - bytes
 			symetric_key - bytes
 			digest - bytes
 			parts - bytes
@@ -2432,14 +2400,9 @@ class udon_DB:
 		if not udon_utils.type_check([
 			(db_path, str),
 			(table, str),
-			(time, bytes),
-			(src, bytes),
 			(msg, bytes),
 			(msgsig, bytes),
-			(channel, bytes),
 			(symetric_key, bytes),
-			(digest, bytes),
-			(parts, bytes),
 			(channel_table, bool),
 			]):
 			error('Error: invalid type - udon_DB.write_msg_table_entry()')
@@ -2447,13 +2410,13 @@ class udon_DB:
 
 		sql_write_row = ""
 		if channel_table == False:
-			sql_write_row = f"""INSERT INTO "{table}" (TIME, SRC, MSG, MSGSIG, CHANNEL, KEY, DIGEST, PARTS)
-									VALUES(?,?,?,?,?,?,?,?);"""
-			values = (time, src, msg, msgsig, channel, symetric_key, digest, parts)
+			sql_write_row = f"""INSERT INTO "{table}" (MSG, MSGSIG, KEY)
+									VALUES(?,?,?);"""
+			values = (msg, msgsig, symetric_key)
 		else:
-			sql_write_row = f"""INSERT INTO "{table}" (TIME, SRC, MSG, MSGSIG, CHANNEL, NEW_MSG, KEY, DIGEST, PARTS)
-									VALUES(?,?,?,?,?,?,?,?,?);"""
-			values = (time, src, msg, msgsig, channel, "TRUE", symetric_key, digest, parts)
+			sql_write_row = f"""INSERT INTO "{table}" (MSG, MSGSIG, NEW_MSG, KEY)
+									VALUES(?,?,?);"""
+			values = (msg, msgsig, "TRUE", symetric_key)
 
 		return udon_DB.run_db_commit_values(sql_write_row, values=values, db_path=db_path)
 
