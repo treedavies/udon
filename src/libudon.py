@@ -1397,7 +1397,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 		klst = os.listdir(srv_side_key_dir)
 		for k in klst:
 			path = server_side_key_path(k)
-			print(f"s: Loading {path}")
 			with open(path) as fd:
 				key_data = fd.read()
 				self.keys_dict[k] = key_data
@@ -1498,7 +1497,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 			return (False, err_resp, None)
 
 
-		print(f"Looking for keys in {self.keys_dict.keys()}")
 		key_id = sender_key_id.decode('utf-8')
 		if not key_id in self.keys_dict.keys():
 			self.conform_server_side_keys()
