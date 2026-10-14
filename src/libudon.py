@@ -255,9 +255,12 @@ class udon_client:
 		if drop_member != "":
 			d["drop_member"] = drop_member
 			d["handles"][drop_member] = self.keyname_to_hash[drop_member]
-
-			p = f"{home_dir}/.udon/keys/client_side_keys/{drop_member}.pub"
-			self.keyname_to_hash[drop_member] = udon_utils.utl_file_md5(p)
+			kp = f"{home_dir}/.udon/keys/client_side_keys/{drop_member}"
+			if os.path.exists(kp):
+				self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(kp)
+			else:
+				error(f"gen_channel_struct(): add_member key path not found: {kp}")
+			self.keyname_to_hash[drop_member] = udon_utils.utl_file_md5(kp)
 		else:
 			d["drop_member"] = ""
 
