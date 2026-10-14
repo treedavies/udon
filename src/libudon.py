@@ -1078,13 +1078,15 @@ class udon_client:
 
 			""" Update config's recipeients list. """
 			# TODO: come back to this. it needs adjustment. for now comment out
-			source_hash = self.keyname_to_hash[self.key_name]
+			# print(f"{msg}")
+			source_hash = msg["src"]
+			#source_hash = self.keyname_to_hash[self.key_name]
 			success = self.update_chan_cfg_recipients(channel_info=channel_info,
 														recip=self.recipients,
 														source_hash=source_hash)
-			#if not success:
-			#	error("c_check_sync():update_chan_cfg_recipients() Failed", True)
-			#	return None
+			if not success:
+				error("c_check_sync():update_chan_cfg_recipients() Failed", True)
+				return None
 
 		if not quiet:
 			output(f"Sync'd: {nr_synced}")
@@ -1226,9 +1228,10 @@ class udon_client:
 		dest_lst = []
 		member = None
 		source_handle = None
-
+		print("drop_member_from_list")
 		if source_hash in self.hash_to_keyname.keys():
 			src_handle = self.hash_to_keyname[source_hash]
+			print(f"srchandle {source_hash}: {src_handle}")
 		else:
 			error("srouce_hash not in hash_to_keyname dict")
 			return False
@@ -1238,15 +1241,19 @@ class udon_client:
 		else:
 			error("drop_member_from_list(): drop_member key not found")
 			return False
+		print("A")
 
 		""" Only members can drop themselfs. """
 		""" TODO: Rethink if member should rm self from own config """
+		print(f"{member},{src_handle},{self.key_name}")
 		if member == src_handle and member != self.key_name:
+			print("B")
 			dest_lst = cfg["dest_key_name_list"]
 			if member in dest_lst:
 				dest_lst.remove(member)
 			dest_lst = list(set(dest_lst))
 			dest_lst.sort()
+			print("C")
 
 			udon_utils.create_config(mode='update',
 					channel=cfg["channel"],
@@ -1284,8 +1291,8 @@ class udon_client:
 		if "add_member" in channel_info.keys() and channel_info["add_member"]:
 			return self.add_member_to_list(channel_info, cfg)
 		if "drop_member" in channel_info.keys() and channel_info["drop_member"]:
+			print(f"dropping {channel_info["drop_member"]}")
 			return self.drop_member_from_list(channel_info, cfg, source_hash)
-			pass
 
 		return True
 
