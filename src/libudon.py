@@ -244,9 +244,11 @@ class udon_client:
 		if add_member != "":
 			d["add_member"] = add_member
 			d["handles"][add_member] = self.keyname_to_hash[add_member]
-
-			p = f"{home_dir}/.udon/keys/client_side_keys/{add_member}.pub"
-			self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(p)
+			kp = f"{home_dir}/.udon/keys/client_side_keys/{add_member}"
+			if os.path.exists(kp):
+				self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(kp)
+			else:
+				error(f"gen_channel_struct(): add_member key path not found: {kp}")
 		else:
 			d["add_member"] = ""
 
@@ -333,6 +335,9 @@ class udon_client:
 		MESSAGE["message"] = msg
 		MESSAGE["src"] = msg_sender_key_hash
 		MESSAGE["channel_info"] = channel
+
+		print(f"channel_info: {channel}")
+		print(f"keyname 2 hash {self.keyname_to_hash}")
 
 		""" Signature of MESSAGE"""
 		MESSAGE = json.dumps(MESSAGE)
@@ -827,8 +832,12 @@ class udon_client:
 					continue
 
 			msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
+			if msg_symkey == None:
+				error("decoding message msg_symkey == None")
+				return None
 
 			bmsg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
+			# TODO: This msg is immediatly overwritten. Remove?
 			msg = bmsg.decode("utf-8")
 			if msg == None:
 				error("decoding message msg == None")
@@ -862,6 +871,7 @@ class udon_client:
 			channel = msg["channel_info"]["channel"]
 			msg_timestamp = msg["timestamp"]
 			msg_content = msg["message"]
+
 			msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg_content]
 			msg_list.append(msg_as_lst)
 
@@ -951,6 +961,14 @@ class udon_client:
 		if local_count < 0:
 			error("c_read(): table_row_count() return -1 ??")
 			return None
+
+		# TODO: Create plan generators functions
+		"""
+		if unread == True:
+			plan = gen_unread_plan()
+		else:
+			plan = gen_seq_read_plan(n)
+		"""
 
 		if read_unread == True:
 			return self.c_read_range(1, local_count, table, read_unread)
@@ -1060,9 +1078,10 @@ class udon_client:
 
 			""" Update config's recipeients list. """
 			# TODO: come back to this. it needs adjustment. for now comment out
-			#success = self.update_chan_cfg_recipients(channel_info=channel_info,
-			#											recip=self.recipients,
-			#											source_hash=source_hash)
+			source_hash = self.keyname_to_hash[self.key_name]
+			success = self.update_chan_cfg_recipients(channel_info=channel_info,
+														recip=self.recipients,
+														source_hash=source_hash)
 			#if not success:
 			#	error("c_check_sync():update_chan_cfg_recipients() Failed", True)
 			#	return None
