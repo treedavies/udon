@@ -336,9 +336,6 @@ class udon_client:
 		MESSAGE["src"] = msg_sender_key_hash
 		MESSAGE["channel_info"] = channel
 
-		print(f"channel_info: {channel}")
-		print(f"keyname 2 hash {self.keyname_to_hash}")
-
 		""" Signature of MESSAGE"""
 		MESSAGE = json.dumps(MESSAGE)
 
