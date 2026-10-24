@@ -488,8 +488,7 @@ if __name__ == '__main__':
 	parser.add_option("--clean-messages", dest="clean_messages",
 						help="./udon --clean-channel <channel>", metavar="")
 
-	# TODO: change to --call
-	parser.add_option("--call-mod", dest="mod_call",
+	parser.add_option("--call", dest="mod_call",
 						help="./udon --call-mod <mod> --channel  <chan> <channel> --file <file-path>", metavar="")
 	parser.add_option("-f", "--file", dest="file", metavar="",
 						help="file path")

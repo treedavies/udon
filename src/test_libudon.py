@@ -488,7 +488,7 @@ class Test:
 	def c_send_commit_test_2mb(self, cfg):
 		print("\n----------------------")
 		print(" gRPC Test")
-		print(" c_send_commit_test_2bm() Test")
+		print(" c_send_commit_test_2mb() Test")
 		print("------------------------")
 
 		cfg = config.Config(cfg)

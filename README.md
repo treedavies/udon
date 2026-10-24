@@ -272,3 +272,9 @@ Modules must:
 
 Use the hello module as a template example
 
+Example: Calling the hello module.
+
+    $ udon --call-mod hello --channel test -f /home/tree/repos/udon/src/modules/hello/sample_args.json
+
+    ('0', 'Hello, Tree!', 'null')
+
