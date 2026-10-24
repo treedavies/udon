@@ -202,8 +202,8 @@ certificates.
 To configure the server when your certificate is provided by LetsEncrypt, you can 
 find the `ssl_cert` and `ssl_cert_key` at the following paths.
 
-  /etc/letsencrypt/live/<DOMAIN>/cert.pm
-  /etc/letsencrypt/live/<DOMAIN>/privkey.pem
+  `/etc/letsencrypt/live/<DOMAIN>/cert.pm` and 
+  `/etc/letsencrypt/live/<DOMAIN>/privkey.pem`
 
 Clients should use the `chain.pem` located at:
 
@@ -272,9 +272,12 @@ Modules must:
 
 Use the hello module as a template example
 
-Example: Calling the hello module.
+Example: Calling the hello module:
 
-    $ udon --call-mod hello --channel test -f /home/tree/repos/udon/src/modules/hello/sample_args.json
+    $ udon --call hello --channel test -f /home/tree/repos/udon/src/modules/hello/sample_args.json
 
     ('0', 'Hello, Tree!', 'null')
+
+  
+
 
