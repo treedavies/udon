@@ -115,7 +115,7 @@ def do_poll_check():
 	client.c_poll()
 
 
-def do_read():
+def do_read(read_channel: str, read_unread=False):
 	"""
 		Read messages from local (client-side) DB
 	"""
@@ -135,7 +135,7 @@ def do_read():
 	if home_dir == None:
 		error_and_exit(f"Error: udon.read() home_dir() return None")
 
-	cfg_path = udon.channel_cfg_path(options.read_channel)
+	cfg_path = udon.channel_cfg_path(read_channel)
 	if not os.path.exists(cfg_path):
 		error_and_exit(f"Error: udon.read() channel path NOT found: {cfg_path}")
 
@@ -155,11 +155,13 @@ def do_read():
 	channel_name = f"chan_{client.channel_name}"
 
 	# List of lists
-	message_lst = client.c_read(channel_name, num)
+	message_lst = client.c_read(channel_name, num, read_unread=read_unread)
 	if message_lst == None:
 		error_and_exit("do_read() returned Error")
 
 	for msg in message_lst:
+		msg = client.c_decrypt_message(msg)
+
 		msg_num = msg[0]
 		time    = msg[1]
 		verify  = msg[2]
@@ -177,6 +179,12 @@ def do_read():
 					f"{key} ",
 					f"[{channel}]\n{message}\n"])
 		print(fmtd_out)
+
+		chan = f"chan_{channel}"
+		rtn = client.c_mark_msg_as_read(chan, msg_num)
+		if rtn != 0:
+			error('do_read() - mark_msg_as_read()')
+			return None
 
 
 def get_input():
@@ -329,26 +337,9 @@ def output_new_messages(client, chan_lst: list):
 		Iterate over channels and output newly arrived messages.
 	"""
 	for channel_name in chan_lst:
-		channel_name = f'chan_{channel_name}'
-		if udon.udon_DB.table_exist(client.client_db_path , channel_name):
-			message_lst = client.c_read(channel_name, 1, read_unread=True)
-			if message_lst == None:
-				error_and_exit("do_iter_poll():output_new_messages() return error")
-			for msg in message_lst:
-				msg_num     = msg[0]
-				msg_ts      = msg[1]
-				msg_verify  = msg[2]
-				msg_key     = msg[3]
-				msg_channel = msg[4]
-				msg_content = msg[5]
-				msg_key = msg_key.replace(".pub", "")
-
-				fmtd_out = "".join([f"#{msg_num}: ",
-					f"{msg_ts}\n",
-					f"{msg_verify} ",
-					f"{msg_key} ",
-					f"[{msg_channel}]\n{msg_content}\n"])
-				print(fmtd_out)
+		chan_name = f'chan_{channel_name}'
+		if udon.udon_DB.table_exist(client.client_db_path , chan_name):
+			do_read(channel_name, read_unread=True)
 
 
 def do_iter_poll():
@@ -382,13 +373,13 @@ def do_iter_poll():
 			if r != 0:
 				error_and_exit(f"Error: udon.iter_poll() init_primary_table {cfg}")
 
-			diff = client.c_poll(sync=True, quiet=True)
+			diff = client.c_poll(sync=True, quiet=True, single_batch=True)
 			if diff < 0:
 				sys.exit("Error: udon.iter_poll() - poll() return -1")
 			if diff > 0:
 				chan_lst = udon.udon_DB.get_channel_list()
 				output_new_messages(client, chan_lst)
-		time.sleep(3)
+		time.sleep(1)
 
 
 def do_call_module(channel: str, mod_name: str, args: dict):
@@ -478,6 +469,8 @@ if __name__ == '__main__':
 						help="./udon --iterated-poll", action='store_true',  metavar="")
 	parser.add_option("-r", "--read", dest="read_channel",
 						help="./udon --read <channel>", metavar="")
+	parser.add_option("-u", "--unread", dest="read_unread_channel_msgs",
+						help="./udon --unread <channel>", metavar="")
 	parser.add_option("-n", "--msg-num", dest="msg_num",
 						help="./udon --read <channel> -n <number>", metavar="")
 	parser.add_option("-s", "--sync", dest="sync_channel",
@@ -508,7 +501,7 @@ if __name__ == '__main__':
 	(options, args) = parser.parse_args()
 
 	if options.version:
-		print("Udon: Version 0.02 - Eternal Shaman")
+		print("Udon: Version 0.03 - Eternal Shaman")
 
 	if options.msg_channel:
 		t = Test().check_all_configs()
@@ -530,7 +523,11 @@ if __name__ == '__main__':
 
 	if options.read_channel:
 		t = Test().check_all_configs()
-		do_read()
+		do_read(options.read_channel)
+
+	if options.read_unread_channel_msgs:
+		t = Test().check_all_configs()
+		do_read(options.read_unread_channel_msgs, read_unread=True)
 
 	if options.sync_channel:
 		t = Test().check_all_configs()

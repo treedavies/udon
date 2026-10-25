@@ -270,10 +270,8 @@ class udon_client:
 			self.keyname_to_hash[drop_member] = udon_utils.utl_file_md5(kp)
 		else:
 			d["drop_member"] = ""
-
-		# rtn = json.dumps(d)
-		# return rtn
 		return d
+
 
 	def c_send(self, recip_key: str, msg: str, channel: dict) -> bool:
 		"""
@@ -837,60 +835,70 @@ class udon_client:
 			msg_unread_value = rtn[0][3]
 			msg_symkey       = rtn[0][4]
 
+			msg_as_lst = [msg_num, msg, msg_signature, msg_unread_value, msg_symkey]
 			if read_unread == True:
-				if msg_unread_value != 'TRUE':
-					continue
+				if str(msg_unread_value) == "TRUE":
+					msg_list.append(msg_as_lst)
+			else:
+				msg_list.append(msg_as_lst)
 
-			msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
-			if msg_symkey == None:
-				error("decoding message msg_symkey == None")
-				return None
-
-			bmsg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
-			# TODO: This msg is immediatly overwritten. Remove?
-			msg = bmsg.decode("utf-8")
-			if msg == None:
-				error("decoding message msg == None")
-				return None
-
-			msg = json.loads(bmsg)
-			if not type(msg) == dict:
-				error("message type(msg)")
-				return None
-
-			msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, msg_symkey)
-			if msg_signature == None:
-				error("c_read_range(): decrypt msg_signature")
-				return None
-
-			""" Validate SRC/message Repudiation """
-			try:
-				source = msg["src"]
-				source = self.hash_to_keyname[source]
-				validation = self.c_verify_signature(msg_signature,
-									bmsg, source)
-			except Exception as e:
-				error("c_read_range(): msg validation")
-				source = msg["src"]
-				validation = False
-
-			if validation == True:
-				validity = VALID
-
-			# channel = msg_channel_info["channel"]
-			channel = msg["channel_info"]["channel"]
-			msg_timestamp = msg["timestamp"]
-			msg_content = msg["message"]
-
-			msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg_content]
-			msg_list.append(msg_as_lst)
-
-			chan = f"chan_{channel}"
-			rtn = self.c_mark_msg_as_read(chan, i)
-			if rtn != SUCCESS:
-				error('read_range() - mark_msg_as_read() failure')
-				return None
 		return msg_list
+
+
+	def c_decrypt_message(self, cipher_msg: list) -> list:
+		"""
+		"""
+		VALID = "\033[0;32;48m[V]\033[0m"
+		NOT_VALID = "\033[0;31;48m[!]\033[0m"
+		validity = NOT_VALID
+
+		msg_num          = cipher_msg[0]
+		msg              = cipher_msg[1]
+		msg_signature    = cipher_msg[2]
+		msg_unread_value = cipher_msg[3]
+		msg_symkey       = cipher_msg[4]
+
+		msg_symkey = self.c_decrypt_bstring_with_key(msg_symkey)
+		if msg_symkey == None:
+			error("decoding message msg_symkey == None")
+			return None
+
+		bmsg = self.c_decrypt_bstring_with_sym_key(msg, msg_symkey)
+		msg = bmsg.decode("utf-8")
+		if msg == None:
+			error("decoding message msg == None")
+			return None
+
+		msg = json.loads(bmsg)
+		if not type(msg) == dict:
+			error("message type(msg)")
+			return None
+
+		msg_signature = self.c_decrypt_bstring_with_sym_key(msg_signature, msg_symkey)
+		if msg_signature == None:
+			error("c_read_range(): decrypt msg_signature")
+			return None
+
+		""" Validate SRC/message Repudiation """
+		try:
+			source = msg["src"]
+			source = self.hash_to_keyname[source]
+			validation = self.c_verify_signature(msg_signature,
+									bmsg, source)
+		except Exception as e:
+			error("c_read_range(): msg validation")
+			source = msg["src"]
+			validation = False
+
+		if validation == True:
+			validity = VALID
+
+		channel = msg["channel_info"]["channel"]
+		msg_timestamp = msg["timestamp"]
+		msg_content = msg["message"]
+
+		msg_as_lst = [msg_num, msg_timestamp, validity, source, channel, msg_content]
+		return msg_as_lst
 
 
 	def c_fetch_and_load_absent_keys(self, channel_info: dict) -> list:
@@ -962,8 +970,7 @@ class udon_client:
 		NOT_VALID = "\033[0;31;48m[!]\033[0m"
 		VALID = "\033[0;32;48m[V]\033[0m"
 
-		local_count = udon_DB.table_row_count(self.client_db_path,
-													table)
+		local_count = udon_DB.table_row_count(self.client_db_path, table)
 		if local_count == None:
 			error("c_read(): table_row_count() return error")
 			return None
@@ -971,14 +978,6 @@ class udon_client:
 		if local_count < 0:
 			error("c_read(): table_row_count() return -1 ??")
 			return None
-
-		# TODO: Create plan generators functions
-		"""
-		if unread == True:
-			plan = gen_unread_plan()
-		else:
-			plan = gen_seq_read_plan(n)
-		"""
 
 		if read_unread == True:
 			return self.c_read_range(1, local_count, table, read_unread)
@@ -1038,10 +1037,8 @@ class udon_client:
 			if msg_blob == None:
 				error("c_poll_sync(): decrypt msg_blob:")
 				return -1
-			#print(str(msg_blob))
 			msg = msg_blob.decode('utf-8')
 			msg = json.loads(msg)
-			#print(str(msg_blob))
 
 			""" Write message to local primary table """
 			rtn = udon_DB.write_msg_table_entry(db_path=self.client_db_path,
@@ -1075,6 +1072,7 @@ class udon_client:
 			nr_synced = nr_synced + 1
 
 			""" verify channel keys exist locally. Fetch them if not. """
+			# TODO fetched_lst not used.
 			fetched_lst = self.c_fetch_and_load_absent_keys(channel_info)
 
 			""" 
@@ -1087,10 +1085,7 @@ class udon_client:
 				return None
 
 			""" Update config's recipeients list. """
-			# TODO: come back to this. it needs adjustment. for now comment out
-			# print(f"{msg}")
 			source_hash = msg["src"]
-			#source_hash = self.keyname_to_hash[self.key_name]
 			success = self.update_chan_cfg_recipients(channel_info=channel_info,
 														recip=self.recipients,
 														source_hash=source_hash)
@@ -1100,7 +1095,7 @@ class udon_client:
 
 		if not quiet:
 			output(f"Sync'd: {nr_synced}")
-		return diff
+		return last-first
 
 
 	def create_chan_cfg_from_msg(self, channel_info) -> bool:
@@ -1173,13 +1168,14 @@ class udon_client:
 		return (local_msg_count, remote_msg_count, diff)
 
 
-	def c_poll(self, sync=False, quiet=False) -> int:
+	def c_poll(self, sync=False, quiet=False, single_batch=False) -> int:
 		"""
 		 	AKA check()
 			returns message count of user's table
 			return -1 on error
 			return >0 on success
 		"""
+		BATCH_SIZE = 3
 		NOT_VALID = "\033[0;31;48m[!]\033[0m"
 		VALID = "\033[0;32;48m[V]\033[0m"
 		validity = NOT_VALID
@@ -1195,13 +1191,28 @@ class udon_client:
 			if not quiet:
 				output(f" Key: {self.key_name} - Local:{str(local_msg_count)} Remote:{str(server_msg_count)}")
 		else:
-			last = int(server_msg_count) + 1
-			if local_msg_count == 0:
-				first = 1
-			else:
-				first = int(local_msg_count) + 1
-			self.c_check_sync(first, last, diff, quiet)
-		return diff
+			total_synced = 0
+			while True:
+				if local_msg_count == 0:
+					first = 1
+				else:
+					first = int(local_msg_count) + 1
+
+				if (int(local_msg_count) + BATCH_SIZE) < int(server_msg_count):
+					last = int(local_msg_count) + BATCH_SIZE + 1
+				else:
+					last = int(server_msg_count) +1
+
+				fetch_count = int(last) - int(first)
+				msgs_synced = self.c_check_sync(first, last, diff, quiet)
+				total_synced = total_synced + msgs_synced
+				local_msg_count, server_msg_count, diff = self.local_remote_count()
+
+				if single_batch:
+					return total_synced
+
+				if int(local_msg_count) == int(server_msg_count):
+					return total_synced
 
 
 	def add_member_to_list(self, channel_info: dict, cfg) -> bool:
@@ -1507,7 +1518,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 
 		msg_sig = request.signature
 		if not msg_sig:
-			# verify tyoe
 			err = f"Error: {op}() - missing arg: signature".encode()
 			err_resp = {"error":err}
 			error(f"A _verify_request() returning: (False, {err_resp})", True)
@@ -1515,7 +1525,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 
 		sender_key_id = request.key_id
 		if not sender_key_id:
-			# verify type
 			err = f"Error: {op}() - missing arg: key_id".encode()
 			err_resp = {"error":err}
 			error(f"B _verify_request() returning: (False, {err_resp})", True)
@@ -1523,7 +1532,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 
 		req_uuid = request.uuid
 		if not req_uuid:
-			# verify type
 			err = f"Error: {op}() - missing arg: uuid".encode()
 			err_resp = {"error":err}
 			error(f"C _verify_request() returning: (False, {err_resp})", True)
@@ -1549,7 +1557,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 				return (False, err_resp, None)
 
 		""" Verify the key_id file is on disk """
-		# NOTE: Also still in commit() 
 		kidp = server_side_key_path(key_id)
 		if not os.path.exists(kidp):
 			err = f"Error: {op}() - public key file not found on disk {key_id} [key_dict] not found".encode()
@@ -1557,7 +1564,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 			error(f"D.1 _verify_request() returning: (False, {err_resp})", True)
 			return (False, err_resp, None)
 
-		# redundant?
 		if not key_id in self.keys_dict.keys():
 			err = f"Error: {op}() - public key for key_id {key_id} [key_dict] not found".encode()
 			err_resp = {"error":err}
@@ -1642,15 +1648,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 			MessageResponse = {"error":err_resp}
 			return pb2.MessageResponse(**MessageResponse)
 
-		#rtn_time       = row_entry[1]
-		#rtn_src_sender = row_entry[2]
-		#rtn_bpayload   = row_entry[3]
-		#rtn_signature  = row_entry[4]
-		#rtn_channel    = row_entry[5]
-		#rtn_sym_key    = row_entry[6]
-
-		#print(str(row_entry))
-
 		rtn_bpayload   = row_entry[1]
 		rtn_signature  = row_entry[2]
 		rtn_sym_key    = row_entry[3]
@@ -1714,8 +1711,7 @@ class udon_server(pb2_grpc.UnaryServicer):#
 
 
 	def ping(self, request, context):
-		"""
-		"""
+		""" server side RPC ping """
 		response = {"status":"true".encode(),}
 		return pb2.PingResponse(**response)
 
@@ -1836,19 +1832,10 @@ class udon_server(pb2_grpc.UnaryServicer):#
 		mod_args = None
 		if request.args:
 			mod_args = request.args
-			# print(f"server: Found Args!:{mod_args}")
 
 		try:
-			# print(f"server: mod_args:{mod_args}")
-			# print(str(type(mod_args)))
-
 			decoded_args = mod_args.decode('utf-8')
-			# print(f"server: Decoded args:{decoded_args}")
-			# print(str(type(decoded_args)))
-
 			args = json.loads(decoded_args)
-			# print(f"server: json.loads:{args}")
-			# print(str(type(args)))
 		except Exception as e:
 			error(f"module(): load args - {e}", True)
 			ModResponse = {"rc":"1".encode(),
@@ -1898,7 +1885,6 @@ class udon_server(pb2_grpc.UnaryServicer):#
 		ModResponse["data"] = data
 		ModResponse["error"] = err
 
-		# print(f"Module Returning: {ModResponse}")
 		return pb2.ModuleResponse(**ModResponse)
 
 
@@ -2439,7 +2425,6 @@ class udon_DB:
 			id - int
 
 			return [] on values out of db range (error)
-			# goody
 		"""
 		debug('read_msg_table_entry()')
 		if not udon_utils.type_check(
