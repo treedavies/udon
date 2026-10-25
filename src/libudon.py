@@ -91,15 +91,21 @@ def debug(msg: str, enable=False):
 
 
 def error(msg: str, to_file=False):
+	"""
+		msg: (str) error message to stdout
+		to_file: (bool) write error to log file only
+	"""
+	home_dir = udon_utils.home_dir()
+	tfmt = '%Y-%m-%d %H:%M:%S'
+	time_stamp = datetime.datetime.now().strftime(tfmt)
+	logfile = f"{home_dir}/{UDON_LOGS_DIR}/log"
+	logging.basicConfig(filename=logfile, level=logging.INFO)
+
 	if to_file:
-		home_dir = udon_utils.home_dir()
-		tfmt = '%Y-%m-%d %H:%M:%S'
-		time_stamp = datetime.datetime.now().strftime(tfmt)
-		logfile = f"{home_dir}/{UDON_LOGS_DIR}/log"
-		logging.basicConfig(filename=logfile, level=logging.INFO)
 		logger.error(f"{time_stamp}:{msg}")
 	else:
 		print(f"Error:{msg}")
+		logger.error(f"{time_stamp}:{msg}")
 
 
 def output(msg: str, to_file=False):
