@@ -62,6 +62,7 @@ def server_side_keys_dir() -> str:
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/"
 
+# TODO: refactor
 def server_side_key_path(key: str) -> str:
 	BASE = server_side_keys_dir()
 	path = os.path.join(BASE, key)
@@ -368,7 +369,10 @@ class udon_client:
 		if resp == None:
 			error('udon:send():c_send_commit() resp=None')
 			return False
-
+		if resp.error != "0".encode():
+			print(f'c_send_commit() resp:{resp.error}')
+			error(f'c_send_commit() resp:{resp.error}', True)
+			return False
 		return True
 
 
@@ -1137,16 +1141,21 @@ class udon_client:
 		resp = self.c_msg_check(breq_src=md5_key_name, breq_uuid_sig=uuid_sig,
 								breq_uuid=req_uuid)
 		if resp == None:
-			error("lrc() - udon_client:c_poll(): c_msg_check() returned None")
+			error("A: lrc() - udon_client:c_poll(): c_msg_check() exception returned None")
+			return (-1,-1,-1)
+
+		if resp.error != "".encode():
+			error(f"B: local_remote_count(): udon_client:c_poll(): c_msg_check() {resp}")
 			return (-1,-1,-1)
 
 		nr_msgs = resp.value
 		if nr_msgs == None:
+			error("C: local_remote_count():udon_client:c_poll():c_msg_check() resp.value = None")
 			return (-1,-1,-1)
 
 		remote_msg_count = nr_msgs.decode("utf-8")
 		if not udon_utils.is_int(remote_msg_count):
-			error(f"lrc: server_msg_count not integer {remote_msg_count}")
+			error(f"D: lrc: server_msg_count not integer {remote_msg_count}")
 			return (-1,-1,-1)
 
 		local_msg_count = udon_DB.table_row_count(self.client_db_path,
@@ -1522,7 +1531,7 @@ class udon_server(pb2_grpc.UnaryServicer):#
 			err_resp = {"error":err}
 			return (False, err_resp, None)
 
-
+		""" Load any keys currently not in keys_dict """
 		key_id = sender_key_id.decode('utf-8')
 		if not key_id in self.keys_dict.keys():
 			self.conform_server_side_keys()
@@ -1532,6 +1541,15 @@ class udon_server(pb2_grpc.UnaryServicer):#
 				err_resp = {"error":err}
 				error(f"D _verify_request() returning: (False, {err_resp})", True)
 				return (False, err_resp, None)
+
+		""" Verify the key_id file is on disk """
+		# NOTE: Also still in commit() 
+		kidp = server_side_key_path(key_id)
+		if not os.path.exists(kidp):
+			err = f"Error: {op}() - public key file not found on disk {key_id} [key_dict] not found".encode()
+			err_resp = {"error":err}
+			error(f"D.1 _verify_request() returning: (False, {err_resp})", True)
+			return (False, err_resp, None)
 
 		# redundant?
 		if not key_id in self.keys_dict.keys():
@@ -1699,7 +1717,7 @@ class udon_server(pb2_grpc.UnaryServicer):#
 	def check(self, request, context):
 		"""
 			server side RPC check
-			Retruns byte string in format of:
+			Retruns byte string in format of: (value, sig, error)
 
 			Request
 				- request.key_id
@@ -1734,20 +1752,20 @@ class udon_server(pb2_grpc.UnaryServicer):#
 		debug("clean()")
 		success, err_msg, key_id = self._verify_request(request, op="clean")
 		if success == False:
-			error(f"clean(): req_prereq_verify() -> {success}, {err_msg}, {key_id}", True)
-			return pb2.CleanRequestResponse(**err_msg)
+			error(f"clean(): verify_request() -> {success}, {err_msg}, {key_id}", True)
+			return pb2.CleanResponse(**err_msg)
 
 		msg_count = request.clean_count.decode('utf-8')
 		if not len(msg_count) > 0:
 			output(f"clean(): msg_count null length")
 			err_resp = {"error":"clean(): clean_count null length"}
-			return pb2.CleanRequestResponse(**err_resp)
+			return pb2.CleanResponse(**err_resp)
 
 		try:
 			msg_count = int(msg_count)
 		except Exception as e:
 			err_resp = {"error":"clean(): msg_count not integer"}
-			return pb2.CleanRequestResponse(**err_resp)
+			return pb2.CleanResponse(**err_resp)
 
 		rtn = udon_DB.clean_msgs_in_primary_table(db_path=self.srv_db_path,
 											table=key_id, clean_count=msg_count)
@@ -1932,7 +1950,7 @@ class udon_server(pb2_grpc.UnaryServicer):#
 		""" Send Response """ 
 		rtn_msg = {'response':b'Payload Written',
 			'payload':b'Payload Written',
-			'error':'x'.encode()}
+			'error':'0'.encode()}
 
 		return pb2.MessageResponse(**rtn_msg)
 
@@ -2191,7 +2209,7 @@ class udon_utils:
 			fd.close()
 		except Exception as e:
 			error(str(e))
-			return Fasle
+			return False
 		return True
 
 	# TODO remove same func from udon_init
