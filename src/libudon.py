@@ -40,6 +40,10 @@ UDON_TLS_DIR = '.udon/TLS'
 UDON_LOGS_DIR = '.udon/logs'
 
 def safe_path(BASE: str, fname: str) -> bool:
+	"""
+		Safety check - determine if abs path is under /home/$User/.UDON/
+		Rerturn True/Fasle
+	"""
 	path = os.path.join(BASE, fname)
 	abs_path = os.path.abspath(path)
 	if abs_path != path:
@@ -47,7 +51,7 @@ def safe_path(BASE: str, fname: str) -> bool:
 		return False
 	return True
 
-def channel_dir():
+def channel_dir() -> str:
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_CHAN_DIR}/"
 
@@ -59,11 +63,12 @@ def channel_cfg_path(chan: str) -> str:
 	return os.path.join(BASE, chan)
 
 def server_side_keys_dir() -> str:
+	""" return directory path """
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_SERVER_SIDE_KEYS}/"
 
-# TODO: refactor
 def server_side_key_path(key: str) -> str:
+	""" return server side key path """
 	BASE = server_side_keys_dir()
 	path = os.path.join(BASE, key)
 	if not safe_path(BASE, key):
@@ -71,10 +76,12 @@ def server_side_key_path(key: str) -> str:
 	return os.path.join(BASE, key)
 
 def client_side_keys_dir() -> str:
+	""" return directory path """
 	home_dir = udon_utils.home_dir()
 	return f"{home_dir}/{UDON_CLIENT_SIDE_KEYS}/"
 
 def client_side_key_path(key: str) -> str:
+	""" return client side key path """
 	BASE = client_side_keys_dir()
 	path = os.path.join(BASE, key)
 	if not safe_path(BASE, key):
@@ -88,7 +95,6 @@ def debug(msg: str, enable=False):
 	"""
 	if DEBUG or enable:
 		print(f"DEBUG:{msg}")
-
 
 def error(msg: str, to_file=False):
 	"""
@@ -109,6 +115,7 @@ def error(msg: str, to_file=False):
 
 
 def output(msg: str, to_file=False):
+	""" output to stdout or (stdout and log file) """
 	types_lst = [(msg, str), (to_file, bool)]
 	if not udon_utils.type_check(types_lst):
 		error("output(): type_check")
@@ -231,37 +238,46 @@ class udon_client:
 		return True
 
 
-	def gen_channel_struct(self, channel: str, recipents: list, add_member="", drop_member="") -> dict:
-		home_dir = udon_utils.home_dir()
-		d = {}
-		d["channel"] = channel
+	def gen_channel_struct(self, add_member="", drop_member="") -> dict:
+		"""
+			Create struct of channel information sent with messages
+		"""
+		if not udon_utils.type_check([
+			(add_member, str),
+			(drop_member, str)]):
+			return None
 
+		home_dir = udon_utils.home_dir()
 		lst = []
-		for e in recipents:
+		handles = {}
+		struct = {}
+		struct["channel"] = self.channel_name
+		recipients = self.recipients
+
+		for e in recipients:
 			if e:
 				h = self.keyname_to_hash[e]
 				lst.append(h)
-		d["recipients"] = lst
+		struct["recipients"] = lst
 
-		handles = {}
 		for hash in lst:
 			handles[hash] = self.hash_to_keyname[hash]
-		d["handles"] = handles
+		struct["handles"] = handles
 
 		if add_member != "":
-			d["add_member"] = add_member
-			d["handles"][add_member] = self.keyname_to_hash[add_member]
+			struct["add_member"] = add_member
+			struct["handles"][add_member] = self.keyname_to_hash[add_member]
 			kp = f"{home_dir}/.udon/keys/client_side_keys/{add_member}"
 			if os.path.exists(kp):
 				self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(kp)
 			else:
 				error(f"gen_channel_struct(): add_member key path not found: {kp}")
 		else:
-			d["add_member"] = ""
+			struct["add_member"] = ""
 
 		if drop_member != "":
-			d["drop_member"] = drop_member
-			d["handles"][drop_member] = self.keyname_to_hash[drop_member]
+			struct["drop_member"] = drop_member
+			struct["handles"][drop_member] = self.keyname_to_hash[drop_member]
 			kp = f"{home_dir}/.udon/keys/client_side_keys/{drop_member}"
 			if os.path.exists(kp):
 				self.keyname_to_hash[add_member] = udon_utils.utl_file_md5(kp)
@@ -269,8 +285,8 @@ class udon_client:
 				error(f"gen_channel_struct(): add_member key path not found: {kp}")
 			self.keyname_to_hash[drop_member] = udon_utils.utl_file_md5(kp)
 		else:
-			d["drop_member"] = ""
-		return d
+			struct["drop_member"] = ""
+		return struct
 
 
 	def c_send(self, recip_key: str, msg: str, channel: dict) -> bool:
@@ -278,7 +294,7 @@ class udon_client:
 		Validate and prepare to send message to server
 		- recip_key - key name to send message to.
 		- msg - message str
-		- channel - channel struct as a str
+		- channel - channel struct
 		returns: boolean
 		"""
 		if not udon_utils.type_check([

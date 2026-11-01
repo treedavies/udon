@@ -293,6 +293,22 @@ class Test:
 				rtn = client.c_verify_signature(sig, payload, key)
 				self.evaluate(True, rtn, f"client_signature_tests(key:{key} size:{i})")
 
+	def client_gen_channel_struct_test(self, cfg):
+		print("\n----------------------")
+		print(" cleint Tests")
+		print(" client_gen_channel_struct_test ")
+		print("------------------------")
+		cfg = config.Config(cfg)
+		print(cfg)
+		client = udon_client()
+		rtn = client.c_load_config(cfg)
+
+		chan_struct = client.gen_channel_struct("", "")
+		self.evaluate("test", chan_struct["channel"], "client_gen_channel_struct_test() - channel name")
+		self.evaluate("", chan_struct["drop_member"], "client_gen_channel_struct_test() - drop")
+		self.evaluate("", chan_struct["add_member"], "client_gen_channel_struct_test() - add")
+		self.evaluate("1", str(len(chan_struct["recipients"])), "client_gen_channel_struct_test() - num recipients")
+		self.evaluate("1", str(len(chan_struct["handles"])), "client_gen_channel_struct_test() - num recipients")
 
 	def client_symkey_test(self):
 		print("\n----------------------")
@@ -1431,6 +1447,8 @@ class Test:
 		self.client_encrypt_decrypt_test(cfg)
 		self.client_signature_test(cfg)
 		self.client_symkey_test()
+		self.client_gen_channel_struct_test(cfg)
+
 
 		""" Server object tests """
 		self.server_init_test(cfg, srv_cfg)
