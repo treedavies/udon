@@ -502,7 +502,7 @@ if __name__ == '__main__':
 	(options, args) = parser.parse_args()
 
 	if options.version:
-		print("Udon: Version 0.03 - Eternal Shaman")
+		print("Udon: Version 0.04")
 
 	if options.msg_channel:
 		t = Test().check_all_configs()
