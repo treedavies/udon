@@ -10,7 +10,7 @@ from pathlib import Path
 import libudon as udon
 import udon_init
 import daemon
-import config
+import tomllib
 import json
 import time
 import sys
@@ -64,7 +64,7 @@ def do_check_sync(channel: str) -> int:
 	if not os.path.exists(cfg_path):
 		error_and_exit(f"Error: udon.check_sync(): config path not found: {cfg_path}")
 
-	cfg = config.Config(cfg_path)
+	cfg = udon.udon_utils.toml_to_dict(cfg_path)
 	client = udon.udon_client()
 	if not client.c_load_config(cfg):
 		error_and_exit(f"Error: udon.check_sync(): c_load_config() failed")
@@ -101,7 +101,7 @@ def do_poll_check():
 		error_and_exit(f"Error: udon.poll_check() - cfg_path not found: {cfg_path}")
 
 	try:
-		cfg = config.Config(cfg_path)
+		cfg = udon.udon_utils.toml_to_dict(cfg_path)
 	except Exception as e:
 		error_and_exit(f"Error: udon.poll_check() - Failed to open config {cfg_path} - {e}")
 
@@ -140,7 +140,7 @@ def do_read(read_channel: str, read_unread=False):
 		error_and_exit(f"Error: udon.read() channel path NOT found: {cfg_path}")
 
 	try:
-		cfg = config.Config(cfg_path)
+		cfg = udon.udon_utils.toml_to_dict(cfg_path)
 	except Exception as e:
 		error_and_exit(f"Error: udon.read() Failed to open config {cfg_path}:{e}")
 
@@ -224,7 +224,7 @@ def do_commit_message(add_member="", drop_member=""):
 		error_and_exit(f"Error: udon.commit_message() - Path not found: {path}")
 
 	try:
-		cfg = config.Config(path)
+		cfg = udon.udon_utils.toml_to_dict(path)
 	except Exception as e:
 		error_and_exit(f"Error: udon.commit_message() - config.Config() {e}")
 
@@ -272,7 +272,7 @@ def do_clean_channel(chan: str):
 		error_and_exit(f"Error: udon.clean() - Path not found: {path}")
 
 	try:
-		cfg = config.Config(path)
+		cfg = udon.udon_utils.toml_to_dict(path)
 	except Exception as e:
 		error_and_exit(f"Error: udon.clean() - config.Config() {e}")
 
@@ -362,7 +362,7 @@ def do_iter_poll():
 				error_and_exit(f"Error: udon.iter_poll() config not found: {cfg_path}")
 
 			try:
-				cfg = config.Config(cfg_path)
+				cfg = udon.udon_utils.toml_to_dict(cfg_path)
 			except Exception as e:
 				error_and_exit(f"Error: udon.iter_poll(): Failed to open config {cfg}")
 
@@ -397,7 +397,7 @@ def do_call_module(channel: str, mod_name: str, args: dict):
 	if not os.path.exists(cfg_path):
 		error_and_exit(f"Error: udon.do_call_module(): config path not found: {cfg_path}")
 
-	cfg = config.Config(cfg_path)
+	cfg = udon.udon_utils.toml_to_dict(cfg_path)
 	client = udon.udon_client()
 	if not client.c_load_config(cfg):
 		error_and_exit(f"Error: udon.do_call_module(): c_load_config() failed")

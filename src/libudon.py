@@ -12,7 +12,7 @@ import datetime
 import importlib
 import udon_pb2 as pb2
 import udon_pb2_grpc as pb2_grpc
-import config
+import tomllib
 import sqlite3
 import platform
 import hashlib
@@ -168,7 +168,7 @@ class udon_client:
 			Load client channel config
 		"""
 		debug('c_load_config()')
-		types_lst = [(type(cfg), type(config.Config))]
+		types_lst = [(type(cfg), type(dict))]
 		if not udon_utils.type_check(types_lst):
 			return False
 
@@ -1221,6 +1221,7 @@ class udon_client:
 
 				fetch_count = int(last) - int(first)
 				msgs_synced = self.c_check_sync(first, last, diff, quiet)
+				# TODO fix this bug
 				total_synced = total_synced + msgs_synced
 				local_msg_count, server_msg_count, diff = self.local_remote_count()
 
@@ -1323,7 +1324,7 @@ class udon_client:
 		cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{channel_name}"
 		if os.path.exists(cfg_path):
 			try:
-				cfg = config.Config(cfg_path)
+				cfg = udon_utils.toml_to_dict(cfg_path)
 				cfg = cfg.as_dict()
 				dest_lst = cfg["dest_key_name_list"]
 			except Exception as e:
@@ -1350,7 +1351,7 @@ class udon_server(pb2_grpc.UnaryServicer):#
 			sys.exit(1)
 
 		self.config_path = f"{home_dir}/{UDON_DIR}/server.conf"
-		self.cfg = config.Config(self.config_path)
+		self.cfg = udon_utils.toml_to_dict(self.config_path)
 		self.server_mods_allow = f"{home_dir}/{UDON_DIR}/server_mods.allow"
 		self.modules_path = f"/usr/bin/udon.d/modules/"
 
@@ -1387,8 +1388,7 @@ class udon_server(pb2_grpc.UnaryServicer):#
 			sys.exit(1)
 
 		cfg = f"{home_dir}/{UDON_DIR}/server.conf"
-		cfg = config.Config(cfg)
-
+		cfg = udon_utils.toml_to_dict(cfg)
 		port = cfg["server_port"]
 		srv_port = '[::]:'+port
 		output("Serving on port: "+srv_port)
@@ -1477,7 +1477,7 @@ class udon_server(pb2_grpc.UnaryServicer):#
 			Returns: bool
 		"""
 		debug("s_load_config()")
-		types_lst = [(type(cfg), type(config.Config))]
+		types_lst = [(type(cfg), type(dict))]
 		if not udon_utils.type_check(types_lst):
 			return False
 
@@ -1973,6 +1973,15 @@ class udon_utils:
 			return str(hd)
 		return None
 
+	def toml_to_dict(path: str) -> dict:
+		data = None
+		try:
+			with open(path, "rb") as f:
+				data = tomllib.load(f)
+		except Exception as e:
+			error(f"toml_to_dict({path}): {e}")
+			return None
+		return data
 
 	def is_udon_server_running() -> bool:
 		"""
@@ -2614,7 +2623,7 @@ class udon_DB:
 		for cfg_name in lst:
 			cfg_path = f"{home_dir}/{UDON_CHAN_DIR}/{cfg_name}"
 			try:
-				cfg = config.Config(cfg_path)
+				cfg = udon_utils.toml_to_dict(cfg_path)
 			except Exception as e:
 				error(f"get_client_db_paths() opening Config() {cfg_path} {e}", True)
 				return None

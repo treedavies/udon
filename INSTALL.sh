@@ -87,7 +87,6 @@ echo "[DONE] Created: /usr/bin/udon.d/udon-venv"
 # INSTALL DEPENDENCIES TO VIRTUAL ENVIRONMENT
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install beautifulsoup4
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install cffi
-/usr/bin/udon.d/udon-venv/bin/python3 -m pip install config
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install cryptography
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install google
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install grpcio-tools

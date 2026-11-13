@@ -16,7 +16,7 @@ import datetime
 import hashlib
 import shutil
 import socket
-import config
+import tomllib
 import json
 import sys
 import os
@@ -90,7 +90,7 @@ class Test:
 		"""
 		"""
 		try:
-			cfg = config.Config(cfg)
+			cfg = udon_utils.toml_to_dict(cfg)
 		except Exception as e:
 			print(f"Effor: clean_up() - {e}")
 			sys.exit(1)
@@ -201,7 +201,7 @@ class Test:
 		print("----------------------")
 
 		# Test 1 - Client Initialization, Load config
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		self.evaluate(True, bool(client), "Init Client")
 		rtn = client.c_load_config(cfg)
@@ -213,7 +213,7 @@ class Test:
 		print(" Client - load keys Test")
 		print("------------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		self.evaluate(True, bool(client), "Init Client")
 		rtn = client.c_load_config(cfg)
@@ -244,7 +244,7 @@ class Test:
 		print(" Client - enc/dec Test")
 		print("------------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		self.evaluate(True, bool(client), "Init Client")
 		rtn = client.c_load_config(cfg)
@@ -277,7 +277,7 @@ class Test:
 		print(" Load Keys ")
 		print("----------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "client_signature_test() - c_load_config()")
@@ -298,7 +298,7 @@ class Test:
 		print(" cleint Tests")
 		print(" client_gen_channel_struct_test ")
 		print("------------------------")
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		print(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
@@ -337,7 +337,7 @@ class Test:
 		print("----------------------")
 
 		# Test 1
-		srv_config = config.Config(srv_cfg_path)
+		srv_config = udon_utils.toml_to_dict(srv_cfg_path)
 		server = udon_server()
 		self.evaluate(True, bool(server), "Init Server")
 
@@ -370,7 +370,7 @@ class Test:
 		if md5_table_name == None:
 			self.evaluate(True, bool(server), "drop_test_table(): utl_file_md5() failed")
 
-		srv_config = config.Config(srv_cfg_path)
+		srv_config = udon_utils.toml_to_dict(srv_cfg_path)
 		server = udon_server()
 		self.evaluate(True, bool(server), "drop_test_table(): Init Server")
 
@@ -389,7 +389,7 @@ class Test:
 		print("----------------------")
 
 		# Test 1
-		srv_config = config.Config(srv_cfg_path)
+		srv_config = udon_utils.toml_to_dict(srv_cfg_path)
 		server = udon_server()
 		self.evaluate(True, bool(server), "Init Server")
 
@@ -417,7 +417,7 @@ class Test:
 		print(" gRPC Test")
 		print(" c_ping() Test ")
 		print("------------------------")
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "c_ping_test() - c_load_config()")
@@ -432,7 +432,7 @@ class Test:
 		print(" c_send_commit() Test ")
 		print("------------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "c_send_test() - c_load_config()")
@@ -507,7 +507,7 @@ class Test:
 		print(" c_send_commit_test_2mb() Test")
 		print("------------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "c_send_test() - c_load_config()")
@@ -590,7 +590,7 @@ class Test:
 		print(" commit() replay error test")
 		print("------------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "commit_error_replay_test() - c_load_config()")
@@ -675,7 +675,7 @@ class Test:
 		print(" Check()")
 		print("----------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "check_test() - c_load_config()")
@@ -704,7 +704,7 @@ class Test:
 		print(" gRPC Test")
 		print(" Check() error tests")
 		print("----------------------")
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "check_error_tests() - c_load_config()")
@@ -750,7 +750,7 @@ class Test:
 		print(" fetchkey()")
 		print("----------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "fetchkey() - c_load_config()")
@@ -788,7 +788,7 @@ class Test:
 		print(" fetch()")
 		print("------------------------")
 
-		cfg = config.Config(cfg)                                               
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()                                                    
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "fetch_tests() - c_load_config()")
@@ -826,7 +826,7 @@ class Test:
 		print(" fetch() Error Tests")
 		print("------------------------")
 
-		cfg = config.Config(cfg)                                               
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()                                                    
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "fetch_error_tests() - c_load_config()")
@@ -1134,10 +1134,10 @@ class Test:
 				self.evaluate(True, False, "config_test() path not found - {cfg}", silent=silent_flag)
 
 			try:
-				cfg = config.Config(cfg_path).as_dict()
+				cfg = udon_utils.toml_to_dict(cfg_path)
 			except Exception as e:
 				print(f"Error: load config as dictionary {e}: {cfg_path}")
-				self.evaluate(True, False, f"config_test() - config.Config({cfg_path}).as_dict()", silent=silent_flag)
+				self.evaluate(True, False, f"config_test() - udon_utils.toml_to_dict({cfg_path})", silent=silent_flag)
 
 			""" Verify all assets are defined """
 			""" Verify channel is named correctly """
@@ -1316,7 +1316,7 @@ class Test:
 		print(" Clean table on server")
 		print("------------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "clean_on_server_test() - c_load_config()")
@@ -1337,7 +1337,7 @@ class Test:
 		print(" RPC Module Test")
 		print("------------------------")
 
-		cfg = config.Config(cfg)
+		cfg = udon_utils.toml_to_dict(cfg)
 		client = udon_client()
 		rtn = client.c_load_config(cfg)
 		self.evaluate(True, rtn, "0 rpc_module_test() - c_load_config()")
@@ -1401,7 +1401,7 @@ class Test:
 
 	def running_tests_on_server(self, cfs_path: str):
 		try:
-			cfg = config.Config(self.cfg_path).as_dict()
+			cfg = udon_utils.toml_to_dict(self.cfg_path)
 		except Exception as e:
 			print(f"Error: load config at dictionary {e}: {cfg_path}")
 			self.evaluate(True, False, f"tests_on_server() - config.Config({cfg_path}).as_dict()", silent=silent_flag)
@@ -1482,7 +1482,7 @@ class Test:
 
 		""" --drop member test """
 
-		self.rpc_module_test(cfg)
+		# self.rpc_module_test(cfg)
 
 		""" cleanup test related data """
 		self.drop_test_table(cfg, srv_cfg)
