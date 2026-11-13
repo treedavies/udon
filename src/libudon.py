@@ -1221,7 +1221,6 @@ class udon_client:
 
 				fetch_count = int(last) - int(first)
 				msgs_synced = self.c_check_sync(first, last, diff, quiet)
-				# TODO fix this bug
 				total_synced = total_synced + msgs_synced
 				local_msg_count, server_msg_count, diff = self.local_remote_count()
 
@@ -1325,7 +1324,6 @@ class udon_client:
 		if os.path.exists(cfg_path):
 			try:
 				cfg = udon_utils.toml_to_dict(cfg_path)
-				cfg = cfg.as_dict()
 				dest_lst = cfg["dest_key_name_list"]
 			except Exception as e:
 				error(f"update_chan_cfg_recipients() opening Config() {cfg_path} {e}", True)
