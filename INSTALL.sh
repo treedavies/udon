@@ -2,6 +2,11 @@
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2025 Tree Davies
 
+################################################################
+# This install script installs scripts to `/usr/bin/udon.d` and
+# installs python dependencies in a python virtual environment.
+################################################################
+
 UDON_DIR=/usr/bin/udon.d
 
 PYTHON=`which python3`
@@ -60,6 +65,11 @@ if [ $? -ne 0 ] ; then
 fi
 
 ln -s $UDON_DIR/udon /usr/bin/udon
+
+# CHANGE PYTHON SHABANG TO VIRTUAL ENVIRONMENT
+sed -i 's/\/usr\/bin\/env python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon
+sed -i 's/\/usr\/bin\/env python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon_init.py
+sed -i 's/\/usr\/bin\/env python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/test_udon.py
 
 mkdir -p -m 755 $UDON_DIR/modules
 mkdir -p -m 755 $UDON_DIR/modules/hello

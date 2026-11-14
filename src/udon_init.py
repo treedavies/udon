@@ -1,4 +1,4 @@
-#!/usr/bin/udon.d/udon-venv/bin/python3
+#!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2025 Tree Davies
 
@@ -16,7 +16,6 @@ import platform
 import datetime
 import hashlib
 import shutil
-import config
 import uuid
 import sys
 import os

@@ -2625,7 +2625,7 @@ class udon_DB:
 			except Exception as e:
 				error(f"get_client_db_paths() opening Config() {cfg_path} {e}", True)
 				return None
-			cfg = cfg.as_dict()
+
 			if "client_db_path" in cfg.keys():
 				rtn.append(cfg["client_db_path"])
 		s = set(rtn)
