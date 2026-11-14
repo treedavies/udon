@@ -1990,6 +1990,7 @@ class udon_utils:
 		proc_pid = None
 		for proc in psutil.process_iter():
 			try:
+				print(proc)
 				proc_name = proc.name()
 				proc_pid = proc.pid
 				if (proc_name == 'udon') and (not proc_pid == curr_pid):

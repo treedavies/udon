@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2025 Tree Davies
 
@@ -502,7 +502,7 @@ if __name__ == '__main__':
 	(options, args) = parser.parse_args()
 
 	if options.version:
-		print("Udon: Version 0.06")
+		print("Udon: Version 0.061")
 
 	if options.msg_channel:
 		t = Test().check_all_configs()
