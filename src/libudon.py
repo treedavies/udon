@@ -1988,11 +1988,10 @@ class udon_utils:
 		curr_pid = psutil.Process().pid
 		proc_name = None
 		proc_pid = None
-		for proc in psutil.process_iter(['pid', 'name']):
+		for proc in psutil.process_iter():
 			try:
-				info = proc.info
-				proc_name = info['name']
-				proc_pid = info['pid']
+				proc_name = proc.name()
+				proc_pid = proc.pid
 				if (proc_name == 'udon') and (not proc_pid == curr_pid):
 						output(f"Server process: {proc_name}:{proc_pid}")
 						return True
