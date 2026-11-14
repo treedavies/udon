@@ -43,6 +43,31 @@ OS platforms
 
 * MacOsX
 
+# Dependencies
+
+* beautifulsoup4
+
+* cffi
+
+* cryptography
+
+* google
+
+* grpcio-tools
+
+* protobuf
+
+* pycparser
+
+* setuptools
+
+* soupsieve
+
+* python-daemon
+
+* psutil
+
+
 # 0. Installation
 
 Run the following install script. This will install files to
