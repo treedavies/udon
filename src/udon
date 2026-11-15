@@ -383,37 +383,6 @@ def do_iter_poll():
 		time.sleep(1)
 
 
-def do_call_module(channel: str, mod_name: str, args: dict):
-	"""
-		Call module() on remote server by name and retrieve the response.
-	"""
-	cfg_name = channel
-
-	home_dir = udon.udon_utils.home_dir()
-	if not home_dir:
-		error_and_exit("Error: udon.do_call_module(): home_dir() return None")
-
-	cfg_path = udon.channel_cfg_path(cfg_name)
-	if not os.path.exists(cfg_path):
-		error_and_exit(f"Error: udon.do_call_module(): config path not found: {cfg_path}")
-
-	cfg = udon.udon_utils.toml_to_dict(cfg_path)
-	client = udon.udon_client()
-	if not client.c_load_config(cfg):
-		error_and_exit(f"Error: udon.do_call_module(): c_load_config() failed")
-
-	key_id = client.key_name
-
-	rsp = client.c_module(key_id=key_id,
-							 mod_name=mod_name.encode(),
-							 args=args)
-	if rsp:
-		tpl = (rsp.rc.decode('utf-8'),
-			rsp.data.decode('utf-8'),
-			rsp.error.decode('utf-8'))
-		print(f"{tpl}")
-
-
 def load_arg_file(path: str) -> str:
 	if not os.path.exists(path):
 		print(f"Error: Path not found: {path}")
@@ -482,8 +451,6 @@ if __name__ == '__main__':
 	parser.add_option("--clean-messages", dest="clean_messages",
 						help="./udon --clean-channel <channel>", metavar="")
 
-	parser.add_option("--call", dest="mod_call",
-						help="./udon --call-mod <mod> --channel  <chan> <channel> --file <file-path>", metavar="")
 	parser.add_option("-f", "--file", dest="file", metavar="",
 						help="file path")
 
@@ -551,18 +518,6 @@ if __name__ == '__main__':
 		if rsp.lower() == "y":
 			do_check_sync(options.clean_messages)
 			do_clean_channel(options.clean_messages)
-
-	if options.mod_call and options.file and options.channel:
-		t = Test().check_all_configs()
-		args = load_arg_file(options.file)
-		if args == None:
-			sys.exit("fail arg input bleh")
-
-		if type(args) != dict:
-			args = json.loads(args)
-			args = json.dumps(args)
-			args = args.encode()
-		do_call_module(options.channel, options.mod_call, args)
 
 	if options.start_server:
 		t = Test().check_all_configs()
