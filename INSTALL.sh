@@ -69,13 +69,8 @@ ln -s $UDON_DIR/udon /usr/bin/udon
 # CHANGE PYTHON SHABANG TO VIRTUAL ENVIRONMENT
 sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon
 sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon_init.py
-sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/test_udon.py
+sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/test_libudon.py
 
-mkdir -p -m 755 $UDON_DIR/modules
-mkdir -p -m 755 $UDON_DIR/modules/hello
-for file in `find ./src/modules/` ; do
-    install -m 555 -o root $file $UDON_DIR/modules/hello
-done
 
 # VERIFY VENV MODULE IS INSTALLED
 $PYTHON -c "import venv"
@@ -95,6 +90,7 @@ fi
 echo "[DONE] Created: /usr/bin/udon.d/udon-venv"
 
 # INSTALL DEPENDENCIES TO VIRTUAL ENVIRONMENT
+/usr/bin/udon.d/udon-venv/bin/python3 -m pip install --upgrade pip
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install beautifulsoup4
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install cffi
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install cryptography
