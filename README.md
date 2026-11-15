@@ -320,26 +320,8 @@ remove the key from their channel config.
 
     $ udon --drop <key.pub> --channel <channel>
 
-# 10. User define modules
-
-Udon can be extended using user defined python modules in the
-`/usr/bin/udon.d/modules/` directory.
-
-Modules must:
-  * Be a class called module
-  * Have a run method
-  * return a tuple of byte encoded variables (return-code, data, error)
-
-Use the hello module as a template example
-
-Example: Calling the hello module:
-
-    $ udon --call hello --channel test -f /home/tree/repos/udon/src/modules/hello/sample_args.json
-
-    ('0', 'Hello, Tree!', 'null')
-
   
-# 11. [Informational] The /home/$USER/.udon directory tree
+# 10. [Informational] The /home/$USER/.udon directory tree
 
 ## .udon/keys
 
