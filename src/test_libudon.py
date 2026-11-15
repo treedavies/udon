@@ -1332,31 +1332,6 @@ class Test:
 		self.evaluate("".encode(), rsp.error, f"clean_on_server_test() - no error response")
 
 
-	def rpc_module_test(self, cfg: str):
-		print("\n----------------------")
-		print(" RPC Module Test")
-		print("------------------------")
-
-		cfg = udon_utils.toml_to_dict(cfg)
-		client = udon_client()
-		rtn = client.c_load_config(cfg)
-		self.evaluate(True, rtn, "0 rpc_module_test() - c_load_config()")
-
-		key_id = client.key_name
-
-		mod_args = {}
-		mod_args["name"] = "Dave"
-		json_str_mod_args = json.dumps(mod_args)
-		bargs = json_str_mod_args.encode()
-
-		""" Hello """
-		rsp = client.c_module(key_id=key_id,
-								mod_name="hello".encode(),
-								args=bargs)
-		self.evaluate("0".encode(), rsp.rc, f"1 rpc_module_test() - Hello() response: {rsp.error}")
-		self.evaluate("Hello, Dave!".encode(), rsp.data, f"2 rpc_module_test() - hello response:{rsp.data}")
-
-
 	def udon_dir_check(self):
 		"""
 			Verify required directories exist or Fail
@@ -1481,8 +1456,6 @@ class Test:
 		""" --add member test """
 
 		""" --drop member test """
-
-		# self.rpc_module_test(cfg)
 
 		""" cleanup test related data """
 		self.drop_test_table(cfg, srv_cfg)
