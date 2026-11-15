@@ -67,9 +67,9 @@ fi
 ln -s $UDON_DIR/udon /usr/bin/udon
 
 # CHANGE PYTHON SHABANG TO VIRTUAL ENVIRONMENT
-sed -i 's/\/usr\/bin\/env python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon
-sed -i 's/\/usr\/bin\/env python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon_init.py
-sed -i 's/\/usr\/bin\/env python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/test_udon.py
+sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon
+sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon_init.py
+sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/test_udon.py
 
 mkdir -p -m 755 $UDON_DIR/modules
 mkdir -p -m 755 $UDON_DIR/modules/hello
