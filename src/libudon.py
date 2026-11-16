@@ -2095,11 +2095,11 @@ channel = "{channel}"
 client_key_name = '{pkn}'
 client_private_key = '{privkn}'
 client_db_path = '{home_dir}/.udon/db/{pkn}-udon-local.db'
-dest_key_name_list = {dest_lst}
 clean_on_sync = 'disable'
 server_fqdn = '{fqdn}'
 server_port = '50051'
 ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
+dest_key_name_list = {dest_lst}
 """
 		with open(chan_cfg_path, file_mode) as fd:
 			fd.write(cfg)
