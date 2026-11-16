@@ -149,7 +149,7 @@ def do_read(read_channel: str, read_unread=False):
 		error_and_exit(f"Error: udon.read() - client.c_load_config() Failed")
 
 	if not udon.udon_DB.channel_table_exists(client.client_db_path, client.channel_name):
-		err = "Error: udon.read() - channel_table_exists() False"
+		err = f"Error: udon.read() - channel_table_exists({client.channel_name}) False"
 		try_sync = "Try: udon --sync <channel>"
 		error_and_exit(f"{err}\n{try_sync}")
 	channel_name = f"chan_{client.channel_name}"
