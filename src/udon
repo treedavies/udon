@@ -370,6 +370,9 @@ def do_iter_poll():
 			if not client.c_load_config(cfg):
 				error_and_exit(f"Error: udon.iter_poll() Failed to open config {cfg}")
 
+			if not client.c_ping():
+				error_and_exit("No response from server...")
+
 			r = udon.udon_DB.init_primary_table(client.client_db_path, client.key_name)
 			if r != 0:
 				error_and_exit(f"Error: udon.iter_poll() init_primary_table {cfg}")
