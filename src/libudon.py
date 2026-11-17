@@ -1119,21 +1119,21 @@ class udon_client:
 		resp = self.c_msg_check(breq_src=md5_key_name, breq_uuid_sig=uuid_sig,
 								breq_uuid=req_uuid)
 		if resp == None:
-			error("A: lrc() - udon_client:c_poll(): c_msg_check() exception returned None")
+			error("local_remote_count() - udon_client:c_poll(): c_msg_check() exception returned None")
 			return (-1,-1,-1)
 
 		if resp.error != "".encode():
-			error(f"B: local_remote_count(): udon_client:c_poll(): c_msg_check() {resp}")
+			error(f"local_remote_count(): udon_client:c_poll(): c_msg_check() {resp.error}")
 			return (-1,-1,-1)
 
 		nr_msgs = resp.value
 		if nr_msgs == None:
-			error("C: local_remote_count():udon_client:c_poll():c_msg_check() resp.value = None")
+			error("local_remote_count(): udon_client:c_poll():c_msg_check() resp.value = None")
 			return (-1,-1,-1)
 
 		remote_msg_count = nr_msgs.decode("utf-8")
 		if not udon_utils.is_int(remote_msg_count):
-			error(f"D: lrc: server_msg_count not integer {remote_msg_count}")
+			error(f"local_remote_count(): server_msg_count not integer {remote_msg_count}")
 			return (-1,-1,-1)
 
 		local_msg_count = udon_DB.table_row_count(self.client_db_path,
