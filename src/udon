@@ -472,7 +472,7 @@ if __name__ == '__main__':
 	(options, args) = parser.parse_args()
 
 	if options.version:
-		print("Udon: Version 0.063")
+		print("Udon: Version 0.064")
 
 	if options.msg_channel:
 		t = Test().check_all_configs()
