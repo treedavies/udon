@@ -549,7 +549,7 @@ if __name__ == '__main__':
 
 		port = input("server port? (defaults to 50051): ")
 		if not port:
-			error_and_exit("server port not found")
+			port = "50051"
 
 		pub_key = input("public key name: ")
 		if not pub_key:
