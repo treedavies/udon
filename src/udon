@@ -551,20 +551,28 @@ if __name__ == '__main__':
 		if not port:
 			port = "50051"
 
-		pub_key = input("public key name: ")
+		pub_key = input("Enter you public key name: ")
 		if not pub_key:
 			error_and_exit("public key not found")
 
-		prv_key = ""
 		if os.path.exists(udon.client_side_key_path(pub_key)):
 			prv_key = pub_key.replace(".pub", "")
 		else:
 			s = f"Searched for {udon.client_side_key_path(pub_key)}..."
 			error_and_exit(f"{s}\nPublic key not found")
 
-		if not os.path.exists(udon.server_side_key_path(prv_key)):
-			s = f"Searched for {udon.server_side_key_path(prv_key)}..."
-			error_and_exit(f"{s}\nPrivate key {prv_key} not found")
+		pub_key_path = udon.client_side_key_path(pub_key)
+		if not pub_key_path:
+			error_and_exit(f"Could not find key path {pub_key_path}")
+
+		prv_key_id = udon.udon_utils.utl_file_md5(pub_key_path)
+		if not prv_key_id:
+			error_and_exit(f"Could not geneate md5 {pub_key_path}")
+
+		prv_key_id_path = udon.server_side_key_path(prv_key_id)
+		if not os.path.exists(prv_key_id_path):
+			s = f"Searched for {prv_key_id_path}..."
+			error_and_exit(f"{s}\nPrivate key {prv_key_id_path} not found")
 
 		i = udon_init.Initialization()
 		lst = [pub_key]

@@ -343,7 +343,6 @@ dest_key_name_list = {dest_lst}
 
 		with open(chan_cfg_path, file_mode) as fd:
 			fd.write(test)
-			print(f" Created {chan_cfg_path}")
 		os.chmod(chan_cfg_path, 0o700)
 		print(f" Created {chan_cfg_path}")
 		return
