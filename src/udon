@@ -454,9 +454,6 @@ if __name__ == '__main__':
 	parser.add_option("--clean-messages", dest="clean_messages",
 						help="./udon --clean-channel <channel>", metavar="")
 
-	parser.add_option("-f", "--file", dest="file", metavar="",
-						help="file path")
-
 	parser.add_option("--channel", dest="channel", metavar="",
 						help="channel")
 	parser.add_option("--server", dest="start_server", action='store_true', metavar="", help="udon --server")
