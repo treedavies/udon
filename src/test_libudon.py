@@ -26,7 +26,7 @@ from libudon import udon_DB
 from libudon import udon_client
 from libudon import udon_server
 from libudon import udon_utils
-
+from libudon import safe_path, channel_dir
 
 def handler(signal_received, frame):
     ''' Handle SIGIN/CTRL-C '''
@@ -1390,9 +1390,21 @@ class Test:
 		else:
 			self.evaluate(True, False, f"test_on_server()")
 
+	def test_safe_paths(self):
+		home_dir = udon_utils.home_dir()
+		chan_dir = channel_dir()
+
+		rtn = safe_path(chan_dir, 'test_key_A.pub')
+		self.evaluate(True, rtn, f"test_save_paths({chan_dir},test_key_A)")
+
+		chan_dir +=".."
+		rtn = safe_path(chan_dir, 'test_key_A.pub')
+		self.evaluate(False, rtn, f"'test_save_paths({chan_dir}','test_key_A')")
 
 	def run_tests(self, cfg: str, srv_cfg: str):
 		self.clean_up(cfg)
+
+		self.test_safe_paths()
 
 		self.check_types()
 
