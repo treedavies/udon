@@ -386,41 +386,6 @@ def do_iter_poll():
 		time.sleep(1)
 
 
-def load_arg_file(path: str) -> str:
-	if not os.path.exists(path):
-		print(f"Error: Path not found: {path}")
-		return None
-
-	with open(path, "r") as fd:
-		content = ""
-		lst = fd.readlines()
-		for ln in lst:
-			content = content + ln
-
-	if content == "":
-		print("Error: No content - {path}")
-		return None
-
-	# TODO: investigate this a bit... too many dumps!
-	try:
-		test_ld = json.loads(content)
-		args = json.dumps(content)
-
-		""" Verify it loads as json """
-		args = json.loads(args)
-
-		""" Verify if dumps json to string (also lint) """
-		args = json.dumps(args)
-
-		""" load as json (again)"""
-		j = json.loads(args)
-	except Exception as e:
-		print(f"Error: {e}")
-		return None
-
-	return j
-
-
 if __name__ == '__main__':
 
 	euid = os.geteuid()
