@@ -450,6 +450,16 @@ def do_fetch_key(key_md5: str, channel: str, fetch_key: str):
 		error_and_exit(f"Key ID fetch failed: {key_md5}")
 
 
+def do_show_channel(channel: self):
+	path = udon.channel_cfg_path(channel)
+	if not os.path.exists(path):
+		error_and_exit(f"Error: udon.do_show_channel() - Path not found: {path}")
+	with open(path, "r") as fd:
+		data = fd.readlines()
+	data = "".join(data)
+	print(data)
+
+
 if __name__ == '__main__':
 
 	euid = os.geteuid()
@@ -497,6 +507,7 @@ if __name__ == '__main__':
 	parser.add_option("--key-name", dest="key_name", metavar="")
 	parser.add_option("--fetch-key", dest="fetch_key",
 						help="./udon --fetch-key <md5> --channel <chan-name> --key-name <key-name>", metavar="")
+	parser.add_option("-S", "--show", dest="show_channel", metavar="", help="udon --show <channel-name>")
 
 	(options, args) = parser.parse_args()
 
@@ -514,6 +525,9 @@ if __name__ == '__main__':
 		t = Test().check_all_configs()
 		do_commit_message()
 		# TODO sync
+
+	if options.show_channel:
+		do_show_channel(options.show_channel)
 
 	if options.add_key:
 		s = do_check_sync(options.channel)
