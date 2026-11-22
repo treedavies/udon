@@ -471,43 +471,72 @@ if __name__ == '__main__':
 	user = getpass.getuser()
 
 	parser = OptionParser()
-	parser.add_option("-m", "--message", dest="msg_channel",
-						help="./udon --msg <channel>", metavar="")
-	parser.add_option("-i", "--input", dest="cli_input",
-						help="./udon -m <channel> -i '<msg_string>'", metavar="")
-	parser.add_option("-p", "--poll", dest="poll_channel",
-						help="./udon --poll <channel>", metavar="")
-	parser.add_option("-P", "--iterated-poll", dest="iterated_poll",
-						help="./udon --iterated-poll", action='store_true',  metavar="")
-	parser.add_option("-r", "--read", dest="read_channel",
-						help="./udon --read <channel>", metavar="")
-	parser.add_option("-u", "--unread", dest="read_unread_channel_msgs",
-						help="./udon --unread <channel>", metavar="")
-	parser.add_option("-n", "--msg-num", dest="msg_num",
-						help="./udon --read <channel> -n <number>", metavar="")
-	parser.add_option("-s", "--sync", dest="sync_channel",
-						help="./udon --sync <channel>", metavar="")
-	parser.add_option("-l", "--list", dest="list",
-						help="./udon --list",
-						action='store_true', metavar="")
-	parser.add_option("--clean-messages", dest="clean_messages",
-						help="./udon --clean-channel <channel>", metavar="")
 
-	parser.add_option("--channel", dest="channel", metavar="",
-						help="channel")
-	parser.add_option("--server", dest="start_server", action='store_true', metavar="", help="udon --server")
-	parser.add_option("--daemon", dest="start_daemon", action='store_true', metavar="", help="udon --daemon")
-	parser.add_option("--test", dest="test", action='store_true', metavar="", help="udon --test")
-	parser.add_option("--init", dest="init", action='store_true', metavar="", help="udon --init")
+	parser.add_option("-m", "--message", dest="msg_channel",
+						help="Example: udon --msg <channel>", metavar="<channel>")
+
+	parser.add_option("-i", "--input", dest="cli_input",
+						help="Disables input prompt, and sends -i defined string\nExample: udon -m <channel> -i 'I like cheese!'")
+
+	parser.add_option("-p", "--poll", dest="poll_channel",
+						help="Query server for new messages.\nExample: udon --poll <channel>", metavar="<channel>")
+
+	parser.add_option("-P", "--iterated-poll", dest="iterated_poll",
+						help="Continuously query, sync, and display new messages\nExample: udon --iterated-poll <channel>", action='store_true')
+
+	parser.add_option("-r", "--read", dest="read_channel",
+						help="Read messages.\nExample: udon --read <channel>", metavar="<channel>")
+
+	parser.add_option("-u", "--unread", dest="read_unread_channel_msgs",
+						help="Read unread messages.\nExample: udon --unread <channel>", metavar="")
+
+	parser.add_option("-n", "--msg-num", dest="msg_num",
+						help="Used with --read.\nExample: udon --read <channel> -n <number>", metavar="")
+
+	parser.add_option("-s", "--sync", dest="sync_channel",
+						help="Sync messages from server to client.\nExample: udon --sync <channel>", metavar="<channel>")
+
+	parser.add_option("--clean-messages", dest="clean_messages",
+						help="Sync messages, then Clean (delete) from server.\nExample: udon --clean-channel <channel>", metavar="<channel>")
+
+	parser.add_option("-F", "--fetch-key", dest="fetch_key", metavar="<key-md5sum>",
+						help="udon --fetch-key <md5> --channel <chan-name> --key-name <key-name>")
+
+	parser.add_option("-l", "--list", dest="list",
+						help="Example: udon --list",
+						action='store_true')
+
+	parser.add_option("--server", dest="start_server", action='store_true',
+	help="Start server in foreground.\nExample: udon --server")
+
+	parser.add_option("--daemon", dest="start_daemon", action='store_true',
+	help="Start server as background process.\nExample: udon --daemon")
+
+	parser.add_option("--test", dest="test", action='store_true',
+	help="Run tests against server.\nExample: udon --test")
+
+	parser.add_option("--init", dest="init", action='store_true',
+	help="Initialize user enviornment in /home/$USER/.udon/.")
+
+	parser.add_option("--channel", dest="channel", metavar="<channel>",
+						help="Used with --add, and --drop")
+
+	parser.add_option("-a", "--add", dest="add_key", metavar="<key.pub>",
+	help="Add public key to channel's recipient list.\nExample: udon --add <key>.pub --channel <channel>",)
+
+	parser.add_option("-d", "--drop", dest="drop_key", metavar="<key.pub>",
+	help="drop (self) public key from channel's recipient list.\nExample: udon --drop <key>.pub --channel <channel>",)
+
+	parser.add_option("-S", "--show", dest="show_channel", metavar="<channel>",
+	help="Print channel config to screen.\nExample: udon --show <channel>")
+
+	parser.add_option("--create-channel", dest="create_channel", action="store_true",
+						help="Create a new channel config")
+
+	parser.add_option("-K", "--key-name", dest="key_name", metavar="<key-name>",
+	help="Used with --fetch-key")
+
 	parser.add_option("-v", "--version", dest="version", action='store_true', metavar="", help="udon --version")
-	parser.add_option("-a", "--add", dest="add_key", metavar="", help="udon --add <key>.pub --channel <channel>",)
-	parser.add_option("-d", "--drop", dest="drop_key", metavar="", help="udon --drop <key>.pub --channel <channel>",)
-	parser.add_option("--create-channel", dest="create_channel", action="store_true", metavar="",
-						help="udon --drop <key> -- channel <channel>")
-	parser.add_option("--key-name", dest="key_name", metavar="")
-	parser.add_option("--fetch-key", dest="fetch_key",
-						help="./udon --fetch-key <md5> --channel <chan-name> --key-name <key-name>", metavar="")
-	parser.add_option("-S", "--show", dest="show_channel", metavar="", help="udon --show <channel-name>")
 
 	(options, args) = parser.parse_args()
 

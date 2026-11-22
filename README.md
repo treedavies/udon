@@ -206,63 +206,79 @@ as their channel config's `ssl_root`.
 # 7. Command line flags of operation
 
   TLDR: See next secion 7.1
+Usage: udon [options]
+
+Options:
 
     -h, --help            show this help message and exit
 
-    -m MSG_CHANNEL, --message=MSG_CHANNEL
-                          ./udon --msg <channel>
+    -m <channel>, --message=<channel>
+                          Example: udon --msg <channel>
 
     -i CLI_INPUT, --input=CLI_INPUT
-                          ./udon -m <channel> -i '<msg_string>'
+                          Disables input prompt, and sends -i defined string
+                          Example: udon -m <channel> -i 'I like cheese!'
 
-    -p POLL_CHANNEL, --poll=POLL_CHANNEL
-                          ./udon --poll <channel>
+    -p <channel>, --poll=<channel>
+                          Query server for new messages. Example: udon --poll
+                          <channel>
 
-    -P, --iterated-poll   ./udon --iterated-poll
+    -P, --iterated-poll   Continuously query, sync, and display new messages
+                          Example: udon --iterated-poll <channel>
 
-    -r READ_CHANNEL, --read=READ_CHANNEL
-                          ./udon --read <channel>
+    -r <channel>, --read=<channel>
+                          Read messages. Example: udon --read <channel>
 
     -u READ_UNREAD_CHANNEL_MSGS, --unread=READ_UNREAD_CHANNEL_MSGS
-                          ./udon --unread <channel>
+                          Read unread messages. Example: udon --unread <channel>
 
     -n MSG_NUM, --msg-num=MSG_NUM
-                          ./udon --read <channel> -n <number>
+                          Used with --read. Example: udon --read <channel> -n
+                          <number>
 
-    -s SYNC_CHANNEL, --sync=SYNC_CHANNEL
-                          ./udon --sync <channel>
+    -s <channel>, --sync=<channel>
+                          Sync messages from server to client. Example: udon
+                          --sync <channel>
 
-    -l, --list            ./udon --list
+    --clean-messages=<channel>
+                          Sync messages, then Clean (delete) from server.
+                          Example: udon --clean-channel <channel>
 
-    --clean-messages=CLEAN_MESSAGES
-                          ./udon --clean-channel <channel>
+    -F <key-md5sum>, --fetch-key=<key-md5sum>
+                          udon --fetch-key <md5> --channel <chan-name> --key-
+                          name <key-name>
 
-    --call=MOD_CALL       ./udon --call-mod <mod> --channel  <chan> <channel>
-                          --file <file-path>
+    -l, --list            Example: udon --list
 
-    -f FILE, --file=FILE  file path
+    --server              Start server in foreground. Example: udon --server
 
-    --channel=CHANNEL     channel
+    --daemon              Start server as background process. Example: udon
+                            --daemon
 
-    --server              udon --server
+    --test                Run tests against server. Example: udon --test
 
-    --daemon              udon --daemon
+    --init                Initialize user enviornment in /home/$USER/.udon/.
 
-    --test                udon --test
+    --channel=<channel>   Used with --add, and --drop
 
-    --init                udon --init
-
-    -v, --version         udon --version
-
-    -a ADD_KEY, --add=ADD_KEY
+    -a <key.pub>, --add=<key.pub>
+                          Add public key to channel's recipient list. Example:
                           udon --add <key>.pub --channel <channel>
 
-    -d DROP_KEY, --drop=DROP_KEY
-                          udon --drop <key>.pub --channel <channel>
+    -d <key.pub>, --drop=<key.pub>
+                          drop (self) public key from channel's recipient list.
+                          Example: udon --drop <key>.pub --channel <channel>
 
-    --create-channel      udon --drop <key> -- channel <channel>
+    -S <channel>, --show=<channel>
+                          Print channel config to screen. Example: udon --show
+                          <channel>
 
+    --create-channel      Create a new channel config
 
+    -K <key-name>, --key-name=<key-name>
+                          Used with --fetch-key
+                          
+    -v, --version         udon --version
 
 # 7.1. Command line examples of usage
 
