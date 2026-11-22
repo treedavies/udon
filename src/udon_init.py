@@ -114,7 +114,7 @@ class Initialization:
 			key_size = input(" Desired Key size? (default=4096): ")
 			if len(key_size) == 0:
 				key_size = '4096'
-			elif not udon_utils.is_int(key_size):
+			elif not udon.udon_utils.is_int(key_size):
 				print(" Error: key size not integer")
 				sys.exit(1)
 			elif int(key_size) < 1024:
