@@ -94,7 +94,6 @@ echo "[DONE] Created: /usr/bin/udon.d/udon-venv"
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install beautifulsoup4
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install cffi
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install cryptography
-/usr/bin/udon.d/udon-venv/bin/python3 -m pip install google
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install grpcio-tools
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install protobuf
 /usr/bin/udon.d/udon-venv/bin/python3 -m pip install pycparser
