@@ -386,6 +386,70 @@ def do_iter_poll():
 		time.sleep(1)
 
 
+def do_fetch_key(key_md5: str, channel: str, fetch_key: str):
+	"""
+		Fetch key from server
+	"""
+	home_dir = udon.udon_utils.home_dir()
+	cfg = None
+
+	types_lst = [
+		(key_md5, str),
+		(channel, str),
+		(fetch_key, str)]
+	if not udon.udon_utils.type_check(types_lst):
+		error_and_exit("do_fetch_key() - invalid types")
+
+	if len(key_md5) == 16:
+		error_and_exit("do_fetch_key() key md5 invalid lenth")
+	key_md5 = key_md5.encode()
+
+	path = udon.channel_cfg_path(channel)
+	if not os.path.exists(path):
+		error_and_exit(f"Error: udon.do_fetch_key() - Path not found: {path}")
+
+	try:
+		cfg = udon.udon_utils.toml_to_dict(path)
+	except Exception as e:
+		error_and_exit(f"Error: udon.do_fetch_key() - config.Config() {e}")
+
+	client = udon.udon_client()
+	if not client.c_load_config(cfg):
+		error_and_exit(f"Error: udon.do_fetch_key() - c_load_config failure")
+
+	key_id = client.key_name
+	key_id = client.keyname_to_hash[key_id]
+	key_id = key_id.encode()
+
+	""" Generate request ID and signature """
+	uuid = udon.udon_utils.generate_uuid()
+	req_uuid = uuid.encode()
+	req_sig = client.c_gen_signature(req_uuid)
+
+	resp = client.c_fetchkey(key_md5, key_id, req_sig, req_uuid)
+	if not resp:
+		error_and_exit("Error: c_fetchkey() return None")
+
+	resp_err = resp.error.decode("utf-8")
+	if resp_err:
+		error_and_exit(f"Error: c_fetchkey() {resp_err}")
+
+	rtnd_key = resp.key.decode("utf-8")
+	if rtnd_key:
+		home = udon.udon_utils.home_dir()
+		keypath = f"{home}/.udon/keys/client_side_keys/{fetch_key}"
+		try:
+			with open(keypath, "w") as FD:
+				FD.write(rtnd_key)
+		except Exception as e:
+			error_and_exit(f"do_fetch_key(): write key to file {e}")
+
+	if os.path.exists(keypath):
+		print(f"Key fetched {keypath}")
+	else:
+		error_and_exit(f"Key ID fetch failed: {key_md5}")
+
+
 if __name__ == '__main__':
 
 	euid = os.geteuid()
@@ -430,8 +494,18 @@ if __name__ == '__main__':
 	parser.add_option("-d", "--drop", dest="drop_key", metavar="", help="udon --drop <key>.pub --channel <channel>",)
 	parser.add_option("--create-channel", dest="create_channel", action="store_true", metavar="",
 						help="udon --drop <key> -- channel <channel>")
+	parser.add_option("--key-name", dest="key_name", metavar="")
+	parser.add_option("--fetch-key", dest="fetch_key",
+						help="./udon --fetch-key <md5> --channel <chan-name> --key-name <key-name>", metavar="")
 
 	(options, args) = parser.parse_args()
+
+	if options.fetch_key:
+		if not options.channel:
+			error_and_exit("fetch_key: no channel provided")
+		if not options.key_name:
+			error_and_exit("fetch_key: no key_name provided")
+		do_fetch_key(options.fetch_key, options.channel, options.key_name)
 
 	if options.version:
 		print("Udon: Version 0.064")
