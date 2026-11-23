@@ -452,13 +452,21 @@ def do_fetch_key(key_md5: str, channel: str, fetch_key: str):
 
 
 def do_show_channel(channel: self):
-	path = udon.channel_cfg_path(channel)
-	if not os.path.exists(path):
-		error_and_exit(f"udon.do_show_channel() - Path not found: {path}")
-	with open(path, "r") as fd:
-		data = fd.readlines()
-	data = "".join(data)
-	print(data)
+	if channel != 'all':
+		path = udon.channel_cfg_path(channel)
+		if not os.path.exists(path):
+			error_and_exit(f"udon.do_show_channel() - Path not found: {path}")
+		with open(path, "r") as fd:
+			data = fd.readlines()
+		data = "".join(data)
+		print(data)
+	else:
+		home_dir = udon.udon_utils.home_dir()
+		chan_dir = f"{home_dir}/.udon/channel_cfgs/"
+		dlst = os.listdir(chan_dir)
+		print("Channels configs:")
+		for d in dlst:
+			print(f"* {d}")
 
 
 if __name__ == '__main__':
