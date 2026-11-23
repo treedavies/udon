@@ -622,6 +622,9 @@ if __name__ == '__main__':
 		if not chan_name:
 			error_and_exit("channel name not found")
 
+		if os.path.exists(udon.channel_cfg_path(chan_name)):
+			error_and_exit("Error: channel already exists")
+
 		server = input("Server FQDN: ")
 		if not server:
 			error_and_exit("server FQDN not found")
