@@ -1235,7 +1235,6 @@ class udon_client:
 		source_handle = None
 		if source_hash in self.hash_to_keyname.keys():
 			src_handle = self.hash_to_keyname[source_hash]
-			print(f"srchandle {source_hash}: {src_handle}")
 		else:
 			error("srouce_hash not in hash_to_keyname dict")
 			return False
@@ -1291,7 +1290,6 @@ class udon_client:
 		if "add_member" in channel_info.keys() and channel_info["add_member"]:
 			return self.add_member_to_list(channel_info, cfg)
 		if "drop_member" in channel_info.keys() and channel_info["drop_member"]:
-			print(f"dropping {channel_info["drop_member"]}")
 			return self.drop_member_from_list(channel_info, cfg, source_hash)
 
 		return True
