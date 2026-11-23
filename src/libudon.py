@@ -1086,7 +1086,8 @@ class udon_client:
 			recips.append(self.hash_to_keyname[r])
 
 		if not os.path.exists(cfg_path):
-			udon_utils.create_config("create", channel, 
+			uinit = Initialization()
+			uinit.create_config("create", channel, 
 										self.key_name,
 										self.priv_key_path,
 										self.server_fqdn,
@@ -1216,7 +1217,8 @@ class udon_client:
 		dest_lst = list(set(dest_lst))
 		dest_lst.sort()
 
-		udon_utils.create_config(mode='update',
+		uinit = Initialization()
+		uinit.create_config(mode='update',
 					channel=cfg["channel"],
 					pkn=cfg["client_key_name"],
 					privkn=cfg["client_private_key"],
@@ -1231,7 +1233,6 @@ class udon_client:
 		dest_lst = []
 		member = None
 		source_handle = None
-		print("drop_member_from_list")
 		if source_hash in self.hash_to_keyname.keys():
 			src_handle = self.hash_to_keyname[source_hash]
 			print(f"srchandle {source_hash}: {src_handle}")
@@ -1244,21 +1245,18 @@ class udon_client:
 		else:
 			error("drop_member_from_list(): drop_member key not found")
 			return False
-		print("A")
 
 		""" Only members can drop themselfs. """
 		""" TODO: Rethink if member should rm self from own config """
-		print(f"{member},{src_handle},{self.key_name}")
 		if member == src_handle and member != self.key_name:
-			print("B")
 			dest_lst = cfg["dest_key_name_list"]
 			if member in dest_lst:
 				dest_lst.remove(member)
 			dest_lst = list(set(dest_lst))
 			dest_lst.sort()
-			print("C")
 
-			udon_utils.create_config(mode='update',
+			uinit = Initialization()
+			uinit.create_config(mode='update',
 					channel=cfg["channel"],
 					pkn=cfg["client_key_name"],
 					privkn=cfg["client_private_key"],
@@ -2076,35 +2074,6 @@ class udon_utils:
 			error(str(e))
 			return False
 		return True
-
-	# TODO remove same func from udon_init
-	def create_config(mode: str, channel: str, pkn: str, privkn: str, fqdn: str, dest_lst: list):
-		""" Check test config """
-		home_dir = udon_utils.home_dir()
-		chan_cfg_path = f"{home_dir}/.udon/channel_cfgs/{channel}"
-		dest_lst = str(dest_lst)
-
-		if mode == 'create':
-			file_mode = "x"
-		if mode == 'update':
-			file_mode = "w"
-
-		cfg = f"""
-channel = "{channel}"
-client_key_name = '{pkn}'
-client_private_key = '{privkn}'
-client_db_path = '{home_dir}/.udon/db/{pkn}-udon-local.db'
-clean_on_sync = 'disable'
-server_fqdn = '{fqdn}'
-server_port = '50051'
-ssl_root = '{home_dir}/.udon/TLS/{fqdn}-root.crt'
-dest_key_name_list = {dest_lst}
-"""
-		with open(chan_cfg_path, file_mode) as fd:
-			fd.write(cfg)
-		os.chmod(chan_cfg_path, 0o600)
-		return
-
 
 
 class udon_DB:
