@@ -235,6 +235,8 @@ def do_commit_message(add_member="", drop_member=""):
 	if add_member != "":
 		msg = f"Invited {add_member} to channel"
 	elif drop_member != "":
+		if client.key_name != drop_member:
+			error_and_exit("Only users can drop themselves from a channel...")
 		msg = f"{drop_member} has left the channel"
 	elif options.cli_input:
 		msg = options.cli_input
