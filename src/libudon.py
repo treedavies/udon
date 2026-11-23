@@ -47,7 +47,7 @@ def safe_path(BASE: str, fname: str) -> bool:
 	path = os.path.join(BASE, fname)
 	abs_path = os.path.abspath(path)
 	if abs_path != path:
-		error("(): invalid absolute path")
+		error("safe_path(): invalid absolute path")
 		return False
 	return True
 
