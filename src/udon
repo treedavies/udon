@@ -632,9 +632,11 @@ if __name__ == '__main__':
 		port = input("server port? (defaults to 50051): ")
 		if not port:
 			port = "50051"
+		# TODO Ping server
 
 		pub_key = input("Enter you public key name: ")
-		if not pub_key:
+		pub_key_path = udon.client_side_key_path(pub_key)
+		if not os.path.exists(pub_key_path):
 			error_and_exit("public key not found")
 
 		""" Test pub key path """
