@@ -277,7 +277,7 @@ ssl_cert_key = '{self.home_dir}/{UDON_TLS_DIR}/{subject}.key'
 			sys.exit("Error: openssl path not found")
 			return
 
-		new_tls = input("\nCreate new TLS Certs? (y/n): ")
+		new_tls = input("\nCreate Self-Signed TLS Certificates? (y/n): ")
 		if new_tls == "n":
 			return
 
