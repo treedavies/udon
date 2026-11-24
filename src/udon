@@ -544,9 +544,23 @@ if __name__ == '__main__':
 	parser.add_option("-K", "--key-name", dest="key_name", metavar="<key-name>",
 	help="Used with --fetch-key")
 
+	parser.add_option("-k", "--list-keys", dest="list_keys", action='store_true',
+	help="list local keys and digests. Example: udon --list-keys")
+
 	parser.add_option("-v", "--version", dest="version", action='store_true', metavar="", help="udon --version")
 
 	(options, args) = parser.parse_args()
+
+	if options.list_keys:
+		home_dir = udon.udon_utils.home_dir()
+		client_keys_path = f"{home_dir}/.udon/keys/client_side_keys"
+		lst = os.listdir(f"{home_dir}/.udon/keys/client_side_keys")
+		print(f"keys at: {client_keys_path}")
+		for fname in sorted(lst):
+			if fname.endswith('.pub'):
+				kpath = f"{client_keys_path}/{fname}"
+				md5 = udon.udon_utils.utl_file_md5(kpath)
+				print(f" * {md5} {fname}")
 
 	if options.fetch_key:
 		if not options.channel:
