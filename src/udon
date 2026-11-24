@@ -452,7 +452,10 @@ def do_fetch_key(key_md5: str, channel: str, fetch_key: str):
 
 
 def do_show_channel(channel: self):
-	if channel != 'all':
+	""" Print channel config to screen """
+	if type(channel) == type(str):
+		error_and_exit("do_show_channel(): Invalid arg type")
+	if channel:
 		path = udon.channel_cfg_path(channel)
 		if not os.path.exists(path):
 			error_and_exit(f"udon.do_show_channel() - Path not found: {path}")
@@ -460,13 +463,55 @@ def do_show_channel(channel: self):
 			data = fd.readlines()
 		data = "".join(data)
 		print(data)
-	else:
-		home_dir = udon.udon_utils.home_dir()
-		chan_dir = f"{home_dir}/.udon/channel_cfgs/"
-		dlst = os.listdir(chan_dir)
-		print("Channels configs:")
-		for d in dlst:
-			print(f"* {d}")
+
+
+def do_list_local_channels():
+	""" Print channel config file list to screen """
+	home_dir = udon.udon_utils.home_dir()
+	chan_dir = f"{home_dir}/.udon/channel_cfgs/"
+	dlst = os.listdir(chan_dir)
+	print("Channels configs files:")
+	for fname in dlst:
+		print(f"* {fname}")
+
+
+def do_create_channel():
+	""" Create new channel process """
+	chan_name = input("\nChannel name?: ")
+	if not chan_name:
+		error_and_exit("channel name not found")
+
+	if os.path.exists(udon.channel_cfg_path(chan_name)):
+		error_and_exit("channel already exists")
+
+	server = input("Server FQDN: ")
+	if not server:
+		error_and_exit("server FQDN not found")
+
+	port = input("server port? (defaults to 50051): ")
+	if not port:
+		port = "50051"
+	# TODO Ping server
+
+	pub_key = input("Enter you public key name: ")
+	pub_key_path = udon.client_side_key_path(pub_key)
+	if not os.path.exists(pub_key_path):
+		error_and_exit("public key not found")
+
+	""" Test pub key path """
+	if not os.path.exists(udon.client_side_key_path(pub_key)):
+		error_and_exit(f"{s}\nPublic key not found")
+
+	""" test private key path """
+	pub_key_path = udon.client_side_key_path(pub_key)
+	priv_key_path = pub_key_path.replace(".pub", "")
+	if not os.path.exists(priv_key_path):
+		error_and_exit(f"private key not found: {priv_key_path}")
+	priv_key = priv_key_path.split('/')[-1]
+
+	i = udon_init.Initialization()
+	lst = [pub_key]
+	i.create_config('create', chan_name, pub_key, priv_key_path, server, lst)
 
 
 if __name__ == '__main__':
@@ -538,6 +583,9 @@ if __name__ == '__main__':
 	parser.add_option("-S", "--show", dest="show_channel", metavar="<channel>",
 	help="Print channel config to screen.\nExample: udon --show <channel>")
 
+	parser.add_option("--list-channels", dest="list_local_channels", action='store_true',
+	help="Print channel config names to screen.\nExample: udon --list-channels")
+
 	parser.add_option("--create-channel", dest="create_channel", action="store_true",
 						help="Create a new channel config")
 
@@ -575,10 +623,12 @@ if __name__ == '__main__':
 	if options.msg_channel:
 		t = Test().check_all_configs()
 		do_commit_message()
-		# TODO sync
 
 	if options.show_channel:
 		do_show_channel(options.show_channel)
+
+	if options.list_local_channels:
+		do_list_local_channels()
 
 	if options.add_key:
 		s = do_check_sync(options.channel)
@@ -640,39 +690,5 @@ if __name__ == '__main__':
 		i.init_env()
 
 	if options.create_channel:
-		chan_name = input("\nChannel name?: ")
-		if not chan_name:
-			error_and_exit("channel name not found")
-
-		if os.path.exists(udon.channel_cfg_path(chan_name)):
-			error_and_exit("channel already exists")
-
-		server = input("Server FQDN: ")
-		if not server:
-			error_and_exit("server FQDN not found")
-
-		port = input("server port? (defaults to 50051): ")
-		if not port:
-			port = "50051"
-		# TODO Ping server
-
-		pub_key = input("Enter you public key name: ")
-		pub_key_path = udon.client_side_key_path(pub_key)
-		if not os.path.exists(pub_key_path):
-			error_and_exit("public key not found")
-
-		""" Test pub key path """
-		if not os.path.exists(udon.client_side_key_path(pub_key)):
-			error_and_exit(f"{s}\nPublic key not found")
-
-		""" test private key path """
-		pub_key_path = udon.client_side_key_path(pub_key)
-		priv_key_path = pub_key_path.replace(".pub", "")
-		if not os.path.exists(priv_key_path):
-			error_and_exit(f"private key not found: {priv_key_path}")
-		priv_key = priv_key_path.split('/')[-1]
-
-		i = udon_init.Initialization()
-		lst = [pub_key]
-		i.create_config('create', chan_name, pub_key, priv_key_path, server, lst)
-
+		t = Test().check_all_configs()
+		do_create_channel()
