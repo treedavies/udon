@@ -15,8 +15,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-license = "GPL"
-license-files = ["LICEN[CS]E*"]
+license = "GPL-2.0-only"
+license-files = ["LICENSE"]
 
 [project.urls]
 Homepage = "https://github.com/treedavies/udon"
