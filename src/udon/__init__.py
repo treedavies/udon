@@ -1,6 +1,4 @@
+from .udon import main
 
-import udon
-
-if __name__ == '__main__':
-	sys.exit(udon.main())
+__all__ = ["main"]
 
