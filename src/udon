@@ -212,7 +212,7 @@ def get_input():
 	return Z.strip()
 
 
-def do_commit_message(add_member="", drop_member=""):
+def do_commit_message(options, add_member="", drop_member=""):
 	"""
 		Run message (send) commit() workflow
 	"""
@@ -622,7 +622,7 @@ if __name__ == '__main__':
 
 	if options.msg_channel:
 		t = Test().check_all_configs()
-		do_commit_message()
+		do_commit_message(options)
 
 	if options.show_channel:
 		do_show_channel(options.show_channel)
@@ -633,11 +633,11 @@ if __name__ == '__main__':
 	if options.add_key:
 		s = do_check_sync(options.channel)
 		options.msg_channel = options.channel
-		do_commit_message(add_member=options.add_key)
+		do_commit_message(options, add_member=options.add_key)
 
 	if options.drop_key:
 		options.msg_channel = options.channel
-		do_commit_message(drop_member=options.drop_key)
+		do_commit_message(options, drop_member=options.drop_key)
 
 	if options.poll_channel:
 		t = Test().check_all_configs()
