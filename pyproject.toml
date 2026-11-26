@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "udon"
+version = "0.065"
+authors = [
+  { name="Tree Davies", email="tdavies.aur@darkphysics.net" },
+]
+description = "Minimalistic CLI based End to End Encrypted (E2EE) message passing tool/service."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "GPL-2.0-only"
+license-files = ["LICENSE"]
+
+[project.urls]
+Homepage = "https://github.com/treedavies/udon"
+Issues = "https://github.com/treedavies/udon/issues"
+
+
