@@ -1,5 +1,5 @@
-from .udon.py import main
+import sys
 
 if __name__ == "__main__":
-    main()
-
+    from udon import main
+    sys.exit(main())
