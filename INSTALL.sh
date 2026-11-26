@@ -34,40 +34,40 @@ if [ ! -e $UDON_DIR ] ; then
 fi
 
 
-install -m 755 -o root ./src/udon $UDON_DIR
+install -m 755 -o root ./src/udon/udon.py $UDON_DIR
 if [ $? -ne 0 ] ; then
 	echo "Error: install failed - src/udon"
 	exit 1
 fi
 
-install -m 755 -o root ./src/udon_init.py $UDON_DIR
+install -m 755 -o root ./src/udon/udon_init.py $UDON_DIR
 if [ $? -ne 0 ] ; then
 	echo "Error: install failed - src/udon_init.py"
 	exit 1
 fi
 
-install -m 444 -o root ./src/libudon.py $UDON_DIR
+install -m 444 -o root ./src/udon/libudon.py $UDON_DIR
 if [ $? -ne 0 ] ; then
 	echo "Error: install failed - src/libudon.py"
 	exit 1
 fi
 
-install -m 444 -o root ./src/udon.proto $UDON_DIR
+install -m 444 -o root ./src/udon/udon.proto $UDON_DIR
 if [ $? -ne 0 ] ; then
 	echo "Error: install failed - src/udon.proto"
 	exit 1
 fi
 
-install -m 755 -o root ./src/test_libudon.py $UDON_DIR
+install -m 755 -o root ./src/udon/test_libudon.py $UDON_DIR
 if [ $? -ne 0 ] ; then
 	echo "Error: install failed src/test_libudon.py"
 	exit 1
 fi
 
-ln -s $UDON_DIR/udon /usr/bin/udon
+ln -s $UDON_DIR/udon.py /usr/bin/udon
 
 # CHANGE PYTHON SHABANG TO VIRTUAL ENVIRONMENT
-sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon
+sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon.py
 sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/udon_init.py
 sed -i 's/\/usr\/bin\/python3/\/usr\/bin\/udon.d\/udon-venv\/bin\/python3/' /usr/bin/udon.d/test_libudon.py
 
