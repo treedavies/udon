@@ -514,8 +514,7 @@ def do_create_channel():
 	i.create_config('create', chan_name, pub_key, priv_key_path, server, lst)
 
 
-if __name__ == '__main__':
-
+def main():
 	euid = os.geteuid()
 	if euid == 0:
 		error_and_exit("Can not run as root user.\nPlease run as a non-priviledged user.")
@@ -692,3 +691,6 @@ if __name__ == '__main__':
 	if options.create_channel:
 		t = Test().check_all_configs()
 		do_create_channel()
+
+if __name__ == '__main__':
+	main()
