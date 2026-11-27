@@ -618,7 +618,7 @@ if __name__ == '__main__':
 		do_fetch_key(options.fetch_key, options.channel, options.key_name)
 
 	if options.version:
-		print("Udon: Version 0.065")
+		print("Udon: Version 0.066")
 
 	if options.msg_channel:
 		t = Test().check_all_configs()
